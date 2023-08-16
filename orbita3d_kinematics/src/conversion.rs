@@ -13,3 +13,11 @@ pub fn intrinsic_roll_pitch_yaw_to_matrix(roll: f64, pitch: f64, yaw: f64) -> Ro
 
     mx * my * mz
 }
+
+pub fn matrix_to_intrinsic_roll_pitch_yaw(rot: Rotation3<f64>) -> [f64; 3] {
+    let roll = -rot[(1, 2)].atan2(rot[(2, 2)]);
+    let pitch = rot[(0, 2)].atan2((1.0 - rot[(0, 2)].powf(2.0)).sqrt());
+    let yaw = -rot[(0, 1)].atan2(rot[(0, 0)]);
+
+    [roll, pitch, yaw]
+}

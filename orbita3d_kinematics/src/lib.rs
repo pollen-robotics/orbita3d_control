@@ -1,4 +1,4 @@
-use nalgebra::{Matrix3, Rotation3, Vector3};
+use nalgebra::{Matrix3, Rotation3, SVector, Vector3};
 
 pub mod conversion;
 mod position;
@@ -6,7 +6,7 @@ mod position;
 #[derive(Copy, Clone)]
 pub struct Orbita3dKinematicsModel {
     // holds current value of the n parameters
-    // p: Vector6f64,
+    p: SVector<f64, 6>,
     pub alpha: f64,
     pub gamma_min: f64,
     pub offset: f64,
@@ -19,7 +19,7 @@ pub struct Orbita3dKinematicsModel {
 impl Default for Orbita3dKinematicsModel {
     fn default() -> Self {
         Orbita3dKinematicsModel {
-            // p: Vector6f64::from_row_slice(&[0., 1., 0., 1., 0., 1.]),
+            p: SVector::from_row_slice(&[0., 1., 0., 1., 0., 1.]),
             alpha: 54.0_f64.to_radians(),
             gamma_min: 0.0_f64.to_radians(),
             offset: 0.0_f64.to_radians(),
