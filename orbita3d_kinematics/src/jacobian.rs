@@ -3,7 +3,7 @@ use nalgebra::{Matrix3, Rotation3, RowVector3};
 use crate::Orbita3dKinematicsModel;
 
 impl Orbita3dKinematicsModel {
-    pub fn jacobian_inverse(&mut self, rot: Rotation3<f64>, thetas: [f64; 3]) -> Matrix3<f64> {
+    pub fn jacobian_inverse(&self, rot: Rotation3<f64>, thetas: [f64; 3]) -> Matrix3<f64> {
         let v = self.platform_unit_vectors_from_mat(rot);
 
         let sa1 = self.alpha.sin();
@@ -38,7 +38,7 @@ impl Orbita3dKinematicsModel {
         Matrix3::from_rows(&[row1, row2, row3])
     }
 
-    pub fn jacobian(&mut self, rot: Rotation3<f64>, thetas: [f64; 3]) -> Matrix3<f64> {
+    pub fn jacobian(&self, rot: Rotation3<f64>, thetas: [f64; 3]) -> Matrix3<f64> {
         let j_inv = self.jacobian_inverse(rot, thetas);
         j_inv.try_inverse().unwrap()
     }

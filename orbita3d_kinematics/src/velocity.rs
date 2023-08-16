@@ -4,7 +4,7 @@ use crate::Orbita3dKinematicsModel;
 
 impl Orbita3dKinematicsModel {
     pub fn compute_output_velocity_from_disks(
-        &mut self,
+        &self,
         thetas: [f64; 3],
         input_velocity: [f64; 3],
     ) -> [f64; 3] {
@@ -17,7 +17,7 @@ impl Orbita3dKinematicsModel {
     }
 
     pub fn compute_input_velocity_from_disks(
-        &mut self,
+        &self,
         thetas: [f64; 3],
         output_velocity: [f64; 3],
     ) -> [f64; 3] {
@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn inverse_forward_vel() {
-        let mut orb = Orbita3dKinematicsModel::default();
+        let orb = Orbita3dKinematicsModel::default();
 
         let rpy = random_rpy();
 

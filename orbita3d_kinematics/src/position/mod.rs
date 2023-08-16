@@ -23,7 +23,7 @@ mod tests {
 
     #[test]
     fn forward_inverse() {
-        let mut orb = Orbita3dKinematicsModel {
+        let orb = Orbita3dKinematicsModel {
             offset: 60.0_f64.to_radians(),
             ..Default::default()
         };
@@ -55,8 +55,7 @@ mod tests {
 
     #[test]
     fn inverse_forward() {
-        // let mut orb = Orbita3DProblem::default();
-        let mut orb = Orbita3dKinematicsModel {
+        let orb = Orbita3dKinematicsModel {
             offset: 60.0_f64.to_radians(),
             ..Default::default()
         };

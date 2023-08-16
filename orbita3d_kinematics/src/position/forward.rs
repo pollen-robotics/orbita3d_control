@@ -6,7 +6,7 @@ use nshare::{RefNdarray2, ToNalgebra};
 use crate::Orbita3dKinematicsModel;
 
 impl Orbita3dKinematicsModel {
-    pub fn compute_forward_kinematics(&mut self, thetas: [f64; 3]) -> Rotation3<f64> {
+    pub fn compute_forward_kinematics(&self, thetas: [f64; 3]) -> Rotation3<f64> {
         let thetas = Vector3::from_row_slice(&[
             thetas[0],
             thetas[1] + 120.0_f64.to_radians(),
@@ -73,10 +73,6 @@ impl Orbita3dKinematicsModel {
         align_vectors(v_mat.transpose(), b_mat.transpose())
     }
 
-    fn set_thetas(&mut self, thetas: Vector3<f64>) {
-        self.thetas.copy_from(&thetas);
-    }
-
     fn v_i(&self, cpi: f64, spi: f64, cti: f64, sti: f64) -> Vector3<f64> {
         let sa1 = self.alpha.sin();
         let sa2 = self.beta.sin();
@@ -97,60 +93,16 @@ impl Orbita3dKinematicsModel {
         Vector3::from_row_slice(&[sa1 * sti, -cti * sa1, -ca1])
     }
 
-    fn phis_system_equations(&self) -> SVector<f64, 12> {
-        // compute the system of equations
-        let cp1 = self.p[0];
-        let sp1 = self.p[1];
-        let cp2 = self.p[2];
-        let sp2 = self.p[3];
-        let cp3 = self.p[4];
-        let sp3 = self.p[5];
-        let ca2 = self.beta.cos();
-
-        let st1 = self.thetas[0].sin();
-        let st2 = self.thetas[1].sin();
-        let st3 = self.thetas[2].sin();
-        let ct1 = self.thetas[0].cos();
-        let ct2 = self.thetas[1].cos();
-        let ct3 = self.thetas[2].cos();
-
-        let v1n = self.v_i(cp1, sp1, ct1, st1);
-        let v2n = self.v_i(cp2, sp2, ct2, st2);
-        let v3n = self.v_i(cp3, sp3, ct3, st3);
-
-        let w1n = self.w_i(ct1, st1);
-        let w2n = self.w_i(ct2, st2);
-        let w3n = self.w_i(ct3, st3);
-
-        let eq1 = v1n.dot(&v2n) + 0.5;
-        let eq2 = v2n.dot(&v3n) + 0.5;
-        let eq3 = v3n.dot(&v1n) + 0.5;
-
-        let eq4 = w1n.dot(&v1n) - ca2;
-        let eq5 = w2n.dot(&v2n) - ca2;
-        let eq6 = w3n.dot(&v3n) - ca2;
-
-        let eq7 = v1n.dot(&v1n) - 1.;
-        let eq8 = v2n.dot(&v2n) - 1.;
-        let eq9 = v3n.dot(&v3n) - 1.;
-
-        let eq10 = v1n[0] + v2n[0] + v3n[0];
-        let eq11 = v1n[1] + v2n[1] + v3n[1];
-        let eq12 = v1n[2] + v2n[2] + v3n[2];
-
-        SVector::from_row_slice(&[
-            eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8, eq9, eq10, eq11, eq12,
-        ])
-    }
-
-    fn compute_phis(&mut self, thetas: Vector3<f64>) -> Option<SVector<f64, 9>> {
+    fn compute_phis(&self, thetas: Vector3<f64>) -> Option<SVector<f64, 9>> {
         // Compute the phi angles with a least square minimization of the system of equations
-        self.p = SVector::from_row_slice(&[0., 1., 0., 1., 0., 1.]);
-
-        self.set_thetas(thetas);
-
         let lm = LevenbergMarquardt::new().with_xtol(f64::EPSILON);
-        let (result, report) = lm.minimize(*self);
+
+        let problem = Orbita3dForwardProblem {
+            kin: *self,
+            p: [0., 1., 0., 1., 0., 1.].into(),
+            thetas,
+        };
+        let (result, report) = lm.minimize(problem);
 
         if !report.termination.was_successful() {
             return None;
@@ -221,14 +173,68 @@ fn align_vectors(a: Matrix3<f64>, b: Matrix3<f64>) -> Rotation3<f64> {
     Rotation3::from_matrix_unchecked(m)
 }
 
+struct Orbita3dForwardProblem {
+    kin: Orbita3dKinematicsModel,
+    thetas: Vector3<f64>,
+    p: SVector<f64, 6>,
+}
+
+impl Orbita3dForwardProblem {
+    fn phis_system_equations(&self) -> SVector<f64, 12> {
+        // compute the system of equations
+        let cp1 = self.p[0];
+        let sp1 = self.p[1];
+        let cp2 = self.p[2];
+        let sp2 = self.p[3];
+        let cp3 = self.p[4];
+        let sp3 = self.p[5];
+        let ca2 = self.kin.beta.cos();
+
+        let st1 = self.thetas[0].sin();
+        let st2 = self.thetas[1].sin();
+        let st3 = self.thetas[2].sin();
+        let ct1 = self.thetas[0].cos();
+        let ct2 = self.thetas[1].cos();
+        let ct3 = self.thetas[2].cos();
+
+        let v1n = self.kin.v_i(cp1, sp1, ct1, st1);
+        let v2n = self.kin.v_i(cp2, sp2, ct2, st2);
+        let v3n = self.kin.v_i(cp3, sp3, ct3, st3);
+
+        let w1n = self.kin.w_i(ct1, st1);
+        let w2n = self.kin.w_i(ct2, st2);
+        let w3n = self.kin.w_i(ct3, st3);
+
+        let eq1 = v1n.dot(&v2n) + 0.5;
+        let eq2 = v2n.dot(&v3n) + 0.5;
+        let eq3 = v3n.dot(&v1n) + 0.5;
+
+        let eq4 = w1n.dot(&v1n) - ca2;
+        let eq5 = w2n.dot(&v2n) - ca2;
+        let eq6 = w3n.dot(&v3n) - ca2;
+
+        let eq7 = v1n.dot(&v1n) - 1.;
+        let eq8 = v2n.dot(&v2n) - 1.;
+        let eq9 = v3n.dot(&v3n) - 1.;
+
+        let eq10 = v1n[0] + v2n[0] + v3n[0];
+        let eq11 = v1n[1] + v2n[1] + v3n[1];
+        let eq12 = v1n[2] + v2n[2] + v3n[2];
+
+        SVector::from_row_slice(&[
+            eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8, eq9, eq10, eq11, eq12,
+        ])
+    }
+}
+
 // We implement a trait for every problem we want to solve
-impl LeastSquaresProblem<f64, U12, U6> for Orbita3dKinematicsModel {
+impl LeastSquaresProblem<f64, U12, U6> for Orbita3dForwardProblem {
     type ParameterStorage = Owned<f64, U6>;
     type ResidualStorage = Owned<f64, U12>;
     type JacobianStorage = Owned<f64, U12, U6>;
 
     fn set_params(&mut self, p: &SVector<f64, 6>) {
-        self.p.copy_from(p);
+        self.p = *p;
         // do common calculations for residuals and the Jacobian here
     }
 
@@ -237,19 +243,18 @@ impl LeastSquaresProblem<f64, U12, U6> for Orbita3dKinematicsModel {
     }
 
     fn residuals(&self) -> Option<SVector<f64, 12>> {
-        let r = self.phis_system_equations();
-        Some(r)
+        Some(self.phis_system_equations())
     }
 
     fn jacobian(&self) -> Option<SMatrix<f64, 12, 6>> {
         // Compute the Jacobian of the optimization problem ie.
         // the matrix for which each rows are the derivatives of each equation by a parameter
 
-        let sa1 = self.alpha.sin();
-        let sa2 = self.beta.sin();
+        let sa1 = self.kin.alpha.sin();
+        let sa2 = self.kin.beta.sin();
 
-        let ca1 = self.alpha.cos();
-        let ca2 = self.beta.cos();
+        let ca1 = self.kin.alpha.cos();
+        let ca2 = self.kin.beta.cos();
 
         let cp1 = self.p[0];
         let sp1 = self.p[1];
