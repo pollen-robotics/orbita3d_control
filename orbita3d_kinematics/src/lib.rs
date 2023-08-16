@@ -1,4 +1,4 @@
-use nalgebra::{Matrix3, Rotation3, SVector, Vector3};
+use nalgebra::{Matrix3, Rotation3, Vector3};
 
 pub mod conversion;
 mod jacobian;
@@ -8,28 +8,23 @@ mod velocity;
 
 #[derive(Copy, Clone)]
 pub struct Orbita3dKinematicsModel {
-    // holds current value of the n parameters
-    p: SVector<f64, 6>,
     pub alpha: f64,
     pub gamma_min: f64,
     pub offset: f64,
     pub beta: f64,
     pub gamma_max: f64,
     pub passiv_arms_direct: bool,
-    pub thetas: Vector3<f64>,
 }
 
 impl Default for Orbita3dKinematicsModel {
     fn default() -> Self {
         Orbita3dKinematicsModel {
-            p: SVector::from_row_slice(&[0., 1., 0., 1., 0., 1.]),
             alpha: 54.0_f64.to_radians(),
             gamma_min: 0.0_f64.to_radians(),
             offset: 0.0_f64.to_radians(),
             beta: 90.0_f64.to_radians(),
             gamma_max: 180.0_f64.to_radians(),
             passiv_arms_direct: true,
-            thetas: Vector3::from_row_slice(&[0., 0., 0.]),
         }
     }
 }

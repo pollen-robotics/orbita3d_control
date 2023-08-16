@@ -4,7 +4,7 @@ use crate::Orbita3dKinematicsModel;
 
 impl Orbita3dKinematicsModel {
     pub fn compute_output_torque_from_disks(
-        &mut self,
+        &self,
         thetas: [f64; 3],
         input_torque: [f64; 3],
     ) -> [f64; 3] {
@@ -16,7 +16,7 @@ impl Orbita3dKinematicsModel {
     }
 
     pub fn compute_input_torque_from_disks(
-        &mut self,
+        &self,
         thetas: [f64; 3],
         output_torque: [f64; 3],
     ) -> [f64; 3] {
@@ -28,7 +28,7 @@ impl Orbita3dKinematicsModel {
     }
 
     pub fn compute_output_torque_from_j_inv(
-        &mut self,
+        &self,
         j_inv: Matrix3<f64>,
         input_torque: Vector3<f64>,
     ) -> Vector3<f64> {
@@ -67,7 +67,7 @@ mod tests {
 
     #[test]
     fn inverse_forward_torque() {
-        let mut orb = Orbita3dKinematicsModel::default();
+        let orb = Orbita3dKinematicsModel::default();
 
         let rpy = random_rpy();
         let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
