@@ -1,0 +1,5 @@
+[workspace]
+
+members = [
+    "orbita3d_kinematics",
+]
