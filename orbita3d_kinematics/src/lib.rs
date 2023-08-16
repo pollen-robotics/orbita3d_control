@@ -3,6 +3,7 @@ use nalgebra::{Matrix3, Rotation3, SVector, Vector3};
 pub mod conversion;
 mod jacobian;
 mod position;
+mod torque;
 mod velocity;
 
 #[derive(Copy, Clone)]
