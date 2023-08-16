@@ -6,24 +6,24 @@ use nshare::{RefNdarray2, ToNalgebra};
 use crate::Orbita3dKinematicsModel;
 
 impl Orbita3dKinematicsModel {
-    pub fn compute_forward_kinematics(&mut self, disk_position: [f64; 3]) -> Rotation3<f64> {
-        let disk_position = Vector3::from_row_slice(&[
-            disk_position[0],
-            disk_position[1] + 120.0_f64.to_radians(),
-            disk_position[2] - 120.0_f64.to_radians(),
+    pub fn compute_forward_kinematics(&mut self, thetas: [f64; 3]) -> Rotation3<f64> {
+        let thetas = Vector3::from_row_slice(&[
+            thetas[0],
+            thetas[1] + 120.0_f64.to_radians(),
+            thetas[2] - 120.0_f64.to_radians(),
         ]);
 
         // Forward of Orbita, takes the disk position (in radians) and return a rotation matrix
         // self.p = Vector6f64::from_row_slice(&[0., 1., 0., 1., 0., 1.]); //reset p?
-        let st1 = disk_position[0].sin();
-        let st2 = disk_position[1].sin();
-        let st3 = disk_position[2].sin();
+        let st1 = thetas[0].sin();
+        let st2 = thetas[1].sin();
+        let st3 = thetas[2].sin();
 
-        let ct1 = disk_position[0].cos();
-        let ct2 = disk_position[1].cos();
-        let ct3 = disk_position[2].cos();
+        let ct1 = thetas[0].cos();
+        let ct2 = thetas[1].cos();
+        let ct3 = thetas[2].cos();
 
-        let phis = self.compute_phis(disk_position).unwrap();
+        let phis = self.compute_phis(thetas).unwrap();
         let sp1_n = phis[0];
         let cp1_n = phis[1];
 
@@ -73,8 +73,8 @@ impl Orbita3dKinematicsModel {
         align_vectors(v_mat.transpose(), b_mat.transpose())
     }
 
-    fn set_thetas(&mut self, disk_position: Vector3<f64>) {
-        self.thetas.copy_from(&disk_position);
+    fn set_thetas(&mut self, thetas: Vector3<f64>) {
+        self.thetas.copy_from(&thetas);
     }
 
     fn v_i(&self, cpi: f64, spi: f64, cti: f64, sti: f64) -> Vector3<f64> {
@@ -143,11 +143,11 @@ impl Orbita3dKinematicsModel {
         ])
     }
 
-    fn compute_phis(&mut self, disk_position: Vector3<f64>) -> Option<SVector<f64, 9>> {
+    fn compute_phis(&mut self, thetas: Vector3<f64>) -> Option<SVector<f64, 9>> {
         // Compute the phi angles with a least square minimization of the system of equations
         self.p = SVector::from_row_slice(&[0., 1., 0., 1., 0., 1.]);
 
-        self.set_thetas(disk_position);
+        self.set_thetas(thetas);
 
         let lm = LevenbergMarquardt::new().with_xtol(f64::EPSILON);
         let (result, report) = lm.minimize(*self);

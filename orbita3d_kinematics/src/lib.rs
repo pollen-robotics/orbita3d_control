@@ -1,7 +1,9 @@
 use nalgebra::{Matrix3, Rotation3, SVector, Vector3};
 
 pub mod conversion;
+mod jacobian;
 mod position;
+mod velocity;
 
 #[derive(Copy, Clone)]
 pub struct Orbita3dKinematicsModel {

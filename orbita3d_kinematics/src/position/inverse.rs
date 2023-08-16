@@ -134,10 +134,10 @@ mod tests {
         let orb = Orbita3dKinematicsModel::default();
 
         let rot = intrinsic_roll_pitch_yaw_to_matrix(0.0, 0.0, 0.0);
-        let disks = orb.compute_inverse_kinematics(rot).unwrap();
-        assert!(disks[0].abs() < 1e-4);
-        assert!(disks[1].abs() < 1e-4);
-        assert!(disks[2].abs() < 1e-4);
+        let thetas = orb.compute_inverse_kinematics(rot).unwrap();
+        assert!(thetas[0].abs() < 1e-4);
+        assert!(thetas[1].abs() < 1e-4);
+        assert!(thetas[2].abs() < 1e-4);
     }
 
     #[test]
@@ -148,9 +148,9 @@ mod tests {
 
         let orb = Orbita3dKinematicsModel::default();
         let rot = intrinsic_roll_pitch_yaw_to_matrix(0.0, 0.3, 0.0);
-        let disks = orb.compute_inverse_kinematics(rot).unwrap();
-        assert!(disks[0].abs() < 1e-4);
-        assert!(disks[1].abs() > 1e-4);
-        assert!(disks[2].abs() > 1e-4);
+        let thetas = orb.compute_inverse_kinematics(rot).unwrap();
+        assert!(thetas[0].abs() < 1e-4);
+        assert!(thetas[1].abs() > 1e-4);
+        assert!(thetas[2].abs() > 1e-4);
     }
 }
