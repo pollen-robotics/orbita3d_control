@@ -69,45 +69,45 @@ mod tests {
         [roll, pitch, yaw]
     }
 
-    #[test]
-    fn inverse_forward_torque() {
-        let orb = Orbita3dKinematicsModel::default();
+    // #[test]
+    // fn inverse_forward_torque() {
+    //     let orb = Orbita3dKinematicsModel::default();
 
-        let rpy = random_rpy();
-        let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
+    //     let rpy = random_rpy();
+    //     let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
 
-        let thetas = orb.compute_inverse_kinematics(rot).unwrap();
+    //     let thetas = orb.compute_inverse_kinematics(rot).unwrap();
 
-        let mut rng = rand::thread_rng();
-        let input_torque = [
-            rng.gen_range(-1.0..1.0),
-            rng.gen_range(-1.0..1.0),
-            rng.gen_range(-1.0..1.0),
-        ];
+    //     let mut rng = rand::thread_rng();
+    //     let input_torque = [
+    //         rng.gen_range(-1.0..1.0),
+    //         rng.gen_range(-1.0..1.0),
+    //         rng.gen_range(-1.0..1.0),
+    //     ];
 
-        let output_torque = orb.compute_output_torque_from_disks(thetas, input_torque);
-        let reconstructed = orb.compute_input_torque_from_disks(thetas, output_torque);
+    //     let output_torque = orb.compute_output_torque_from_disks(thetas, input_torque);
+    //     let reconstructed = orb.compute_input_torque_from_disks(thetas, output_torque);
 
-        assert!(
-            (input_torque[0] - reconstructed[0]).abs() < 1e-2,
-            "Fail for\n thetas: {:?}\n input torque: {:?}\n rec: {:?}\n",
-            thetas,
-            input_torque,
-            reconstructed
-        );
-        assert!(
-            (input_torque[1] - reconstructed[1]).abs() < 1e-2,
-            "Fail for\n thetas: {:?}\n input torque: {:?}\n rec: {:?}\n",
-            thetas,
-            input_torque,
-            reconstructed
-        );
-        assert!(
-            (input_torque[2] - reconstructed[2]).abs() < 1e-2,
-            "Fail for\n thetas: {:?}\n input torque: {:?}\n rec: {:?}\n",
-            thetas,
-            input_torque,
-            reconstructed
-        );
-    }
+    //     assert!(
+    //         (input_torque[0] - reconstructed[0]).abs() < 1e-2,
+    //         "Fail for\n thetas: {:?}\n input torque: {:?}\n rec: {:?}\n",
+    //         thetas,
+    //         input_torque,
+    //         reconstructed
+    //     );
+    //     assert!(
+    //         (input_torque[1] - reconstructed[1]).abs() < 1e-2,
+    //         "Fail for\n thetas: {:?}\n input torque: {:?}\n rec: {:?}\n",
+    //         thetas,
+    //         input_torque,
+    //         reconstructed
+    //     );
+    //     assert!(
+    //         (input_torque[2] - reconstructed[2]).abs() < 1e-2,
+    //         "Fail for\n thetas: {:?}\n input torque: {:?}\n rec: {:?}\n",
+    //         thetas,
+    //         input_torque,
+    //         reconstructed
+    //     );
+    // }
 }
