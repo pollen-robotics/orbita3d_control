@@ -51,23 +51,23 @@ impl Orbita3dKinematicsModel {
 
 #[cfg(test)]
 mod tests {
-    use crate::{conversion::intrinsic_roll_pitch_yaw_to_matrix, Orbita3dKinematicsModel};
+    // use crate::{conversion::intrinsic_roll_pitch_yaw_to_matrix, Orbita3dKinematicsModel};
 
-    use rand::Rng;
+    // use rand::Rng;
 
-    const ROLL_RANGE: f64 = 30.0;
-    const PITCH_RANGE: f64 = 30.0;
-    const YAW_RANGE: f64 = 90.0;
+    // const ROLL_RANGE: f64 = 30.0;
+    // const PITCH_RANGE: f64 = 30.0;
+    // const YAW_RANGE: f64 = 90.0;
 
-    fn random_rpy() -> [f64; 3] {
-        let mut rng = rand::thread_rng();
+    // fn random_rpy() -> [f64; 3] {
+    //     let mut rng = rand::thread_rng();
 
-        let roll = rng.gen_range(-ROLL_RANGE..ROLL_RANGE).to_radians();
-        let pitch = rng.gen_range(-PITCH_RANGE..PITCH_RANGE).to_radians();
-        let yaw = rng.gen_range(-YAW_RANGE..YAW_RANGE).to_radians();
+    //     let roll = rng.gen_range(-ROLL_RANGE..ROLL_RANGE).to_radians();
+    //     let pitch = rng.gen_range(-PITCH_RANGE..PITCH_RANGE).to_radians();
+    //     let yaw = rng.gen_range(-YAW_RANGE..YAW_RANGE).to_radians();
 
-        [roll, pitch, yaw]
-    }
+    //     [roll, pitch, yaw]
+    // }
 
     // #[test]
     // fn inverse_forward_torque() {

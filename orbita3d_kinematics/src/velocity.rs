@@ -50,26 +50,23 @@ impl Orbita3dKinematicsModel {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        conversion::{self},
-        Orbita3dKinematicsModel,
-    };
+    use crate::Orbita3dKinematicsModel;
 
-    use rand::Rng;
+    // use rand::Rng;
 
-    const ROLL_RANGE: f64 = 30.0;
-    const PITCH_RANGE: f64 = 30.0;
-    const YAW_RANGE: f64 = 90.0;
+    // const ROLL_RANGE: f64 = 30.0;
+    // const PITCH_RANGE: f64 = 30.0;
+    // const YAW_RANGE: f64 = 90.0;
 
-    fn random_rpy() -> [f64; 3] {
-        let mut rng = rand::thread_rng();
+    // fn random_rpy() -> [f64; 3] {
+    //     let mut rng = rand::thread_rng();
 
-        let roll = rng.gen_range(-ROLL_RANGE..ROLL_RANGE).to_radians();
-        let pitch = rng.gen_range(-PITCH_RANGE..PITCH_RANGE).to_radians();
-        let yaw = rng.gen_range(-YAW_RANGE..YAW_RANGE).to_radians();
+    //     let roll = rng.gen_range(-ROLL_RANGE..ROLL_RANGE).to_radians();
+    //     let pitch = rng.gen_range(-PITCH_RANGE..PITCH_RANGE).to_radians();
+    //     let yaw = rng.gen_range(-YAW_RANGE..YAW_RANGE).to_radians();
 
-        [roll, pitch, yaw]
-    }
+    //     [roll, pitch, yaw]
+    // }
 
     fn check_inverse_forward(thetas: [f64; 3], input_velocity: [f64; 3]) {
         let orb = Orbita3dKinematicsModel::default();
@@ -98,7 +95,11 @@ mod tests {
     #[test]
     fn inverse_forward_vel() {
         // Using fixed value 1
-        let thetas = [0.147376526054817, -0.0063153266133482155, 0.29099962984161976];
+        let thetas = [
+            0.147376526054817,
+            -0.0063153266133482155,
+            0.29099962984161976,
+        ];
         let input_velocity = [0.6696758700667225, 0.1914613976070494, -0.3389136179061003];
         check_inverse_forward(thetas, input_velocity);
 
