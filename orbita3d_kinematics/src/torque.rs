@@ -90,18 +90,24 @@ mod tests {
 
         assert!(
             (input_torque[0] - reconstructed[0]).abs() < 1e-2,
-            "Fail for {:?}",
-            input_torque
+            "Fail for {:?} {:?} {:?}",
+            thetas,
+            input_torque,
+            reconstructed
         );
         assert!(
             (input_torque[1] - reconstructed[1]).abs() < 1e-2,
-            "Fail for {:?}",
-            input_torque
+            "Fail for {:?} {:?} {:?}",
+            thetas,
+            input_torque,
+            reconstructed
         );
         assert!(
             (input_torque[2] - reconstructed[2]).abs() < 1e-2,
-            "Fail for {:?}",
-            input_torque
+            "Fail for {:?} {:?} {:?}",
+            thetas,
+            input_torque,
+            reconstructed
         );
     }
 }

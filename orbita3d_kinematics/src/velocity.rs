@@ -78,32 +78,38 @@ mod tests {
         let rpy = random_rpy();
 
         let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
-        let disks = orb.compute_inverse_kinematics(rot).unwrap();
+        let thetas = orb.compute_inverse_kinematics(rot).unwrap();
 
         let mut rng = rand::thread_rng();
-        let input_vel = [
+        let input_velocity = [
             rng.gen_range(-1.0..1.0),
             rng.gen_range(-1.0..1.0),
             rng.gen_range(-1.0..1.0),
         ];
 
-        let output_vel = orb.compute_output_velocity_from_disks(disks, input_vel);
-        let reconstructed = orb.compute_input_velocity_from_disks(disks, output_vel);
+        let output_velocity = orb.compute_output_velocity_from_disks(thetas, input_velocity);
+        let reconstructed = orb.compute_input_velocity_from_disks(thetas, output_velocity);
 
         assert!(
-            (input_vel[0] - reconstructed[0]).abs() < 1e-2,
-            "Fail for {:?}",
-            input_vel
+            (input_velocity[0] - reconstructed[0]).abs() < 1e-2,
+            "Fail for {:?} {:?} {:?}",
+            thetas,
+            input_velocity,
+            reconstructed
         );
         assert!(
-            (input_vel[1] - reconstructed[1]).abs() < 1e-2,
-            "Fail for {:?}",
-            input_vel
+            (input_velocity[1] - reconstructed[1]).abs() < 1e-2,
+            "Fail for {:?} {:?} {:?}",
+            thetas,
+            input_velocity,
+            reconstructed
         );
         assert!(
-            (input_vel[2] - reconstructed[2]).abs() < 1e-2,
-            "Fail for {:?}",
-            input_vel
+            (input_velocity[2] - reconstructed[2]).abs() < 1e-2,
+            "Fail for {:?} {:?} {:?}",
+            thetas,
+            input_velocity,
+            reconstructed
         );
     }
 }
