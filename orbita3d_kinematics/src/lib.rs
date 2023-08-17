@@ -16,6 +16,8 @@ mod position;
 mod torque;
 mod velocity;
 
+pub use position::InverseSolutionErrorKind;
+
 #[derive(Debug, Copy, Clone)]
 /// Kinematics model for Orbita3d
 pub struct Orbita3dKinematicsModel {

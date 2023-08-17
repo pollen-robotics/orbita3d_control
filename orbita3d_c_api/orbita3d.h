@@ -67,7 +67,7 @@ int32_t orbita3d_kinematics_forward_torque(const Orbita3dKinematicsModel *self,
 /// * quat - The platform orientation as a quaternion.
 /// * thetas - Holder for the motor angles as a 3-element array result.
 /// # Returns
-/// * 0 if success, 1 if error.
+/// * 0 if success, 1 if no solution, 2 if invalid solution.
 int32_t orbita3d_kinematics_inverse_position(const Orbita3dKinematicsModel *self,
                                              const double (*quat)[4],
                                              double (*thetas)[3]);
