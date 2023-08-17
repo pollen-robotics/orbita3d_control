@@ -1,0 +1,12 @@
+[project]
+name = "orbita3d"
+dependencies = ["cffi", "numpy", "pyyaml", "scipy"]
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+
+[tool.maturin]
+python-source = "python"
+module-name  = "orbita3d._orbita3d"

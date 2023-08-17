@@ -6,7 +6,7 @@ mod position;
 mod torque;
 mod velocity;
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Orbita3dKinematicsModel {
     pub alpha: f64,
     pub gamma_min: f64,
