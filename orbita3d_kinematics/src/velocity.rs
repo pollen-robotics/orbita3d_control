@@ -75,7 +75,7 @@ mod tests {
     fn inverse_forward_vel() {
         let orb = Orbita3dKinematicsModel::default();
 
-        let rpy = random_rpy();
+        let rpy: [f64; 3] = random_rpy();
 
         let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
         let thetas = orb.compute_inverse_kinematics(rot).unwrap();
@@ -92,21 +92,21 @@ mod tests {
 
         assert!(
             (input_velocity[0] - reconstructed[0]).abs() < 1e-2,
-            "Fail for {:?} {:?} {:?}",
+            "Fail for\n thetas: {:?}\n input velocity: {:?}\n rec: {:?}\n",
             thetas,
             input_velocity,
             reconstructed
         );
         assert!(
             (input_velocity[1] - reconstructed[1]).abs() < 1e-2,
-            "Fail for {:?} {:?} {:?}",
+            "Fail for\n thetas: {:?}\n input velocity: {:?}\n rec: {:?}\n",
             thetas,
             input_velocity,
             reconstructed
         );
         assert!(
             (input_velocity[2] - reconstructed[2]).abs() < 1e-2,
-            "Fail for {:?} {:?} {:?}",
+            "Fail for\n thetas: {:?}\n input velocity: {:?}\n rec: {:?}\n",
             thetas,
             input_velocity,
             reconstructed
