@@ -1,5 +1,6 @@
 mod forward;
 mod inverse;
+pub use inverse::InverseSolutionErrorKind;
 
 #[cfg(test)]
 mod tests {

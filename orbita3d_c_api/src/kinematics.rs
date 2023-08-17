@@ -105,7 +105,7 @@ impl Orbita3dKinematicsModel {
     /// * quat - The platform orientation as a quaternion.
     /// * thetas - Holder for the motor angles as a 3-element array result.
     /// # Returns
-    /// * 0 if success, 1 if error.
+    /// * 0 if success, 1 if no solution, 2 if invalid solution.
     pub extern "C" fn orbita3d_kinematics_inverse_position(
         &self,
         quat: &[f64; 4],
@@ -120,7 +120,10 @@ impl Orbita3dKinematicsModel {
                 *thetas = sol;
                 0
             }
-            Err(_) => 1,
+            Err(err) => match err {
+                orbita3d_kinematics::InverseSolutionErrorKind::NoSolution(_) => 1,
+                orbita3d_kinematics::InverseSolutionErrorKind::InvalidSolution(_, _) => 2,
+            },
         }
     }
 
