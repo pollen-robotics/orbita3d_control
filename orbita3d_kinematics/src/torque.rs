@@ -12,7 +12,7 @@ impl Orbita3dKinematicsModel {
     /// * input_torque - The input torque as a 3-element array.
     /// # Returns
     /// * The output torque as a 3d rotation.
-    pub fn compute_output_torque_from_disks(
+    pub fn compute_output_torque(
         &self,
         thetas: [f64; 3],
         input_torque: [f64; 3],
@@ -34,7 +34,7 @@ impl Orbita3dKinematicsModel {
     /// * output_torque - The output torque as a 3d rotation.
     /// # Returns
     /// * The input torque as a 3-element array.
-    pub fn compute_input_torque_from_disks(
+    pub fn compute_input_torque(
         &self,
         thetas: [f64; 3],
         output_torque: Rotation3<f64>,
@@ -103,8 +103,8 @@ mod tests {
     //         rng.gen_range(-1.0..1.0),
     //     ];
 
-    //     let output_torque = orb.compute_output_torque_from_disks(thetas, input_torque);
-    //     let reconstructed = orb.compute_input_torque_from_disks(thetas, output_torque);
+    //     let output_torque = orb.compute_output_torque(thetas, input_torque);
+    //     let reconstructed = orb.compute_input_torque(thetas, output_torque);
 
     //     assert!(
     //         (input_torque[0] - reconstructed[0]).abs() < 1e-2,

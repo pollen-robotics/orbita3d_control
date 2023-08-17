@@ -71,7 +71,7 @@ impl Orbita3dKinematicsModel {
     ) -> i32 {
         let rot = self
             .inner()
-            .compute_output_velocity_from_disks(*thetas, *thetas_velocity);
+            .compute_output_velocity(*thetas, *thetas_velocity);
         *quat_velocity = conversion::rotation_matrix_to_quaternion(rot);
 
         0
@@ -92,9 +92,7 @@ impl Orbita3dKinematicsModel {
         thetas_torque: &[f64; 3],
         quat_torque: &mut [f64; 4],
     ) -> i32 {
-        let rot = self
-            .inner()
-            .compute_output_torque_from_disks(*thetas, *thetas_torque);
+        let rot = self.inner().compute_output_torque(*thetas, *thetas_torque);
         *quat_torque = conversion::rotation_matrix_to_quaternion(rot);
 
         0
@@ -149,7 +147,7 @@ impl Orbita3dKinematicsModel {
         );
         *thetas_velocity = self
             .inner()
-            .compute_input_velocity_from_disks(*thetas, output_velocity);
+            .compute_input_velocity(*thetas, output_velocity);
 
         0
     }
@@ -175,9 +173,7 @@ impl Orbita3dKinematicsModel {
             quat_torque[2],
             quat_torque[3],
         );
-        *thetas_torque = self
-            .inner()
-            .compute_input_torque_from_disks(*thetas, output_torque);
+        *thetas_torque = self.inner().compute_input_torque(*thetas, output_torque);
 
         0
     }

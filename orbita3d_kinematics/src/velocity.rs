@@ -12,7 +12,7 @@ impl Orbita3dKinematicsModel {
     /// * input_velocity - The input velocity as a 3-element array.
     /// # Returns
     /// * The output velocity as a 3d rotation.
-    pub fn compute_output_velocity_from_disks(
+    pub fn compute_output_velocity(
         &self,
         thetas: [f64; 3],
         input_velocity: [f64; 3],
@@ -34,7 +34,7 @@ impl Orbita3dKinematicsModel {
     /// * output_velocity - The output velocity as a 3d rotation.
     /// # Returns
     /// * The input velocity as a 3-element array.
-    pub fn compute_input_velocity_from_disks(
+    pub fn compute_input_velocity(
         &self,
         thetas: [f64; 3],
         output_velocity: Rotation3<f64>,
@@ -89,8 +89,8 @@ mod tests {
     fn check_inverse_forward(thetas: [f64; 3], input_velocity: [f64; 3]) {
         let orb = Orbita3dKinematicsModel::default();
 
-        let output_velocity = orb.compute_output_velocity_from_disks(thetas, input_velocity);
-        let reconstructed = orb.compute_input_velocity_from_disks(thetas, output_velocity);
+        let output_velocity = orb.compute_output_velocity(thetas, input_velocity);
+        let reconstructed = orb.compute_input_velocity(thetas, output_velocity);
 
         for i in 0..3 {
             assert!(
