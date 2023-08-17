@@ -1,4 +1,4 @@
-use nalgebra::{Matrix3, Vector3};
+use nalgebra::{Matrix3, Rotation3, Vector3};
 
 use crate::Orbita3dKinematicsModel;
 
@@ -7,23 +7,27 @@ impl Orbita3dKinematicsModel {
         &self,
         thetas: [f64; 3],
         input_torque: [f64; 3],
-    ) -> [f64; 3] {
+    ) -> Rotation3<f64> {
         let rot = self.compute_forward_kinematics(thetas);
 
         let j_inv = self.jacobian_inverse(rot, thetas);
-        self.compute_output_torque_from_j_inv(j_inv, input_torque.into())
-            .into()
+        let rpy = self.compute_output_torque_from_j_inv(j_inv, input_torque.into());
+
+        Rotation3::from_euler_angles(rpy[0], rpy[1], rpy[2])
     }
 
     pub fn compute_input_torque_from_disks(
         &self,
         thetas: [f64; 3],
-        output_torque: [f64; 3],
+        output_torque: Rotation3<f64>,
     ) -> [f64; 3] {
+        let output_torque = output_torque.euler_angles();
+        let output_torque = Vector3::new(output_torque.0, output_torque.1, output_torque.2);
+
         let rot = self.compute_forward_kinematics(thetas);
         let j_inv = self.jacobian_inverse(rot, thetas);
 
-        self.compute_input_torque_from_j_inv(j_inv, output_torque.into())
+        self.compute_input_torque_from_j_inv(j_inv, output_torque)
             .into()
     }
 

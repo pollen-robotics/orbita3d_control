@@ -1,4 +1,4 @@
-use nalgebra::{Matrix3, Vector3};
+use nalgebra::{Matrix3, Rotation3, Vector3};
 
 use crate::Orbita3dKinematicsModel;
 
@@ -7,23 +7,26 @@ impl Orbita3dKinematicsModel {
         &self,
         thetas: [f64; 3],
         input_velocity: [f64; 3],
-    ) -> [f64; 3] {
+    ) -> Rotation3<f64> {
         let rot = self.compute_forward_kinematics(thetas);
 
         let j_inv = self.jacobian_inverse(rot, thetas);
         let res = self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into());
 
-        [res[0], res[1], res[2]]
+        Rotation3::from_euler_angles(res[0], res[1], res[2])
     }
 
     pub fn compute_input_velocity_from_disks(
         &self,
         thetas: [f64; 3],
-        output_velocity: [f64; 3],
+        output_velocity: Rotation3<f64>,
     ) -> [f64; 3] {
+        let output_velocity = output_velocity.euler_angles();
+        let output_velocity = Vector3::new(output_velocity.0, output_velocity.1, output_velocity.2);
+
         let rot = self.compute_forward_kinematics([thetas[0], thetas[1], thetas[2]]);
         let j_inv = self.jacobian_inverse(rot, thetas);
-        self.compute_input_velocity_from_j_inv(j_inv, output_velocity.into())
+        self.compute_input_velocity_from_j_inv(j_inv, output_velocity)
             .into()
     }
 
