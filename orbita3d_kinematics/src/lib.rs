@@ -1,3 +1,13 @@
+//! Kinematics model for Orbita3d
+//!
+//! ### Model definition
+//! * _thetas_ disk angles
+//! * _rot_ platform orientation
+//!
+//! All values are expressed in radians.
+//!
+//! See the [README.md](./README.md) for more information.
+
 use nalgebra::{Matrix3, Rotation3, Vector3};
 
 pub mod conversion;
@@ -7,6 +17,7 @@ mod torque;
 mod velocity;
 
 #[derive(Debug, Copy, Clone)]
+/// Kinematics model for Orbita3d
 pub struct Orbita3dKinematicsModel {
     pub alpha: f64,
     pub gamma_min: f64,
@@ -17,6 +28,7 @@ pub struct Orbita3dKinematicsModel {
 }
 
 impl Default for Orbita3dKinematicsModel {
+    /// Creates a new Orbita3dKinematicsModel with default values corresponding to Reachy's neck.
     fn default() -> Self {
         Orbita3dKinematicsModel {
             alpha: 54.0_f64.to_radians(),

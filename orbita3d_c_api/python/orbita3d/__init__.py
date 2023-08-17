@@ -5,6 +5,8 @@ from ._orbita3d import lib
 
 
 class KinematicsModel:
+    """Orbita3d kinematics model"""
+
     def __init__(
         self,
         alpha: float,
@@ -14,6 +16,10 @@ class KinematicsModel:
         gamma_max: float,
         passiv_arms_direct: bool,
     ) -> None:
+        """Create a new Orbita3d kinematics model.
+
+        See the [README.md](https://github.com/pollen-robotics/orbita3d_control/orbita3d_kinematics) for more information about the parameters.
+        """
         self.model = ffi.new(
             "struct Orbita3dKinematicsModel *",
             lib.create_orbita3d_kinematics_model(
@@ -29,6 +35,13 @@ class KinematicsModel:
     def forward_position(
         self, thetas: Tuple[float, float, float]
     ) -> Tuple[float, float, float, float]:
+        """Compute the forward position kinematics of the Orbita3d.
+
+        Args:
+            thetas: The three motors angles (in radians).
+        Returns:
+            The quaternion representing the end-effector orientation (qx, qy, qz, qw).
+        """
         thetas = ffi.new("double(*)[3]", tuple(thetas))
         q = ffi.new("double(*)[4]")
 
@@ -41,6 +54,14 @@ class KinematicsModel:
         thetas: Tuple[float, float, float],
         thetas_velocity: Tuple[float, float, float],
     ) -> Tuple[float, float, float, float]:
+        """Compute the forward velocity kinematics of the Orbita3d.
+
+        Args:
+            thetas: The three motors angles (in radians).
+            thetas_velocity: The three motors velocities (in radians per second).
+        Returns:
+            The quaternion representing the end-effector orientation velocity (qx, qy, qz, qw).
+        """
         thetas = ffi.new("double(*)[3]", tuple(thetas))
         thetas_velocity = ffi.new("double(*)[3]", tuple(thetas_velocity))
         q_velocity = ffi.new("double(*)[4]")
@@ -58,6 +79,14 @@ class KinematicsModel:
         thetas: Tuple[float, float, float],
         thetas_torque: Tuple[float, float, float],
     ) -> Tuple[float, float, float, float]:
+        """Compute the forward torque kinematics of the Orbita3d.
+
+        Args:
+            thetas: The three motors angles (in radians).
+            thetas_torque: The three motors torques (in Newton meters).
+        Returns:
+            The quaternion representing the end-effector orientation torque (qx, qy, qz, qw).
+        """
         thetas = ffi.new("double(*)[3]", tuple(thetas))
         thetas_torque = ffi.new("double(*)[3]", tuple(thetas_torque))
         q_torque = ffi.new("double(*)[4]")
@@ -73,6 +102,13 @@ class KinematicsModel:
     def inverse_position(
         self, q: Tuple[float, float, float, float]
     ) -> Tuple[float, float, float]:
+        """Compute the inverse position kinematics of the Orbita3d.
+
+        Args:
+            q: The quaternion representing the end-effector orientation (qx, qy, qz, qw).
+        Returns:
+            The three motors angles (in radians).
+        """
         q = ffi.new("double(*)[4]", tuple(q))
         thetas = ffi.new("double(*)[3]")
 
@@ -85,6 +121,14 @@ class KinematicsModel:
         q: Tuple[float, float, float, float],
         q_velocity: Tuple[float, float, float, float],
     ) -> Tuple[float, float, float]:
+        """Compute the inverse velocity kinematics of the Orbita3d.
+        
+        Args:
+            q: The quaternion representing the end-effector orientation (qx, qy, qz, qw).
+            q_velocity: The quaternion representing the end-effector orientation velocity (qx, qy, qz, qw).
+        Returns:
+            The three motors velocities (in radians per second).
+        """
         q = ffi.new("double(*)[4]", tuple(q))
         q_velocity = ffi.new("double(*)[4]", tuple(q_velocity))
         thetas_velocity = ffi.new("double(*)[3]")
@@ -102,6 +146,14 @@ class KinematicsModel:
         q: Tuple[float, float, float, float],
         q_torque: Tuple[float, float, float, float],
     ) -> Tuple[float, float, float]:
+        """Compute the inverse torque kinematics of the Orbita3d.
+        
+        Args:
+            q: The quaternion representing the end-effector orientation (qx, qy, qz, qw).
+            q_torque: The quaternion representing the end-effector orientation torque (qx, qy, qz, qw).
+        Returns:
+            The three motors torques (in Newton meters).
+        """
         q = ffi.new("double(*)[4]", tuple(q))
         q_torque = ffi.new("double(*)[4]", tuple(q_torque))
         thetas_torque = ffi.new("double(*)[3]")

@@ -4,12 +4,23 @@ use std::f64::consts::PI;
 use crate::Orbita3dKinematicsModel;
 
 #[derive(Debug)]
+/// Error that can occur when computing the inverse kinematics of the Orbita3d platform.
 pub enum InverseSolutionErrorKind {
+    /// No solution found.
     NoSolution(Rotation3<f64>),
+    /// Invalid solution found.
     InvalidSolution(Rotation3<f64>, Vector3<f64>),
 }
 
 impl Orbita3dKinematicsModel {
+    /// Compute the inverse kinematics of the Orbita3d platform.
+    ///
+    /// Compute the motor angles from the platform orientation.
+    ///
+    /// # Arguments
+    /// * rot - The platform orientation as a rotation matrix.
+    /// # Returns
+    /// * The motor angles as a 3-element array.
     pub fn compute_inverse_kinematics(
         &self,
         rot: Rotation3<f64>,

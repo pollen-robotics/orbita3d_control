@@ -1,7 +1,10 @@
+//! C API for the kinematics module of the Orbita3D library.
+
 use orbita3d_kinematics::conversion;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+/// Kinematics model for Orbita3d
 pub struct Orbita3dKinematicsModel {
     pub alpha: f64,
     pub gamma_min: f64,
@@ -13,6 +16,7 @@ pub struct Orbita3dKinematicsModel {
 
 impl Orbita3dKinematicsModel {
     #[no_mangle]
+    /// Create a new Orbita3dKinematicsModel.
     pub extern "C" fn create_orbita3d_kinematics_model(
         alpha: f64,
         gamma_min: f64,
@@ -32,6 +36,13 @@ impl Orbita3dKinematicsModel {
     }
 
     #[no_mangle]
+    /// Compute the forward position kinematics.
+    ///
+    /// # Arguments
+    /// * thetas - The motor angles as a 3-element array.
+    /// * quat - Holder for the platform orientation as a quaternion result.
+    /// # Returns
+    /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_forward_position(
         &self,
         thetas: &[f64; 3],
@@ -44,6 +55,14 @@ impl Orbita3dKinematicsModel {
     }
 
     #[no_mangle]
+    /// Compute the forward velocity.
+    ///
+    /// # Arguments
+    /// * thetas - The motor angles as a 3-element array.
+    /// * thetas_velocity - The motor velocities as a 3-element array.
+    /// * quat_velocity - Holder for the platform orientation velocity as a quaternion result.
+    /// # Returns
+    /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_forward_velocity(
         &self,
         thetas: &[f64; 3],
@@ -59,6 +78,14 @@ impl Orbita3dKinematicsModel {
     }
 
     #[no_mangle]
+    /// Compute the forward torque.
+    ///
+    /// # Arguments
+    /// * thetas - The motor angles as a 3-element array.
+    /// * thetas_torque - The motor torques as a 3-element array.
+    /// * quat_torque - Holder for the platform orientation torque as a quaternion result.
+    /// # Returns
+    /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_forward_torque(
         &self,
         thetas: &[f64; 3],
@@ -74,6 +101,13 @@ impl Orbita3dKinematicsModel {
     }
 
     #[no_mangle]
+    /// Compute the inverse position kinematics.
+    ///
+    /// # Arguments
+    /// * quat - The platform orientation as a quaternion.
+    /// * thetas - Holder for the motor angles as a 3-element array result.
+    /// # Returns
+    /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_inverse_position(
         &self,
         quat: &[f64; 4],
@@ -93,6 +127,14 @@ impl Orbita3dKinematicsModel {
     }
 
     #[no_mangle]
+    /// Compute the inverse velocity.
+    ///
+    /// # Arguments
+    /// * thetas - The motor angles as a 3-element array.
+    /// * quat_velocity - The platform orientation velocity as a quaternion.
+    /// * thetas_velocity - Holder for the motor velocities as a 3-element array result.
+    /// # Returns
+    /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_inverse_velocity(
         &self,
         thetas: &[f64; 3],
@@ -113,6 +155,14 @@ impl Orbita3dKinematicsModel {
     }
 
     #[no_mangle]
+    /// Compute the inverse torque.
+    ///
+    /// # Arguments
+    /// * thetas - The motor angles as a 3-element array.
+    /// * quat_torque - The platform orientation torque as a quaternion.
+    /// * thetas_torque - Holder for the motor torques as a 3-element array result.
+    /// # Returns
+    /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_inverse_torque(
         &self,
         thetas: &[f64; 3],

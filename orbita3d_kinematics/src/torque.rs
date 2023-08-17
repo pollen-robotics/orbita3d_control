@@ -3,6 +3,15 @@ use nalgebra::{Matrix3, Rotation3, Vector3};
 use crate::Orbita3dKinematicsModel;
 
 impl Orbita3dKinematicsModel {
+    /// Compute the forward torque
+    ///
+    /// Compute the output torque (platform oriented torque) from the input torque (motors torque) and the motor angles.
+    ///
+    /// # Arguments
+    /// * thetas - The motor angles as a 3-element array.
+    /// * input_torque - The input torque as a 3-element array.
+    /// # Returns
+    /// * The output torque as a 3d rotation.
     pub fn compute_output_torque_from_disks(
         &self,
         thetas: [f64; 3],
@@ -16,6 +25,15 @@ impl Orbita3dKinematicsModel {
         Rotation3::from_euler_angles(rpy[0], rpy[1], rpy[2])
     }
 
+    /// Compute the inverse torque
+    ///
+    /// Compute the input torque (motors torque) from the output torque (platform oriented torque) and the motor angles.
+    ///
+    /// # Arguments
+    /// * thetas - The motor angles as a 3-element array.
+    /// * output_torque - The output torque as a 3d rotation.
+    /// # Returns
+    /// * The input torque as a 3-element array.
     pub fn compute_input_torque_from_disks(
         &self,
         thetas: [f64; 3],
@@ -31,7 +49,7 @@ impl Orbita3dKinematicsModel {
             .into()
     }
 
-    pub fn compute_output_torque_from_j_inv(
+    fn compute_output_torque_from_j_inv(
         &self,
         j_inv: Matrix3<f64>,
         input_torque: Vector3<f64>,
@@ -39,7 +57,7 @@ impl Orbita3dKinematicsModel {
         j_inv.transpose() * input_torque
     }
 
-    pub fn compute_input_torque_from_j_inv(
+    fn compute_input_torque_from_j_inv(
         &self,
         j_inv: Matrix3<f64>,
         output_torque: Vector3<f64>,

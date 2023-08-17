@@ -3,6 +3,15 @@ use nalgebra::{Matrix3, Rotation3, Vector3};
 use crate::Orbita3dKinematicsModel;
 
 impl Orbita3dKinematicsModel {
+    /// Compute the forward velocity
+    ///
+    /// Compute the output velocity (platform oriented velocity) from the input velocity (motors velocity) and the motor angles.
+    ///
+    /// # Arguments
+    /// * thetas - The motor angles as a 3-element array.
+    /// * input_velocity - The input velocity as a 3-element array.
+    /// # Returns
+    /// * The output velocity as a 3d rotation.
     pub fn compute_output_velocity_from_disks(
         &self,
         thetas: [f64; 3],
@@ -16,6 +25,15 @@ impl Orbita3dKinematicsModel {
         Rotation3::from_euler_angles(res[0], res[1], res[2])
     }
 
+    /// Compute the inverse velocity
+    ///
+    /// Compute the input velocity (motors velocity) from the output velocity (platform oriented velocity) and the motor angles.
+    ///
+    /// # Arguments
+    /// * thetas - The motor angles as a 3-element array.
+    /// * output_velocity - The output velocity as a 3d rotation.
+    /// # Returns
+    /// * The input velocity as a 3-element array.
     pub fn compute_input_velocity_from_disks(
         &self,
         thetas: [f64; 3],

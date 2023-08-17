@@ -3,6 +3,15 @@ use nalgebra::{Matrix3, Rotation3, RowVector3};
 use crate::Orbita3dKinematicsModel;
 
 impl Orbita3dKinematicsModel {
+    /// Compute the inverse jacobian
+    ///
+    /// Compute the inverse jacobian from the platform orientation and the motor angles.
+    ///
+    /// # Arguments
+    /// * rot - The platform orientation as a rotation matrix.
+    /// * thetas - The motor angles as a 3-element array.
+    /// # Returns
+    /// * The inverse jacobian as a 3x3 matrix.
     pub fn jacobian_inverse(&self, rot: Rotation3<f64>, thetas: [f64; 3]) -> Matrix3<f64> {
         let v = self.platform_unit_vectors_from_mat(rot);
 
@@ -38,6 +47,15 @@ impl Orbita3dKinematicsModel {
         Matrix3::from_rows(&[row1, row2, row3])
     }
 
+    /// Compute the jacobian
+    ///
+    /// The jacobian is computed by inverting the inverse jacobian.
+    ///
+    /// # Arguments
+    /// * rot - The platform orientation as a rotation matrix.
+    /// * thetas - The motor angles as a 3-element array.
+    /// # Returns
+    /// * The jacobian as a 3x3 matrix.
     pub fn jacobian(&self, rot: Rotation3<f64>, thetas: [f64; 3]) -> Matrix3<f64> {
         let j_inv = self.jacobian_inverse(rot, thetas);
         j_inv.try_inverse().unwrap()
