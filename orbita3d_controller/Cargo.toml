@@ -1,0 +1,12 @@
+[package]
+name = "orbita3d_controller"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+motor_toolbox_rs = { version = "0.1.0", path = "../../motor_toolbox_rs" }
+orbita3d_kinematics = { version = "0.1.0", path = "../orbita3d_kinematics" }
+serde = { version = "1.0.183", features = ["derive"] }
+serde_yaml = "0.9.25"

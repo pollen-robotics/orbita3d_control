@@ -11,6 +11,22 @@ pub enum InverseSolutionErrorKind {
     /// Invalid solution found.
     InvalidSolution(Rotation3<f64>, Vector3<f64>),
 }
+impl std::fmt::Display for InverseSolutionErrorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InverseSolutionErrorKind::NoSolution(rot) => {
+                write!(f, "No solution found for rotation matrix: {}", rot)
+            }
+            InverseSolutionErrorKind::InvalidSolution(rot, gammas) => write!(
+                f,
+                "Invalid solution found for rotation matrix: {} (gammas: {})",
+                rot, gammas
+            ),
+        }
+    }
+}
+impl std::error::Error for InverseSolutionErrorKind {}
+
 
 impl Orbita3dKinematicsModel {
     /// Compute the inverse kinematics of the Orbita3d platform.
