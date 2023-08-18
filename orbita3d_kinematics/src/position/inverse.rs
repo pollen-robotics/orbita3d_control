@@ -27,7 +27,6 @@ impl std::fmt::Display for InverseSolutionErrorKind {
 }
 impl std::error::Error for InverseSolutionErrorKind {}
 
-
 impl Orbita3dKinematicsModel {
     /// Compute the inverse kinematics of the Orbita3d platform.
     ///

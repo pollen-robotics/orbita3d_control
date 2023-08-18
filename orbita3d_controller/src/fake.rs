@@ -1,40 +1,24 @@
-use motor_toolbox_rs::FakeMotor;
+use motor_toolbox_rs::{FakeMotor, MultipleMotorsControllerWrapper};
+use orbita3d_kinematics::Orbita3dKinematicsModel;
 use serde::{Deserialize, Serialize};
 
-use crate::{Orbita3dController, Result};
+use crate::Orbita3dController;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FakeConfig {
-    pub alpha: f64,
-    pub gamma_min: f64,
-    pub offset: f64,
-    pub beta: f64,
-    pub gamma_max: f64,
-    pub passiv_arms_direct: bool,
+    pub kinematics_model: Orbita3dKinematicsModel,
 }
 
 impl Orbita3dController {
-    pub fn with_fake_motors(
-        alpha: f64,
-        gamma_min: f64,
-        offset: f64,
-        beta: f64,
-        gamma_max: f64,
-        passiv_arms_direct: bool,
-    ) -> Result<Self> {
-        Ok(Self::new(
-            [
+    pub fn with_fake_motors(config: FakeConfig) -> Self {
+        Self {
+            inner: Box::new(MultipleMotorsControllerWrapper::new([
                 Box::<FakeMotor>::default(),
                 Box::<FakeMotor>::default(),
                 Box::<FakeMotor>::default(),
-            ],
-            alpha,
-            gamma_min,
-            offset,
-            beta,
-            gamma_max,
-            passiv_arms_direct,
-        ))
+            ])),
+            kinematics: config.kinematics_model,
+        }
     }
 }
 
@@ -47,12 +31,13 @@ mod tests {
     #[test]
     fn parse_config() {
         let config = r#"!FakeMotors
-            alpha: 0.0
-            gamma_min: 0.0
-            offset: 0.0
-            beta: 0.0
-            gamma_max: 0.0
-            passiv_arms_direct: false
+        kinematics_model:
+          alpha: 0.0
+          gamma_min: 0.0
+          offset: 0.0
+          beta: 0.0
+          gamma_max: 0.0
+          passiv_arms_direct: false
         "#;
 
         let config: Result<Orbita3dConfig, _> = serde_yaml::from_str(config);
@@ -61,12 +46,12 @@ mod tests {
         let config = config.unwrap();
 
         if let Orbita3dConfig::FakeMotors(config) = config {
-            assert_eq!(config.alpha, 0.0);
-            assert_eq!(config.gamma_min, 0.0);
-            assert_eq!(config.offset, 0.0);
-            assert_eq!(config.beta, 0.0);
-            assert_eq!(config.gamma_max, 0.0);
-            assert!(!config.passiv_arms_direct);
+            assert_eq!(config.kinematics_model.alpha, 0.0);
+            assert_eq!(config.kinematics_model.gamma_min, 0.0);
+            assert_eq!(config.kinematics_model.offset, 0.0);
+            assert_eq!(config.kinematics_model.beta, 0.0);
+            assert_eq!(config.kinematics_model.gamma_max, 0.0);
+            assert!(!config.kinematics_model.passiv_arms_direct);
         } else {
             panic!("Wrong config type");
         }
@@ -81,12 +66,12 @@ mod tests {
         let config = config.unwrap();
 
         if let Orbita3dConfig::FakeMotors(config) = config {
-            assert_eq!(config.alpha, 50.0_f64.to_radians());
-            assert_eq!(config.gamma_min, 0.0);
-            assert_eq!(config.offset, 0.0);
-            assert_eq!(config.beta, PI / 2.0);
-            assert_eq!(config.gamma_max, PI);
-            assert!(config.passiv_arms_direct);
+            assert_eq!(config.kinematics_model.alpha, 50.0_f64.to_radians());
+            assert_eq!(config.kinematics_model.gamma_min, 0.0);
+            assert_eq!(config.kinematics_model.offset, 0.0);
+            assert_eq!(config.kinematics_model.beta, PI / 2.0);
+            assert_eq!(config.kinematics_model.gamma_max, PI);
+            assert!(config.kinematics_model.passiv_arms_direct);
         } else {
             panic!("Wrong config type");
         }

@@ -6,7 +6,7 @@
 //!
 //! ## Setup
 //! - [x] Load configuration from a file
-//! - [ ] Support for different communication layers (Dynamixel like serial, Fake)
+//! - [x] Support for different communication layers (Dynamixel like serial, Fake)
 //!
 //! ## Control
 //! - [x] Enable/Disable torque
@@ -16,21 +16,17 @@
 //!
 //! ## Communication
 //! - [x] Fake motors
-//! - [ ] Dynamixel like serial
+//! - [x] Dynamixel like serial
 //! - [ ] EtherCAT communication
 //!
 //! # Examples
 //! ```rust
-//! use orbita3d_controller::Orbita3dController;
+//! use orbita3d_controller::{FakeConfig, Orbita3dController};
+//! use orbita3d_kinematics::Orbita3dKinematicsModel;
 //!
 //! let mut orbita3d = Orbita3dController::with_fake_motors(
-//!     50.0_f64.to_radians(),
-//!     0.0_f64.to_radians(),
-//!     0.0_f64.to_radians(),
-//!     90.0_f64.to_radians(),
-//!     180.0_f64.to_radians(),
-//!     true,
-//! ).unwrap();
+//!     FakeConfig { kinematics_model: Orbita3dKinematicsModel::default() }
+//! );
 //!
 //! let orientation = orbita3d.get_current_orientation().unwrap();
 //! println!("Current orientation: {:?}", orientation);
@@ -44,22 +40,19 @@
 //! println!("Current orientation: {:?}", orientation);
 //! ```
 
+mod dynamixel_serial;
 use dynamixel_serial::DynamixelSerialConfig;
-use fake::FakeConfig;
-use motor_toolbox_rs::{
-    MotorController, MultipleMotorsController, MultipleMotorsControllerWrapper, PID,
-};
+mod fake;
+pub use fake::FakeConfig;
+use motor_toolbox_rs::{MultipleMotorsController, PID};
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
-
-mod dynamixel_serial;
-mod fake;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug)]
 pub struct Orbita3dController {
-    inner: MultipleMotorsControllerWrapper<3>,
+    inner: Box<dyn MultipleMotorsController<3>>,
     kinematics: Orbita3dKinematicsModel,
 }
 
@@ -76,39 +69,8 @@ impl Orbita3dController {
         let config: Orbita3dConfig = serde_yaml::from_reader(f)?;
 
         match config {
-            Orbita3dConfig::FakeMotors(fake_config) => Self::with_fake_motors(
-                fake_config.alpha,
-                fake_config.gamma_min,
-                fake_config.offset,
-                fake_config.beta,
-                fake_config.gamma_max,
-                fake_config.passiv_arms_direct,
-            ),
-            Orbita3dConfig::DynamixelSerial(_) => todo!(),
-        }
-    }
-
-    fn new(
-        controllers: [Box<dyn MotorController>; 3],
-        alpha: f64,
-        gamma_min: f64,
-        offset: f64,
-        beta: f64,
-        gamma_max: f64,
-        passiv_arms_direct: bool,
-    ) -> Self {
-        let kinematics = Orbita3dKinematicsModel {
-            alpha,
-            gamma_min,
-            offset,
-            beta,
-            gamma_max,
-            passiv_arms_direct,
-        };
-
-        Self {
-            inner: MultipleMotorsControllerWrapper::new(controllers),
-            kinematics,
+            Orbita3dConfig::DynamixelSerial(dxl_config) => Self::with_dynamixel_serial(dxl_config),
+            Orbita3dConfig::FakeMotors(fake_config) => Ok(Self::with_fake_motors(fake_config)),
         }
     }
 }

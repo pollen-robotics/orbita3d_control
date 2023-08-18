@@ -8,5 +8,7 @@ edition = "2021"
 [dependencies]
 motor_toolbox_rs = { version = "0.1.0", path = "../../motor_toolbox_rs" }
 orbita3d_kinematics = { version = "0.1.0", path = "../orbita3d_kinematics" }
+rustypot = "0.4.1"
 serde = { version = "1.0.183", features = ["derive"] }
 serde_yaml = "0.9.25"
+serialport = "4.2.2"
