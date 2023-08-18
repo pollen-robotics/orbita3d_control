@@ -1,4 +1,4 @@
-use motor_toolbox_rs::{MultipleMotorsController, PID};
+use motor_toolbox_rs::{MultipleMotorsController, PID, MissingResisterErrror};
 use orbita3d_kinematics::Orbita3dKinematicsModel;
 use rustypot::{
     device::orbita_foc::{self, DiskValue},
@@ -77,11 +77,11 @@ impl MultipleMotorsController<3> for DynamixelSerialController {
     }
 
     fn get_current_velocity(&mut self) -> Result<[f64; 3]> {
-        todo!()
+        Err(Box::new(MissingResisterErrror("current_velocity".to_string())))
     }
 
     fn get_current_torque(&mut self) -> Result<[f64; 3]> {
-        todo!()
+        Err(Box::new(MissingResisterErrror("current_torque".to_string())))
     }
 
     fn get_target_position(&mut self) -> Result<[f64; 3]> {
@@ -124,11 +124,11 @@ impl MultipleMotorsController<3> for DynamixelSerialController {
     }
 
     fn get_torque_limit(&mut self) -> Result<[f64; 3]> {
-        todo!()
+        Err(Box::new(MissingResisterErrror("torque_limit".to_string())))
     }
 
     fn set_torque_limit(&mut self, _torque: [f64; 3]) -> Result<()> {
-        todo!()
+        Err(Box::new(MissingResisterErrror("torque_limit".to_string())))
     }
 
     fn get_pid_gains(&mut self) -> Result<[PID; 3]> {
