@@ -1,17 +1,14 @@
 [package]
-name = "orbita3d_kinematics"
+name = "orbita3d_controller"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-levenberg-marquardt = "0.12.0"
-nalgebra = "0.30.1"
-ndarray = "0.15.6"
-ndarray_einsum_beta = "0.7.0"
-nshare = "0.9.0"
+motor_toolbox_rs = "0.1.0"
+orbita3d_kinematics = { version = "0.1.0", path = "../orbita3d_kinematics" }
+rustypot = "0.4.1"
 serde = { version = "1.0.183", features = ["derive"] }
-
-[dev-dependencies]
-rand = "0.8.5"
+serde_yaml = "0.9.25"
+serialport = "4.2.2"

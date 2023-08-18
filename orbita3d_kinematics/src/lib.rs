@@ -17,8 +17,9 @@ mod torque;
 mod velocity;
 
 pub use position::InverseSolutionErrorKind;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 /// Kinematics model for Orbita3d
 pub struct Orbita3dKinematicsModel {
     pub alpha: f64,
