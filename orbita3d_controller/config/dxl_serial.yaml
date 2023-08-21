@@ -1,10 +1,13 @@
-!DynamixelSerial
+io: !DynamixelSerial
+  serial_port: /dev/ttyUSB0
+  id: 42
+disks:
+  zeros: [0.0, 0.0, 0.0]
+  reduction: 1.0
 kinematics_model:
   alpha: 0.8726646259971648 # 50 degrees
-  gamma_min: 0.0
+  gamma_min: 0.6981317007977318 # 40 degrees
   offset: 0.0
   beta: 1.5707963267948966 # 90 degrees
   gamma_max: 3.141592653589793 # 180 degrees
   passiv_arms_direct: true
-serial_port: /dev/ttyUSB0
-id: 42
