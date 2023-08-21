@@ -16,6 +16,9 @@ pub struct DynamixelSerialConfig {
     pub serial_port: String,
     /// Dynamixel ID
     pub id: u8,
+    /// Use cache for the dynamixel serial controller
+    /// Can drastically improve performance, but can hide some communication errors
+    pub use_cache: bool,
 }
 
 /// DynamixelSerialController - wrapper around the three disks motors
@@ -72,6 +75,10 @@ impl DynamixelSerialController {
         }
 
         Ok(controller)
+    }
+
+    pub fn id(&self) -> u8 {
+        self.id
     }
 }
 

@@ -1,6 +1,7 @@
 io: !DynamixelSerial
   serial_port: /dev/ttyUSB0
   id: 42
+  use_cache: false
 disks:
   zeros: !ZeroStartup
   reduction: 1.0
