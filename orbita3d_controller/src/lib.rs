@@ -58,10 +58,31 @@ pub struct Orbita3dConfig {
 /// Disks Config
 pub struct DisksConfig {
     /// Zeros of each disk (in rad), used as an offset
-    pub zeros: [f64; 3],
+    pub zeros: ZeroType,
     /// Reduction between the motor and the disk
     pub reduction: f64,
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+/// Zero type config
+/// This is used to configure the zero of each disk
+pub enum ZeroType {
+    /// ApproximateHardwareZero config
+    ApproximateHardwareZero(ApproximateHardwareZero),
+    /// ZeroStartup config
+    ZeroStartup(ZeroStartup),
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+/// ApproximateHardwareZero config
+pub struct ApproximateHardwareZero {
+    /// Hardware zero of each disk (in rad)
+    pub hardware_zero: [f64; 3],
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+/// ZeroStartup config
+pub struct ZeroStartup;
 
 /// Orbita3d Controller
 pub struct Orbita3dController {
@@ -87,8 +108,15 @@ impl Orbita3dController {
                 Box::new(controller)
             }
             Orbita3dIOConfig::FakeMotors(_) => {
-                let controller = FakeMotorsController::<3>::new()
-                    .with_offsets(config.disks.zeros.map(Some))
+                let mut controller = FakeMotorsController::<3>::new();
+
+                let offsets = match config.disks.zeros {
+                    ZeroType::ApproximateHardwareZero(zero) => zero.hardware_zero,
+                    ZeroType::ZeroStartup(_) => controller.get_current_position()?,
+                };
+
+                let controller = controller
+                    .with_offsets(offsets.map(Some))
                     .with_reduction([Some(config.disks.reduction); 3]);
 
                 Box::new(controller)

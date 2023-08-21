@@ -5,9 +5,9 @@ use rustypot::{
 };
 use serde::{Deserialize, Serialize};
 use serialport::SerialPort;
-use std::time::Duration;
+use std::{f64::consts::PI, time::Duration};
 
-use crate::Result;
+use crate::{Result, ZeroType};
 
 #[derive(Debug, Deserialize, Serialize)]
 /// DynamixelSerial Config
@@ -31,17 +31,47 @@ pub struct DynamixelSerialController {
 
 impl DynamixelSerialController {
     /// Creates a new DynamixelSerialController
-    pub fn new(serial_port: &str, id: u8, zeros: [f64; 3], reductions: f64) -> Result<Self> {
-        Ok(Self {
+    pub fn new(serial_port: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
+        let mut controller = Self {
             serial_port: serialport::new(serial_port, 1_000_000)
                 .timeout(Duration::from_millis(10))
                 .open()?,
             io: DynamixelSerialIO::v1(),
             id,
-            offsets: zeros.map(Some),
+            offsets: [None; 3],
             reduction: [Some(reductions); 3],
             limits: [None; 3],
-        })
+        };
+
+        match zero {
+            ZeroType::ApproximateHardwareZero(zero) => {
+                let current_pos = MotorsController::get_current_position(&mut controller)?;
+
+                zero.hardware_zero
+                    .iter()
+                    .zip(current_pos.iter())
+                    .enumerate()
+                    .for_each(|(i, (&hardware_zero, &current_pos))| {
+                        controller.offsets[i] = Some(find_closest_offset_to_zero(
+                            current_pos,
+                            hardware_zero,
+                            reductions,
+                        ));
+                    });
+            }
+            ZeroType::ZeroStartup(_) => {
+                let current_pos = MotorsController::get_current_position(&mut controller)?;
+
+                current_pos
+                    .iter()
+                    .enumerate()
+                    .for_each(|(i, &current_pos)| {
+                        controller.offsets[i] = Some(current_pos);
+                    });
+            }
+        }
+
+        Ok(controller)
     }
 }
 
@@ -182,6 +212,31 @@ impl RawMotorsIO<3> for DynamixelSerialController {
     }
 }
 
+fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduction: f64) -> f64 {
+    //! Find the closest offset to zero
+    //!
+    //! The absolute encoder is placed before orbita reduction.
+    //! Thus, we do not have the real orbita disk absolute position.
+    //! But we only know where we are in a local dial of arc (2pi / reduction).
+    //!
+    //! To find the closest offset to our zero hardware, we assume that the current position is at maximum one dial from the hardware zero.
+    let dial_arc = 2.0 * PI / reduction;
+
+    let possibilities = [
+        hardware_zero - dial_arc,
+        hardware_zero,
+        hardware_zero + dial_arc,
+    ];
+
+    possibilities
+        .iter()
+        .map(|&p| (p - current_position).abs())
+        .enumerate()
+        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+        .map(|(i, _)| possibilities[i])
+        .unwrap()
+}
+
 #[cfg(test)]
 mod tests {
     use std::f64::consts::PI;
@@ -205,7 +260,10 @@ mod tests {
             assert_eq!(config.kinematics_model.gamma_max, PI);
             assert!(config.kinematics_model.passiv_arms_direct);
 
-            assert_eq!(config.disks.zeros, [0.0, 0.0, 0.0]);
+            if let crate::ZeroType::ZeroStartup(_) = config.disks.zeros {
+            } else {
+                panic!("Wrong config type");
+            }
             assert_eq!(config.disks.reduction, 1.0);
 
             assert_eq!(dxl_config.serial_port, "/dev/ttyUSB0");
