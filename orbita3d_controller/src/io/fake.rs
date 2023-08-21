@@ -20,7 +20,10 @@ mod tests {
         let config = config.unwrap();
 
         if let Orbita3dIOConfig::FakeMotors(_) = config.io {
-            assert_eq!(config.disks.zeros, [0.0, 0.0, 0.0]);
+            if let crate::ZeroType::ZeroStartup(_) = config.disks.zeros {
+            } else {
+                panic!("Wrong config type");
+            }
             assert_eq!(config.disks.reduction, 1.0);
 
             assert_eq!(config.kinematics_model.gamma_min, 0.0);
