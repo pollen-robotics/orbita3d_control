@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+mod cached_dynamixel_serial;
+pub use cached_dynamixel_serial::CachedDynamixelSerialController;
 mod dynamixel_serial;
 pub use dynamixel_serial::DynamixelSerialController;
 mod fake;

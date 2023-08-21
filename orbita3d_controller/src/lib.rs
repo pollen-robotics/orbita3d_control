@@ -38,7 +38,7 @@
 //! ```
 
 pub mod io;
-use io::{DynamixelSerialController, Orbita3dIOConfig};
+use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOConfig};
 use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
@@ -97,16 +97,20 @@ impl Orbita3dController {
         let config: Orbita3dConfig = serde_yaml::from_reader(f)?;
 
         let controller: Box<dyn MotorsController<3>> = match config.io {
-            Orbita3dIOConfig::DynamixelSerial(dxl_config) => {
-                let controller = DynamixelSerialController::new(
+            Orbita3dIOConfig::DynamixelSerial(dxl_config) => match dxl_config.use_cache {
+                true => Box::new(CachedDynamixelSerialController::new(
                     &dxl_config.serial_port,
                     dxl_config.id,
                     config.disks.zeros,
                     config.disks.reduction,
-                )?;
-
-                Box::new(controller)
-            }
+                )?),
+                false => Box::new(DynamixelSerialController::new(
+                    &dxl_config.serial_port,
+                    dxl_config.id,
+                    config.disks.zeros,
+                    config.disks.reduction,
+                )?),
+            },
             Orbita3dIOConfig::FakeMotors(_) => {
                 let mut controller = FakeMotorsController::<3>::new();
 
