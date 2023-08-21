@@ -1,5 +1,4 @@
-use motor_toolbox_rs::{MissingResisterErrror, MultipleMotorsController, PID};
-use orbita3d_kinematics::Orbita3dKinematicsModel;
+use motor_toolbox_rs::{MissingResisterErrror, MotorsController, RawMotorsIO, PID};
 use rustypot::{
     device::orbita_foc::{self, DiskValue},
     DynamixelSerialIO,
@@ -8,62 +7,72 @@ use serde::{Deserialize, Serialize};
 use serialport::SerialPort;
 use std::time::Duration;
 
-use crate::{Orbita3dController, Result};
+use crate::Result;
 
 #[derive(Debug, Deserialize, Serialize)]
+/// DynamixelSerial Config
 pub struct DynamixelSerialConfig {
-    kinematics_model: Orbita3dKinematicsModel,
-
-    serial_port: String,
-    id: u8,
+    /// Name of the serial port (eg. /dev/ttyUSB0)
+    pub serial_port: String,
+    /// Dynamixel ID
+    pub id: u8,
 }
 
+/// DynamixelSerialController - wrapper around the three disks motors
 pub struct DynamixelSerialController {
     serial_port: Box<dyn SerialPort>,
     io: DynamixelSerialIO,
     id: u8,
+
+    offsets: [Option<f64>; 3],
+    reduction: [Option<f64>; 3],
+    limits: [Option<motor_toolbox_rs::Limit>; 3],
 }
 
 impl DynamixelSerialController {
-    pub fn new(serial_port: &str, id: u8) -> Result<Self> {
+    /// Creates a new DynamixelSerialController
+    pub fn new(serial_port: &str, id: u8, zeros: [f64; 3], reductions: f64) -> Result<Self> {
         Ok(Self {
             serial_port: serialport::new(serial_port, 1_000_000)
                 .timeout(Duration::from_millis(10))
                 .open()?,
             io: DynamixelSerialIO::v1(),
             id,
+            offsets: zeros.map(Some),
+            reduction: [Some(reductions); 3],
+            limits: [None; 3],
         })
     }
 }
 
-impl Orbita3dController {
-    pub fn with_dynamixel_serial(config: DynamixelSerialConfig) -> Result<Self> {
-        Ok(Self {
-            inner: Box::new(DynamixelSerialController::new(
-                &config.serial_port,
-                config.id,
-            )?),
-            kinematics: config.kinematics_model,
-        })
+impl MotorsController<3> for DynamixelSerialController {
+    fn io(&mut self) -> &mut dyn RawMotorsIO<3> {
+        self
+    }
+
+    fn offsets(&self) -> [Option<f64>; 3] {
+        self.offsets
+    }
+
+    fn reduction(&self) -> [Option<f64>; 3] {
+        self.reduction
+    }
+
+    fn limits(&self) -> [Option<motor_toolbox_rs::Limit>; 3] {
+        self.limits
     }
 }
 
-impl MultipleMotorsController<3> for DynamixelSerialController {
-    fn name(&self) -> String {
-        format!(
-            "Dynamixel Serial Controller (port: {:?}, id: {})",
-            self.serial_port.name(),
-            self.id
-        )
+impl RawMotorsIO<3> for DynamixelSerialController {
+    fn is_torque_on(&mut self) -> Result<[bool; 3]> {
+        let on = orbita_foc::read_torque_enable(&self.io, self.serial_port.as_mut(), self.id)
+            .map(|torque| torque != 0)?;
+        Ok([on; 3])
     }
 
-    fn is_torque_on(&mut self) -> Result<bool> {
-        orbita_foc::read_torque_enable(&self.io, self.serial_port.as_mut(), self.id)
-            .map(|torque| torque != 0)
-    }
-
-    fn set_torque(&mut self, on: bool) -> Result<()> {
-        orbita_foc::write_torque_enable(&self.io, self.serial_port.as_mut(), self.id, on as u8)
+    fn set_torque(&mut self, on: [bool; 3]) -> Result<()> {
+        assert!(on.iter().all(|&t| t == on[0]));
+        orbita_foc::write_torque_enable(&self.io, self.serial_port.as_mut(), self.id, on[0] as u8)
     }
 
     fn get_current_position(&mut self) -> Result<[f64; 3]> {
@@ -177,40 +186,8 @@ impl MultipleMotorsController<3> for DynamixelSerialController {
 mod tests {
     use std::f64::consts::PI;
 
-    use crate::Orbita3dConfig;
+    use crate::{io::Orbita3dIOConfig, Orbita3dConfig};
 
-    #[test]
-    fn parse_config() {
-        let config = r#"!DynamixelSerial
-        kinematics_model:
-          alpha: 0.0
-          gamma_min: 0.0
-          offset: 0.0
-          beta: 0.0
-          gamma_max: 0.0
-          passiv_arms_direct: false
-        serial_port: "/dev/ttyUSB0"
-        id: 42
-        "#;
-
-        let config: Result<Orbita3dConfig, _> = serde_yaml::from_str(config);
-        assert!(config.is_ok());
-
-        let config = config.unwrap();
-
-        if let Orbita3dConfig::DynamixelSerial(config) = config {
-            assert_eq!(config.kinematics_model.alpha, 0.0);
-            assert_eq!(config.kinematics_model.gamma_min, 0.0);
-            assert_eq!(config.kinematics_model.offset, 0.0);
-            assert_eq!(config.kinematics_model.beta, 0.0);
-            assert_eq!(config.kinematics_model.gamma_max, 0.0);
-            assert!(!config.kinematics_model.passiv_arms_direct);
-            assert_eq!(config.serial_port, "/dev/ttyUSB0");
-            assert_eq!(config.id, 42);
-        } else {
-            panic!("Wrong config type");
-        }
-    }
     #[test]
     fn parse_config_file() {
         let f = std::fs::File::open("./config/dxl_serial.yaml").unwrap();
@@ -220,15 +197,19 @@ mod tests {
 
         let config = config.unwrap();
 
-        if let Orbita3dConfig::DynamixelSerial(config) = config {
+        if let Orbita3dIOConfig::DynamixelSerial(dxl_config) = config.io {
             assert_eq!(config.kinematics_model.alpha, 50.0_f64.to_radians());
-            assert_eq!(config.kinematics_model.gamma_min, 0.0);
+            assert_eq!(config.kinematics_model.gamma_min, 40.0_f64.to_radians());
             assert_eq!(config.kinematics_model.offset, 0.0);
             assert_eq!(config.kinematics_model.beta, PI / 2.0);
             assert_eq!(config.kinematics_model.gamma_max, PI);
             assert!(config.kinematics_model.passiv_arms_direct);
-            assert_eq!(config.serial_port, "/dev/ttyUSB0");
-            assert_eq!(config.id, 42);
+
+            assert_eq!(config.disks.zeros, [0.0, 0.0, 0.0]);
+            assert_eq!(config.disks.reduction, 1.0);
+
+            assert_eq!(dxl_config.serial_port, "/dev/ttyUSB0");
+            assert_eq!(dxl_config.id, 42);
         } else {
             panic!("Wrong config type");
         }

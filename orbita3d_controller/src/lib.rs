@@ -21,12 +21,9 @@
 //!
 //! # Examples
 //! ```rust
-//! use orbita3d_controller::{FakeConfig, Orbita3dController};
-//! use orbita3d_kinematics::Orbita3dKinematicsModel;
+//! use orbita3d_controller::Orbita3dController;
 //!
-//! let mut orbita3d = Orbita3dController::with_fake_motors(
-//!     FakeConfig { kinematics_model: Orbita3dKinematicsModel::default() }
-//! );
+//! let mut orbita3d = Orbita3dController::with_config("./config/fake.yaml").unwrap();
 //!
 //! let orientation = orbita3d.get_current_orientation().unwrap();
 //! println!("Current orientation: {:?}", orientation);
@@ -40,26 +37,36 @@
 //! println!("Current orientation: {:?}", orientation);
 //! ```
 
-mod dynamixel_serial;
-use dynamixel_serial::DynamixelSerialConfig;
-mod fake;
-pub use fake::FakeConfig;
-use motor_toolbox_rs::{MultipleMotorsController, PID};
+pub mod io;
+use io::{DynamixelSerialController, Orbita3dIOConfig};
+use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-#[derive(Debug)]
-pub struct Orbita3dController {
-    inner: Box<dyn MultipleMotorsController<3>>,
-    kinematics: Orbita3dKinematicsModel,
+#[derive(Debug, Deserialize, Serialize)]
+/// Orbita3d Config
+pub struct Orbita3dConfig {
+    /// IO specific config
+    pub io: Orbita3dIOConfig,
+    /// Disks specific config
+    pub disks: DisksConfig,
+    /// Kinematics model config
+    pub kinematics_model: Orbita3dKinematicsModel,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub enum Orbita3dConfig {
-    DynamixelSerial(DynamixelSerialConfig),
-    FakeMotors(FakeConfig),
+/// Disks Config
+pub struct DisksConfig {
+    /// Zeros of each disk (in rad), used as an offset
+    pub zeros: [f64; 3],
+    /// Reduction between the motor and the disk
+    pub reduction: f64,
+}
+
+/// Orbita3d Controller
+pub struct Orbita3dController {
+    inner: Box<dyn MotorsController<3>>,
+    kinematics: Orbita3dKinematicsModel,
 }
 
 impl Orbita3dController {
@@ -68,28 +75,54 @@ impl Orbita3dController {
         let f = std::fs::File::open(configfile)?;
         let config: Orbita3dConfig = serde_yaml::from_reader(f)?;
 
-        match config {
-            Orbita3dConfig::DynamixelSerial(dxl_config) => Self::with_dynamixel_serial(dxl_config),
-            Orbita3dConfig::FakeMotors(fake_config) => Ok(Self::with_fake_motors(fake_config)),
-        }
+        let controller: Box<dyn MotorsController<3>> = match config.io {
+            Orbita3dIOConfig::DynamixelSerial(dxl_config) => {
+                let controller = DynamixelSerialController::new(
+                    &dxl_config.serial_port,
+                    dxl_config.id,
+                    config.disks.zeros,
+                    config.disks.reduction,
+                )?;
+
+                Box::new(controller)
+            }
+            Orbita3dIOConfig::FakeMotors(_) => {
+                let controller = FakeMotorsController::<3>::new()
+                    .with_offsets(config.disks.zeros.map(Some))
+                    .with_reduction([Some(config.disks.reduction); 3]);
+
+                Box::new(controller)
+            }
+        };
+
+        Ok(Self {
+            inner: controller,
+            kinematics: config.kinematics_model,
+        })
     }
 }
 
 impl Orbita3dController {
     /// Check if the torque is ON or OFF
     pub fn is_torque_on(&mut self) -> Result<bool> {
-        self.inner.is_torque_on()
+        let torques = self.inner.is_torque_on()?;
+        assert!(torques.iter().all(|&t| t == torques[0]));
+        Ok(torques[0])
     }
     /// Enable the torque
     ///
     /// # Arguments
     /// * reset_target: if true, the target position will be reset to the current position
     pub fn enable_torque(&mut self, reset_target: bool) -> Result<()> {
-        self.inner.enable_torque(reset_target)
+        if reset_target {
+            let thetas = self.inner.get_current_position()?;
+            self.inner.set_target_position(thetas)?;
+        }
+        self.inner.set_torque([true; 3])
     }
     /// Disable the torque
     pub fn disable_torque(&mut self) -> Result<()> {
-        self.inner.disable_torque()
+        self.inner.set_torque([false; 3])
     }
 
     /// Get the current orientation (as quaternion (qx, qy, qz, qw))

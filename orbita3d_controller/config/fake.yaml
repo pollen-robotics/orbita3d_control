@@ -1,4 +1,7 @@
-!FakeMotors
+io: !FakeMotors
+disks:
+  zeros: [0.0, 0.0, 0.0]
+  reduction: 1.0
 kinematics_model:
   alpha: 0.8726646259971648 # 50 degrees
   gamma_min: 0.0
