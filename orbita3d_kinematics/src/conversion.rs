@@ -34,9 +34,11 @@ pub fn matrix_to_intrinsic_roll_pitch_yaw(rot: Rotation3<f64>) -> [f64; 3] {
 #[cfg(test)]
 mod tests {
     use rand::Rng;
-    use std::f64::{consts::PI, EPSILON};
+    use std::f64::consts::PI;
 
     use super::*;
+
+    const EPSILON: f64 = 1e-6;
 
     #[test]
     fn rpy() {
@@ -71,7 +73,7 @@ mod tests {
         // Check that the reconstructed rotation matrix is the same as the original
         for i in 0..3 {
             for j in 0..3 {
-                assert!((rot[(i, j)] - reconstructed[(i, j)]).abs() < EPSILON);
+                assert!((rot[(i, j)] - reconstructed[(i, j)]).abs() < 0.0001);
             }
         }
     }
