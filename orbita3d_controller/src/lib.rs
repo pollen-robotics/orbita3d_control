@@ -86,7 +86,7 @@ pub struct ZeroStartup;
 
 /// Orbita3d Controller
 pub struct Orbita3dController {
-    inner: Box<dyn MotorsController<3>>,
+    inner: Box<dyn MotorsController<3> + Send>,
     kinematics: Orbita3dKinematicsModel,
 }
 
@@ -96,7 +96,7 @@ impl Orbita3dController {
         let f = std::fs::File::open(configfile)?;
         let config: Orbita3dConfig = serde_yaml::from_reader(f)?;
 
-        let controller: Box<dyn MotorsController<3>> = match config.io {
+        let controller: Box<dyn MotorsController<3> + Send> = match config.io {
             Orbita3dIOConfig::DynamixelSerial(dxl_config) => match dxl_config.use_cache {
                 true => Box::new(CachedDynamixelSerialController::new(
                     &dxl_config.serial_port,
