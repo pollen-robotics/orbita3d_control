@@ -184,7 +184,7 @@ class Orbita3dController:
             A new Orbita3dController.
         """
         uid = ffi.new("uint32_t *")
-        check(lib.create_orbita3d_controller_from_config(config.encode("utf-8"), uid))
+        check(lib.orbita3d_controller_from_config(config.encode("utf-8"), uid))
         return cls(uid[0])
 
     def is_torque_on(self) -> bool:
