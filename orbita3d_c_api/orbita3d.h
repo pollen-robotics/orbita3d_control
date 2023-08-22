@@ -16,6 +16,36 @@ struct Orbita3dKinematicsModel {
 
 extern "C" {
 
+int32_t orbita3d_controller_from_config(const char *configfile, uint32_t *uid);
+
+int32_t orbita3d_is_torque_on(uint32_t uid, bool *is_on);
+
+int32_t orbita3d_enable_torque(uint32_t uid, bool reset_target);
+
+int32_t orbita3d_disable_torque(uint32_t uid);
+
+int32_t orbita3d_get_current_orientation(uint32_t uid, double (*orientation)[4]);
+
+int32_t orbita3d_get_current_velocity(uint32_t uid, double (*velocity)[4]);
+
+int32_t orbita3d_get_current_torque(uint32_t uid, double (*torque)[4]);
+
+int32_t orbita3d_get_target_orientation(uint32_t uid, double (*orientation)[4]);
+
+int32_t orbita3d_set_target_orientation(uint32_t uid, const double (*orientation)[4]);
+
+int32_t orbita3d_get_raw_motors_velocity_limit(uint32_t uid, double (*limit)[3]);
+
+int32_t orbita3d_set_raw_motors_velocity_limit(uint32_t uid, const double (*limit)[3]);
+
+int32_t orbita3d_get_raw_motors_torque_limit(uint32_t uid, double (*limit)[3]);
+
+int32_t orbita3d_set_raw_motors_torque_limit(uint32_t uid, const double (*limit)[3]);
+
+int32_t orbita3d_get_raw_motors_pid_gains(uint32_t uid, double (*gains)[3][3]);
+
+int32_t orbita3d_set_raw_motors_pid_gains(uint32_t uid, const double (*gains)[3][3]);
+
 /// Create a new Orbita3dKinematicsModel.
 Orbita3dKinematicsModel create_orbita3d_kinematics_model(double alpha,
                                                          double gamma_min,
