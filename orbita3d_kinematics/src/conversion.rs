@@ -30,3 +30,49 @@ pub fn matrix_to_intrinsic_roll_pitch_yaw(rot: Rotation3<f64>) -> [f64; 3] {
 
     [roll, pitch, yaw]
 }
+
+#[cfg(test)]
+mod tests {
+    use rand::Rng;
+    use std::f64::{consts::PI, EPSILON};
+
+    use super::*;
+
+    #[test]
+    fn rpy() {
+        let mut rng = rand::thread_rng();
+
+        let roll = rng.gen_range(-PI..PI).to_radians();
+        let pitch = rng.gen_range(-PI..PI).to_radians();
+        let yaw = rng.gen_range(-PI..PI).to_radians();
+
+        let rot = intrinsic_roll_pitch_yaw_to_matrix(roll, pitch, yaw);
+        let rpy = matrix_to_intrinsic_roll_pitch_yaw(rot);
+
+        assert!((roll - rpy[0]).abs() < EPSILON);
+        assert!((pitch - rpy[1]).abs() < EPSILON);
+        assert!((yaw - rpy[2]).abs() < EPSILON);
+    }
+
+    #[test]
+    fn quat() {
+        let mut rng = rand::thread_rng();
+
+        // Use euler angles to generate a roation matrix
+        let roll = rng.gen_range(-PI..PI).to_radians();
+        let pitch = rng.gen_range(-PI..PI).to_radians();
+        let yaw = rng.gen_range(-PI..PI).to_radians();
+        let rot = intrinsic_roll_pitch_yaw_to_matrix(roll, pitch, yaw);
+
+        // Convert the rotation matrix to a quaternion
+        let quat = rotation_matrix_to_quaternion(rot);
+        let reconstructed = quaternion_to_rotation_matrix(quat[0], quat[1], quat[2], quat[3]);
+
+        // Check that the reconstructed rotation matrix is the same as the original
+        for i in 0..3 {
+            for j in 0..3 {
+                assert!((rot[(i, j)] - reconstructed[(i, j)]).abs() < EPSILON);
+            }
+        }
+    }
+}
