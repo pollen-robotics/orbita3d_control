@@ -21,6 +21,7 @@ pub struct DynamixelSerialConfig {
     pub use_cache: bool,
 }
 
+#[derive(Debug)]
 /// DynamixelSerialController - wrapper around the three disks motors
 pub struct DynamixelSerialController {
     serial_port: Box<dyn SerialPort>,

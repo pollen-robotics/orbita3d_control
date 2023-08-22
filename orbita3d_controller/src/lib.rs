@@ -93,23 +93,37 @@ pub struct Orbita3dController {
 impl Orbita3dController {
     /// Creates a new Orbita3dController using the given configuration file.
     pub fn with_config(configfile: &str) -> Result<Self> {
+        log::info!("Loading config file: {}", configfile);
+
         let f = std::fs::File::open(configfile)?;
         let config: Orbita3dConfig = serde_yaml::from_reader(f)?;
 
         let controller: Box<dyn MotorsController<3> + Send> = match config.io {
             Orbita3dIOConfig::DynamixelSerial(dxl_config) => match dxl_config.use_cache {
-                true => Box::new(CachedDynamixelSerialController::new(
-                    &dxl_config.serial_port,
-                    dxl_config.id,
-                    config.disks.zeros,
-                    config.disks.reduction,
-                )?),
-                false => Box::new(DynamixelSerialController::new(
-                    &dxl_config.serial_port,
-                    dxl_config.id,
-                    config.disks.zeros,
-                    config.disks.reduction,
-                )?),
+                true => {
+                    let controller = CachedDynamixelSerialController::new(
+                        &dxl_config.serial_port,
+                        dxl_config.id,
+                        config.disks.zeros,
+                        config.disks.reduction,
+                    )?;
+
+                    log::info!("Using cached dynamixel controller {:?}", controller);
+
+                    Box::new(controller)
+                }
+                false => {
+                    let controller = DynamixelSerialController::new(
+                        &dxl_config.serial_port,
+                        dxl_config.id,
+                        config.disks.zeros,
+                        config.disks.reduction,
+                    )?;
+
+                    log::info!("Using dynamixel controller {:?}", controller);
+
+                    Box::new(controller)
+                }
             },
             Orbita3dIOConfig::FakeMotors(_) => {
                 let mut controller = FakeMotorsController::<3>::new();
@@ -122,6 +136,8 @@ impl Orbita3dController {
                 let controller = controller
                     .with_offsets(offsets.map(Some))
                     .with_reduction([Some(config.disks.reduction); 3]);
+
+                log::info!("Using fake motors controller {:?}", controller);
 
                 Box::new(controller)
             }

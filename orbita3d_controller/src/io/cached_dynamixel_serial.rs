@@ -5,6 +5,7 @@ use crate::ZeroType;
 
 use super::DynamixelSerialController;
 
+#[derive(Debug)]
 /// CachedDynamixelSerialController - Cached version of the DynamixelSerialController
 pub struct CachedDynamixelSerialController {
     inner: DynamixelSerialController,
