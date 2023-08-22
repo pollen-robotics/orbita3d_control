@@ -128,4 +128,8 @@ int32_t orbita3d_kinematics_inverse_torque(const Orbita3dKinematicsModel *self,
                                            const double (*quat_torque)[4],
                                            double (*thetas_torque)[3]);
 
+int32_t quaternion_to_intrinsic_roll_pitch_yaw(const double (*quat)[4], double (*rpy)[3]);
+
+int32_t intrinsic_roll_pitch_yaw_to_quaternion(const double (*rpy)[3], double (*quat)[4]);
+
 } // extern "C"
