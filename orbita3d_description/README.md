@@ -4,7 +4,7 @@
 
 ### Launch a fake system
 
-- With a fake Orbita3d (which is different than the fake mode where the dummy ros2_controllers are used): ``ros2 launch orbita3d_description test.launch.py fake:=false config_file:=PATH_TO_YOUR_WORKSPACE/src/orbita3d_control/orbita3d_description/config/fake.yaml`` (change config file for your real system)
+- With a fake Orbita3d (which is different than the fake mode where the dummy ros2_controllers are used): ``ros2 launch orbita3d_description test.launch.py fake:=false config_file:=PATH_TO_YOUR_WORKSPACE/src/orbita3d_control/orbita3d_controller/config/fake.yaml`` (change config file for your real system)
 
 ### Interact with the system
 
