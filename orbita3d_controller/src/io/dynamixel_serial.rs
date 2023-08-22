@@ -1,4 +1,4 @@
-use motor_toolbox_rs::{MissingResisterErrror, MotorsController, RawMotorsIO, PID};
+use motor_toolbox_rs::{Limit, MissingResisterErrror, MotorsController, RawMotorsIO, Result, PID};
 use rustypot::{
     device::orbita_foc::{self, DiskValue},
     DynamixelSerialIO,
@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serialport::SerialPort;
 use std::{f64::consts::PI, time::Duration};
 
-use crate::{Result, ZeroType};
+use crate::ZeroType;
 
 #[derive(Debug, Deserialize, Serialize)]
 /// DynamixelSerial Config
@@ -29,7 +29,7 @@ pub struct DynamixelSerialController {
 
     offsets: [Option<f64>; 3],
     reduction: [Option<f64>; 3],
-    limits: [Option<motor_toolbox_rs::Limit>; 3],
+    limits: [Option<Limit>; 3],
 }
 
 impl DynamixelSerialController {
@@ -183,23 +183,11 @@ impl RawMotorsIO<3> for DynamixelSerialController {
 
     fn get_pid_gains(&mut self) -> Result<[PID; 3]> {
         orbita_foc::read_angle_pid(&self.io, self.serial_port.as_mut(), self.id).map(|pid| {
-            [
-                PID {
-                    p: pid.p as f64,
-                    i: pid.i as f64,
-                    d: pid.d as f64,
-                },
-                PID {
-                    p: pid.p as f64,
-                    i: pid.i as f64,
-                    d: pid.d as f64,
-                },
-                PID {
-                    p: pid.p as f64,
-                    i: pid.i as f64,
-                    d: pid.d as f64,
-                },
-            ]
+            [PID {
+                p: pid.p as f64,
+                i: pid.i as f64,
+                d: pid.d as f64,
+            }; 3]
         })
     }
 
@@ -226,7 +214,14 @@ fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduct
     //! Thus, we do not have the real orbita disk absolute position.
     //! But we only know where we are in a local dial of arc (2pi / reduction).
     //!
-    //! To find the closest offset to our zero hardware, we assume that the current position is at maximum one dial from the hardware zero.
+    //! To find the closest offset to our zero hardware, we assume that the current position is at maximum one dial from the hardware zero.   
+    log::info!(
+        "find_closest_offset_to_zero: current_position: {}, hardware_zero: {}, reduction: {}",
+        current_position,
+        hardware_zero,
+        reduction
+    );
+
     let dial_arc = 2.0 * PI / reduction;
 
     let possibilities = [
@@ -234,21 +229,29 @@ fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduct
         hardware_zero,
         hardware_zero + dial_arc,
     ];
+    log::debug!("possibilities: {:?}", possibilities);
 
-    possibilities
+    let best = possibilities
         .iter()
         .map(|&p| (p - current_position).abs())
         .enumerate()
         .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
         .map(|(i, _)| possibilities[i])
-        .unwrap()
+        .unwrap();
+
+    log::info!("best: {}", best);
+    best
 }
 
 #[cfg(test)]
 mod tests {
+    use rand::Rng;
     use std::f64::consts::PI;
 
-    use crate::{io::Orbita3dIOConfig, Orbita3dConfig};
+    use crate::{
+        io::{dynamixel_serial::find_closest_offset_to_zero, Orbita3dIOConfig},
+        Orbita3dConfig,
+    };
 
     #[test]
     fn parse_config_file() {
@@ -278,5 +281,29 @@ mod tests {
         } else {
             panic!("Wrong config type");
         }
+    }
+
+    #[test]
+    fn test_approx() {
+        let mut rng = rand::thread_rng();
+
+        let pos = rng.gen_range(-PI..PI);
+        let reduction = rng.gen_range(0.5..2.0);
+        assert_eq!(find_closest_offset_to_zero(pos, pos, reduction), pos);
+
+        let pos = 0.0;
+        let hardware_zero = 0.25;
+        let reduction = 1.0;
+
+        assert_eq!(
+            find_closest_offset_to_zero(pos, hardware_zero, reduction),
+            0.25
+        );
+
+        let reduction = 100.0;
+        assert_eq!(
+            find_closest_offset_to_zero(pos, hardware_zero, reduction),
+            0.25 - 2.0 * PI / reduction
+        );
     }
 }
