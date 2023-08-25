@@ -1,4 +1,4 @@
-use nalgebra::{Matrix3, Rotation3, Vector3};
+use nalgebra::{Matrix3, Vector3};
 
 use crate::Orbita3dKinematicsModel;
 
@@ -16,7 +16,7 @@ impl Orbita3dKinematicsModel {
         &self,
         thetas: [f64; 3],
         input_velocity: [f64; 3],
-    ) -> Rotation3<f64> {
+    ) -> Vector3<f64> {
         let rot = self.compute_forward_kinematics(thetas);
 
         let j_inv = self.jacobian_inverse(rot, thetas);
@@ -25,8 +25,8 @@ impl Orbita3dKinematicsModel {
             input_velocity
         );
 
+        self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into())
         // Rotation3::new(self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into()))
-        Rotation3::new(self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into()))
     }
 
     /// Compute the inverse velocity
@@ -41,11 +41,11 @@ impl Orbita3dKinematicsModel {
     pub fn compute_input_velocity(
         &self,
         thetas: [f64; 3],
-        output_velocity: Rotation3<f64>,
+        output_velocity: Vector3<f64>,
     ) -> [f64; 3] {
         println!(
             "[compute input velocity] output_velocity: {:?}",
-            output_velocity.scaled_axis()
+            output_velocity
         );
 
         let rot = self.compute_forward_kinematics([thetas[0], thetas[1], thetas[2]]);
@@ -57,10 +57,10 @@ impl Orbita3dKinematicsModel {
     fn compute_input_velocity_from_j_inv(
         &self,
         j_inv: Matrix3<f64>,
-        output_vel: Rotation3<f64>,
+        output_vel: Vector3<f64>,
     ) -> Vector3<f64> {
         let j = j_inv.pseudo_inverse(1.0e-6).unwrap();
-        j * output_vel.scaled_axis()
+        j * output_vel
     }
 
     fn compute_output_velocity_from_j_inv(
@@ -96,10 +96,7 @@ mod tests {
         let orb = Orbita3dKinematicsModel::default();
 
         let output_velocity = orb.compute_output_velocity(thetas, input_velocity);
-        println!(
-            "Computed output_velocity: {:?}",
-            output_velocity.scaled_axis()
-        );
+        println!("Computed output_velocity: {:?}", output_velocity);
 
         let reconstructed = orb.compute_input_velocity(thetas, output_velocity);
         println!("Computed input_velocity: {:?}", reconstructed);
@@ -141,13 +138,13 @@ mod tests {
         // // Using random values
         let orb = Orbita3dKinematicsModel::default();
 
-        // let rpy: [f64; 3] = random_rpy();
+        let rpy: [f64; 3] = random_rpy();
 
-        let rpy = [
-            -0.0006058028930239779,
-            0.5135135761900762,
-            -1.5625687865275368,
-        ];
+        // let rpy = [
+        //     -0.0006058028930239779,
+        //     0.5135135761900762,
+        //     -1.5625687865275368,
+        // ];
 
         let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
         let rpyconv = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);

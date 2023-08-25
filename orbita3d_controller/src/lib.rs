@@ -188,15 +188,20 @@ impl Orbita3dController {
         let rot = self
             .kinematics
             .compute_output_velocity(thetas, input_velocity);
-        Ok(rot.scaled_axis().into())
+        // Ok(rot.scaled_axis().into())
+        Ok(rot.into())
     }
-    /// FIXME Get the current torque (as quaternion (qx, qy, qz, qw))
-    pub fn get_current_torque(&mut self) -> Result<[f64; 4]> {
+    /// Get the current torque (as pseudo vector)
+    pub fn get_current_torque(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
         let input_torque = self.inner.get_current_torque()?;
 
-        let rot = self.kinematics.compute_output_torque(thetas, input_torque);
-        Ok(conversion::rotation_matrix_to_quaternion(rot))
+        // let rot = self.kinematics.compute_output_torque(thetas, input_torque);
+        // Ok(conversion::rotation_matrix_to_quaternion(rot))
+        Ok(self
+            .kinematics
+            .compute_output_torque(thetas, input_torque)
+            .into())
     }
 
     /// Get the target orientation (as quaternion (qx, qy, qz, qw))
