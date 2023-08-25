@@ -9,9 +9,9 @@ impl Orbita3dKinematicsModel {
     ///
     /// # Arguments
     /// * thetas - The motor angles as a 3-element array.
-    /// * input_velocity - The input velocity as a 3-element array.
+    /// * input_velocity - The input velocity as a 3-element array (motors velocity).
     /// # Returns
-    /// * The output velocity as a 3d rotation.
+    /// * The output velocity as a 3d rotation. This rotation is a axis-angle rotation vector representing the velocity pseudo vector.
     pub fn compute_output_velocity(
         &self,
         thetas: [f64; 3],
@@ -20,9 +20,13 @@ impl Orbita3dKinematicsModel {
         let rot = self.compute_forward_kinematics(thetas);
 
         let j_inv = self.jacobian_inverse(rot, thetas);
-        let res = self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into());
+        println!(
+            "[compute output velocity] input_velocity: {:?}",
+            input_velocity
+        );
 
-        Rotation3::from_euler_angles(res[0], res[1], res[2])
+        // Rotation3::new(self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into()))
+        Rotation3::new(self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into()))
     }
 
     /// Compute the inverse velocity
@@ -31,7 +35,7 @@ impl Orbita3dKinematicsModel {
     ///
     /// # Arguments
     /// * thetas - The motor angles as a 3-element array.
-    /// * output_velocity - The output velocity as a 3d rotation.
+    /// * output_velocity - The output velocity as a 3d rotation axis-angle velocity pseudo-vector.
     /// # Returns
     /// * The input velocity as a 3-element array.
     pub fn compute_input_velocity(
@@ -39,8 +43,10 @@ impl Orbita3dKinematicsModel {
         thetas: [f64; 3],
         output_velocity: Rotation3<f64>,
     ) -> [f64; 3] {
-        let output_velocity = output_velocity.euler_angles();
-        let output_velocity = Vector3::new(output_velocity.0, output_velocity.1, output_velocity.2);
+        println!(
+            "[compute input velocity] output_velocity: {:?}",
+            output_velocity.scaled_axis()
+        );
 
         let rot = self.compute_forward_kinematics([thetas[0], thetas[1], thetas[2]]);
         let j_inv = self.jacobian_inverse(rot, thetas);
@@ -51,10 +57,10 @@ impl Orbita3dKinematicsModel {
     fn compute_input_velocity_from_j_inv(
         &self,
         j_inv: Matrix3<f64>,
-        output_vel: Vector3<f64>,
+        output_vel: Rotation3<f64>,
     ) -> Vector3<f64> {
-        let j = j_inv.pseudo_inverse(0.000001).unwrap();
-        j * output_vel
+        let j = j_inv.pseudo_inverse(1.0e-6).unwrap();
+        j * output_vel.scaled_axis()
     }
 
     fn compute_output_velocity_from_j_inv(
@@ -68,29 +74,35 @@ impl Orbita3dKinematicsModel {
 
 #[cfg(test)]
 mod tests {
-    use crate::Orbita3dKinematicsModel;
+    use crate::{conversion, Orbita3dKinematicsModel};
 
-    // use rand::Rng;
+    use rand::Rng;
 
-    // const ROLL_RANGE: f64 = 30.0;
-    // const PITCH_RANGE: f64 = 30.0;
-    // const YAW_RANGE: f64 = 90.0;
+    const ROLL_RANGE: f64 = 30.0;
+    const PITCH_RANGE: f64 = 30.0;
+    const YAW_RANGE: f64 = 90.0;
 
-    // fn random_rpy() -> [f64; 3] {
-    //     let mut rng = rand::thread_rng();
+    fn random_rpy() -> [f64; 3] {
+        let mut rng = rand::thread_rng();
 
-    //     let roll = rng.gen_range(-ROLL_RANGE..ROLL_RANGE).to_radians();
-    //     let pitch = rng.gen_range(-PITCH_RANGE..PITCH_RANGE).to_radians();
-    //     let yaw = rng.gen_range(-YAW_RANGE..YAW_RANGE).to_radians();
+        let roll = rng.gen_range(-ROLL_RANGE..ROLL_RANGE).to_radians();
+        let pitch = rng.gen_range(-PITCH_RANGE..PITCH_RANGE).to_radians();
+        let yaw = rng.gen_range(-YAW_RANGE..YAW_RANGE).to_radians();
 
-    //     [roll, pitch, yaw]
-    // }
+        [roll, pitch, yaw]
+    }
 
     fn check_inverse_forward(thetas: [f64; 3], input_velocity: [f64; 3]) {
         let orb = Orbita3dKinematicsModel::default();
 
         let output_velocity = orb.compute_output_velocity(thetas, input_velocity);
+        println!(
+            "Computed output_velocity: {:?}",
+            output_velocity.scaled_axis()
+        );
+
         let reconstructed = orb.compute_input_velocity(thetas, output_velocity);
+        println!("Computed input_velocity: {:?}", reconstructed);
 
         for i in 0..3 {
             assert!(
@@ -113,13 +125,13 @@ mod tests {
     #[test]
     fn inverse_forward_vel() {
         // Using fixed value 1
-        let thetas = [
-            0.147376526054817,
-            -0.0063153266133482155,
-            0.29099962984161976,
-        ];
-        let input_velocity = [0.6696758700667225, 0.1914613976070494, -0.3389136179061003];
-        check_inverse_forward(thetas, input_velocity);
+        // let thetas = [
+        //     0.147376526054817,
+        //     -0.0063153266133482155,
+        //     0.29099962984161976,
+        // ];
+        // let input_velocity = [0.6696758700667225, 0.1914613976070494, -0.3389136179061003];
+        // check_inverse_forward(thetas, input_velocity);
 
         // // Using fixed value 2
         // let thetas = [-0.6799726966192987, -1.1128173034407476, -0.8489251256361031];
@@ -127,17 +139,38 @@ mod tests {
         // check_inverse_forward(thetas, input_velocity);
 
         // // Using random values
-        // let orb = Orbita3dKinematicsModel::default();
-        // let rpy: [f64; 3] = random_rpy();
-        // let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
-        // let thetas = orb.compute_inverse_kinematics(rot).unwrap();
+        let orb = Orbita3dKinematicsModel::default();
 
-        // let mut rng = rand::thread_rng();
-        // let input_velocity = [
-        //     rng.gen_range(-1.0..1.0),
-        //     rng.gen_range(-1.0..1.0),
-        //     rng.gen_range(-1.0..1.0),
-        // ];
-        // check_inverse_forward(thetas, input_velocity);
+        // let rpy: [f64; 3] = random_rpy();
+
+        let rpy = [
+            -0.0006058028930239779,
+            0.5135135761900762,
+            -1.5625687865275368,
+        ];
+
+        let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
+        let rpyconv = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+
+        let thetas = orb.compute_inverse_kinematics(rot).unwrap();
+
+        println!("thetas: {:?}", thetas);
+        println!("rpy: {:?}", rpy);
+        let rpy2 = orb.compute_forward_kinematics(thetas);
+
+        println!(
+            "rpy2: {:?}",
+            conversion::matrix_to_intrinsic_roll_pitch_yaw(rpy2)
+        );
+
+        println!("rpy3: {:?}", rpyconv);
+
+        let mut rng = rand::thread_rng();
+        let input_velocity = [
+            rng.gen_range(-1.0..1.0),
+            rng.gen_range(-1.0..1.0),
+            rng.gen_range(-1.0..1.0),
+        ];
+        check_inverse_forward(thetas, input_velocity);
     }
 }

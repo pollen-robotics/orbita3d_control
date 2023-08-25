@@ -215,7 +215,7 @@ fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduct
     //! Thus, we do not have the real orbita disk absolute position.
     //! But we only know where we are in a local dial of arc (2pi / reduction).
     //!
-    //! To find the closest offset to our zero hardware, we assume that the current position is at maximum one dial from the hardware zero.   
+    //! To find the closest offset to our zero hardware, we assume that the current position is at maximum one dial from the hardware zero.
     log::info!(
         "find_closest_offset_to_zero: current_position: {}, hardware_zero: {}, reduction: {}",
         current_position,
@@ -264,7 +264,7 @@ mod tests {
         let config = config.unwrap();
 
         if let Orbita3dIOConfig::DynamixelSerial(dxl_config) = config.io {
-            assert_eq!(config.kinematics_model.alpha, 50.0_f64.to_radians());
+            assert_eq!(config.kinematics_model.alpha, 54.0_f64.to_radians());
             assert_eq!(config.kinematics_model.gamma_min, 40.0_f64.to_radians());
             assert_eq!(config.kinematics_model.offset, 0.0);
             assert_eq!(config.kinematics_model.beta, PI / 2.0);
@@ -275,10 +275,10 @@ mod tests {
             } else {
                 panic!("Wrong config type");
             }
-            assert_eq!(config.disks.reduction, 1.0);
+            assert_eq!(config.disks.reduction, 4.2666667);
 
             assert_eq!(dxl_config.serial_port, "/dev/ttyUSB0");
-            assert_eq!(dxl_config.id, 42);
+            assert_eq!(dxl_config.id, 70);
         } else {
             panic!("Wrong config type");
         }

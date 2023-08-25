@@ -61,7 +61,15 @@ mod tests {
             ..Default::default()
         };
 
-        let rpy = random_rpy();
+        // let rpy = random_rpy();
+
+        // let rpy = [-0.1765150939300468, -0.1289717129142079, -1.05634041350347];
+        let rpy = [
+            -0.0006058028930239779,
+            0.5135135761900762,
+            -1.5625687865275368,
+        ];
+
         let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
         let disks = orb.compute_inverse_kinematics(rot).unwrap();
 
