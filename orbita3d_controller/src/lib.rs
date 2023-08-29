@@ -180,7 +180,7 @@ impl Orbita3dController {
         Ok(conversion::rotation_matrix_to_quaternion(rot))
     }
 
-    /// Get the current velocity $\omega$ (as a velocity pseudo vector (wx, wy, wz) which defines the intantaneous axis of rotation and with the norm represents the velocity)
+    /// Get the current velocity $\omega$ (as a velocity pseudo vector (wx, wy, wz) which defines the instantaneous axis of rotation and with the norm represents the velocity)
     pub fn get_current_velocity(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
         let input_velocity = self.inner.get_current_velocity()?;
