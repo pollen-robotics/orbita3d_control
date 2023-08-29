@@ -3,9 +3,9 @@ use nalgebra::{Matrix3, Vector3};
 use crate::Orbita3dKinematicsModel;
 
 impl Orbita3dKinematicsModel {
-    /// Compute the forward torque
+    /// Compute the forward static torque
     ///
-    /// Compute the output torque (platform oriented torque) from the input torque (motors torque) and the motor angles.
+    /// Compute the output static torque (platform oriented torque) from the input torque (motors torque) and the motor angles.
     ///
     /// # Arguments
     /// * thetas - The motor angles as a 3-element array.
@@ -22,13 +22,13 @@ impl Orbita3dKinematicsModel {
         // Rotation3::from_euler_angles(rpy[0], rpy[1], rpy[2])
     }
 
-    /// Compute the inverse torque
+    /// Compute the inverse static torque
     ///
     /// Compute the input torque (motors torque) from the output torque (platform oriented torque) and the motor angles.
     ///
     /// # Arguments
     /// * thetas - The motor angles as a 3-element array.
-    /// * output_torque - The output torque as a 3d rotation.
+    /// * output_torque - The output torque as a 3d pseudo-vector.
     /// # Returns
     /// * The input torque as a 3-element array.
     pub fn compute_input_torque(&self, thetas: [f64; 3], output_torque: Vector3<f64>) -> [f64; 3] {

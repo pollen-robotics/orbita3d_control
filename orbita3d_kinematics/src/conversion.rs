@@ -31,11 +31,11 @@ pub fn matrix_to_intrinsic_roll_pitch_yaw(rot: Rotation3<f64>) -> [f64; 3] {
     [roll, pitch, yaw]
 }
 
-/// Convert from Vector3<f64> to [f64;3]
+/// Convert from `Vector3<f64>` to `\[`f64;3`\]`
 pub fn vector3_to_array(v: Vector3<f64>) -> [f64; 3] {
     [v.x, v.y, v.z]
 }
-/// Convert from [f64;3] to Vector3<f64>
+/// Convert from `\[`f64;3`\]` to `Vector3<f64>`
 pub fn array_to_vector3(a: [f64; 3]) -> Vector3<f64> {
     Vector3::new(a[0], a[1], a[2])
 }
