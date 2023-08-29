@@ -72,7 +72,7 @@ impl Orbita3dKinematicsModel {
         let vel = self
             .inner()
             .compute_output_velocity(*thetas, *thetas_velocity);
-        *output_velocity = conversion::vector3_to_array(vel);
+        *output_velocity = vel.into();
 
         0
     }
