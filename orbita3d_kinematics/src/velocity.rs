@@ -20,11 +20,6 @@ impl Orbita3dKinematicsModel {
         let rot = self.compute_forward_kinematics(thetas);
 
         let j_inv = self.jacobian_inverse(rot, thetas);
-        println!(
-            "[compute output velocity] input_velocity: {:?}",
-            input_velocity
-        );
-
         self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into())
     }
 
@@ -42,11 +37,6 @@ impl Orbita3dKinematicsModel {
         thetas: [f64; 3],
         output_velocity: Vector3<f64>,
     ) -> [f64; 3] {
-        println!(
-            "[compute input velocity] output_velocity: {:?}",
-            output_velocity
-        );
-
         let rot = self.compute_forward_kinematics([thetas[0], thetas[1], thetas[2]]);
         let j_inv = self.jacobian_inverse(rot, thetas);
         self.compute_input_velocity_from_j_inv(j_inv, output_velocity)
@@ -95,10 +85,7 @@ mod tests {
         let orb = Orbita3dKinematicsModel::default();
 
         let output_velocity = orb.compute_output_velocity(thetas, input_velocity);
-        println!("Computed output_velocity: {:?}", output_velocity);
-
         let reconstructed = orb.compute_input_velocity(thetas, output_velocity);
-        println!("Computed input_velocity: {:?}", reconstructed);
 
         for i in 0..3 {
             assert!(
@@ -142,17 +129,6 @@ mod tests {
         let rpyconv = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
 
         let thetas = orb.compute_inverse_kinematics(rot).unwrap();
-
-        println!("thetas: {:?}", thetas);
-        println!("rpy: {:?}", rpy);
-        let rpy2 = orb.compute_forward_kinematics(thetas);
-
-        println!(
-            "rpy2: {:?}",
-            conversion::matrix_to_intrinsic_roll_pitch_yaw(rpy2)
-        );
-
-        println!("rpy3: {:?}", rpyconv);
 
         let mut rng = rand::thread_rng();
         let input_velocity = [
