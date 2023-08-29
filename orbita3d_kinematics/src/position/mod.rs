@@ -61,27 +61,36 @@ mod tests {
             ..Default::default()
         };
 
-        let rpy = random_rpy();
-        let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
-        let disks = orb.compute_inverse_kinematics(rot).unwrap();
+        for rpy in [
+            [-0.1765150939300468, -0.1289717129142079, -1.05634041350347],
+            [
+                -0.0006058028930239779,
+                0.5135135761900762,
+                -1.5625687865275368,
+            ],
+            random_rpy(),
+        ] {
+            let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
+            let disks = orb.compute_inverse_kinematics(rot).unwrap();
 
-        let rot = orb.compute_forward_kinematics(disks);
-        let reconstructed = matrix_to_intrinsic_roll_pitch_yaw(rot);
+            let rot = orb.compute_forward_kinematics(disks);
+            let reconstructed = matrix_to_intrinsic_roll_pitch_yaw(rot);
 
-        assert!(
-            (rpy[0] - reconstructed[0]).abs() < 1e-2,
-            "Fail for {:?}",
-            rpy
-        );
-        assert!(
-            (rpy[1] - reconstructed[1]).abs() < 1e-2,
-            "Fail for {:?}",
-            rpy
-        );
-        assert!(
-            (rpy[2] - reconstructed[2]).abs() < 1e-2,
-            "Fail for {:?}",
-            rpy
-        );
+            assert!(
+                (rpy[0] - reconstructed[0]).abs() < 1e-2,
+                "Fail for {:?}",
+                rpy
+            );
+            assert!(
+                (rpy[1] - reconstructed[1]).abs() < 1e-2,
+                "Fail for {:?}",
+                rpy
+            );
+            assert!(
+                (rpy[2] - reconstructed[2]).abs() < 1e-2,
+                "Fail for {:?}",
+                rpy
+            );
+        }
     }
 }

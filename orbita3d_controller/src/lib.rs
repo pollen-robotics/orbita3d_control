@@ -179,23 +179,26 @@ impl Orbita3dController {
         let rot = self.kinematics.compute_forward_kinematics(thetas);
         Ok(conversion::rotation_matrix_to_quaternion(rot))
     }
-    /// Get the current velocity (as quaternion (qx, qy, qz, qw))
-    pub fn get_current_velocity(&mut self) -> Result<[f64; 4]> {
+
+    /// Get the current velocity $\omega$ (as a velocity pseudo vector (wx, wy, wz) which defines the instantaneous axis of rotation and with the norm represents the velocity)
+    pub fn get_current_velocity(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
         let input_velocity = self.inner.get_current_velocity()?;
 
         let rot = self
             .kinematics
             .compute_output_velocity(thetas, input_velocity);
-        Ok(conversion::rotation_matrix_to_quaternion(rot))
+        Ok(rot.into())
     }
-    /// Get the current torque (as quaternion (qx, qy, qz, qw))
-    pub fn get_current_torque(&mut self) -> Result<[f64; 4]> {
+    /// Get the current torque (as pseudo vector)
+    pub fn get_current_torque(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
         let input_torque = self.inner.get_current_torque()?;
 
-        let rot = self.kinematics.compute_output_torque(thetas, input_torque);
-        Ok(conversion::rotation_matrix_to_quaternion(rot))
+        Ok(self
+            .kinematics
+            .compute_output_torque(thetas, input_torque)
+            .into())
     }
 
     /// Get the target orientation (as quaternion (qx, qy, qz, qw))

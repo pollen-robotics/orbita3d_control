@@ -89,7 +89,7 @@ pub extern "C" fn orbita3d_get_current_orientation(uid: u32, orientation: &mut [
 }
 
 #[no_mangle]
-pub extern "C" fn orbita3d_get_current_velocity(uid: u32, velocity: &mut [f64; 4]) -> i32 {
+pub extern "C" fn orbita3d_get_current_velocity(uid: u32, velocity: &mut [f64; 3]) -> i32 {
     match CONTROLLER
         .lock()
         .unwrap()
@@ -106,7 +106,7 @@ pub extern "C" fn orbita3d_get_current_velocity(uid: u32, velocity: &mut [f64; 4
 }
 
 #[no_mangle]
-pub extern "C" fn orbita3d_get_current_torque(uid: u32, torque: &mut [f64; 4]) -> i32 {
+pub extern "C" fn orbita3d_get_current_torque(uid: u32, torque: &mut [f64; 3]) -> i32 {
     match CONTROLLER
         .lock()
         .unwrap()

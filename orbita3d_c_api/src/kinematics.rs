@@ -60,19 +60,19 @@ impl Orbita3dKinematicsModel {
     /// # Arguments
     /// * thetas - The motor angles as a 3-element array.
     /// * thetas_velocity - The motor velocities as a 3-element array.
-    /// * quat_velocity - Holder for the platform orientation velocity as a quaternion result.
+    /// * output_velocity - Holder for the platform orientation velocity as a velocity pseudo vector.
     /// # Returns
     /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_forward_velocity(
         &self,
         thetas: &[f64; 3],
         thetas_velocity: &[f64; 3],
-        quat_velocity: &mut [f64; 4],
+        output_velocity: &mut [f64; 3],
     ) -> i32 {
-        let rot = self
+        let vel = self
             .inner()
             .compute_output_velocity(*thetas, *thetas_velocity);
-        *quat_velocity = conversion::rotation_matrix_to_quaternion(rot);
+        *output_velocity = vel.into();
 
         0
     }
@@ -83,17 +83,17 @@ impl Orbita3dKinematicsModel {
     /// # Arguments
     /// * thetas - The motor angles as a 3-element array.
     /// * thetas_torque - The motor torques as a 3-element array.
-    /// * quat_torque - Holder for the platform orientation torque as a quaternion result.
+    /// * output_torque - Holder for the platform orientation torque as a pseudo vector result.
     /// # Returns
     /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_forward_torque(
         &self,
         thetas: &[f64; 3],
         thetas_torque: &[f64; 3],
-        quat_torque: &mut [f64; 4],
+        output_torque: &mut [f64; 3],
     ) -> i32 {
         let rot = self.inner().compute_output_torque(*thetas, *thetas_torque);
-        *quat_torque = conversion::rotation_matrix_to_quaternion(rot);
+        *output_torque = rot.into();
 
         0
     }
@@ -132,25 +132,19 @@ impl Orbita3dKinematicsModel {
     ///
     /// # Arguments
     /// * thetas - The motor angles as a 3-element array.
-    /// * quat_velocity - The platform orientation velocity as a quaternion.
+    /// * output_velocity - The platform orientation velocity as a velocity pseudo vector.
     /// * thetas_velocity - Holder for the motor velocities as a 3-element array result.
     /// # Returns
     /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_inverse_velocity(
         &self,
         thetas: &[f64; 3],
-        quat_velocity: &[f64; 4],
+        output_velocity: &[f64; 3],
         thetas_velocity: &mut [f64; 3],
     ) -> i32 {
-        let output_velocity = conversion::quaternion_to_rotation_matrix(
-            quat_velocity[0],
-            quat_velocity[1],
-            quat_velocity[2],
-            quat_velocity[3],
-        );
         *thetas_velocity = self
             .inner()
-            .compute_input_velocity(*thetas, output_velocity);
+            .compute_input_velocity(*thetas, conversion::array_to_vector3(*output_velocity));
 
         0
     }
@@ -160,23 +154,19 @@ impl Orbita3dKinematicsModel {
     ///
     /// # Arguments
     /// * thetas - The motor angles as a 3-element array.
-    /// * quat_torque - The platform orientation torque as a quaternion.
+    /// * output_torque - The platform orientation torque as a pseudo vector.
     /// * thetas_torque - Holder for the motor torques as a 3-element array result.
     /// # Returns
     /// * 0 if success, 1 if error.
     pub extern "C" fn orbita3d_kinematics_inverse_torque(
         &self,
         thetas: &[f64; 3],
-        quat_torque: &[f64; 4],
+        output_torque: &[f64; 3],
         thetas_torque: &mut [f64; 3],
     ) -> i32 {
-        let output_torque = conversion::quaternion_to_rotation_matrix(
-            quat_torque[0],
-            quat_torque[1],
-            quat_torque[2],
-            quat_torque[3],
-        );
-        *thetas_torque = self.inner().compute_input_torque(*thetas, output_torque);
+        *thetas_torque = self
+            .inner()
+            .compute_input_torque(*thetas, conversion::array_to_vector3(*output_torque));
 
         0
     }
