@@ -26,7 +26,6 @@ impl Orbita3dKinematicsModel {
         );
 
         self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into())
-        // Rotation3::new(self.compute_output_velocity_from_j_inv(j_inv, input_velocity.into()))
     }
 
     /// Compute the inverse velocity
@@ -111,13 +110,6 @@ mod tests {
             );
         }
     }
-
-    // #[test]
-    // fn inverse_forward_vel_value_1() {
-    //     let thetas = [0.147376526054817, -0.0063153266133482155, 0.29099962984161976];
-    //     let input_velocity = [0.6696758700667225, 0.1914613976070494, -0.3389136179061003];
-
-    // }
 
     #[test]
     fn inverse_forward_vel() {

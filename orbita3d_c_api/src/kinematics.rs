@@ -164,12 +164,6 @@ impl Orbita3dKinematicsModel {
         output_torque: &[f64; 3],
         thetas_torque: &mut [f64; 3],
     ) -> i32 {
-        // let output_torque = conversion::quaternion_to_rotation_matrix(
-        //     quat_torque[0],
-        //     quat_torque[1],
-        //     quat_torque[2],
-        //     quat_torque[3],
-        // );
         *thetas_torque = self
             .inner()
             .compute_input_torque(*thetas, conversion::array_to_vector3(*output_torque));

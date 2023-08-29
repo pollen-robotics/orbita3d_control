@@ -16,10 +16,7 @@ impl Orbita3dKinematicsModel {
         let rot = self.compute_forward_kinematics(thetas);
 
         let j_inv = self.jacobian_inverse(rot, thetas);
-        // let rpy = self.compute_output_torque_from_j_inv(j_inv, input_torque.into());
         self.compute_output_torque_from_j_inv(j_inv, input_torque.into())
-
-        // Rotation3::from_euler_angles(rpy[0], rpy[1], rpy[2])
     }
 
     /// Compute the inverse static torque
@@ -32,9 +29,6 @@ impl Orbita3dKinematicsModel {
     /// # Returns
     /// * The input torque as a 3-element array.
     pub fn compute_input_torque(&self, thetas: [f64; 3], output_torque: Vector3<f64>) -> [f64; 3] {
-        // let output_torque = output_torque.euler_angles();
-        // let output_torque = Vector3::new(output_torque.0, output_torque.1, output_torque.2);
-
         let rot = self.compute_forward_kinematics(thetas);
         let j_inv = self.jacobian_inverse(rot, thetas);
 
