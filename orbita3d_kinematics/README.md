@@ -30,7 +30,7 @@ The library also checks the range of angle of the solution ($\gamma_{min}$ and $
 
 ### Forward kinematics
 
-The forward kinematics of a parallel system is unfortunately often much more difficult to compute and usually no exact solution can be obtained. The method used here is a numerical method that solves a system of of 8 equations obtained from geometric constraints of the system. The system is solved using the Levenberg-Marquardt algorithm.
+The forward kinematics of a parallel system is unfortunately often much more difficult to compute and usually no exact solution can be obtained. The method used here is a numerical method that solves a system of 8 equations obtained from geometric constraints of the system. The system is solved using the Levenberg-Marquardt algorithm.
 As demonstrated in: "On the direct kinematics of a class of spherical three-degree-of freedom parallel manipulators", Gosselin, C. M., Sefrioui, J., & Richard, M. J. (1992). https://doi.org/10.1115/DETC1992-0193"
 the system leads to a polynomial of degree 8, which leads to up to 8 solutions. Here again we filter out unfeasible solutions.
 
