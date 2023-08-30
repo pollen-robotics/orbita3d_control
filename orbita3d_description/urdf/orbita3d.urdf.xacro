@@ -4,9 +4,7 @@
   <xacro:include filename="$(find pollen_generic_description)/urdf/inertial_primitives.urdf.xacro"/>
   <xacro:include filename="$(find orbita3d_description)/ros2_control/orbita3d.ros2_control.xacro"/>
 
-  <xacro:macro name="orbita3d" params="name parent length radius mass xyz rpy damping friction configfile">
-    <!-- 54°?? -->
-  <xacro:property name="orbita3d_alpha" value="0.9424777960769379"/>
+  <xacro:macro name="orbita3d" params="name parent length radius mass xyz rpy damping friction config_file">
 
     <material name="orbita3d_yellow">
         <color rgba="0.8 0.8 0.0 1"/>
@@ -63,7 +61,7 @@
       	<geometry>
           <sphere radius="${radius*1.2}"/>
       	</geometry>
-      	<material name="orbita3d_grey"/> 
+      	<material name="orbita3d_grey"/>
       </visual>
       <collision>
       	<origin xyz="0 0 0" rpy="0 0 0"/>

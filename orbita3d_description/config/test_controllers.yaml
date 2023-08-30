@@ -27,36 +27,36 @@ joint_state_broadcaster:
 forward_position_controller:
   ros__parameters:
     joints:
-      - wrist_roll
-      - wrist_pitch
-      - wrist_yaw
+      - neck_roll
+      - neck_pitch
+      - neck_yaw
     interface_name: position
     use_sim_time: false
 
 forward_torque_controller:
   ros__parameters:
     joints:
-      - wrist_roll
-      - wrist_pitch
-      - wrist_yaw
+      - neck_roll
+      - neck_pitch
+      - neck_yaw
     interface_name: torque
     use_sim_time: false
 
 forward_torque_limit_controller:
   ros__parameters:
     joints:
-      - wrist_roll
-      - wrist_pitch
-      - wrist_yaw
+      - neck_roll
+      - neck_pitch
+      - neck_yaw
     interface_name: torque_limit
     use_sim_time: false
 
 forward_speed_limit_controller:
   ros__parameters:
     joints:
-      - wrist_roll
-      - wrist_pitch
-      - wrist_yaw
+      - neck_roll
+      - neck_pitch
+      - neck_yaw
     interface_name: speed_limit
     use_sim_time: false
 
@@ -64,7 +64,7 @@ forward_speed_limit_controller:
 forward_pid_controller:
   ros__parameters:
     joints:
-      - wrist_roll
-      - wrist_pitch
-      - wrist_yaw
+      - neck_roll
+      - neck_pitch
+      - neck_yaw
     use_sim_time: false

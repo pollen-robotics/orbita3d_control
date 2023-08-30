@@ -1,0 +1,143 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="test_orbita3d">
+
+  <xacro:arg name="use_fake_hardware" default="false"/>
+  <xacro:arg name="use_gazebo" default="false"/>
+
+
+  <xacro:include filename="$(find pollen_generic_description)/urdf/inertial_primitives.urdf.xacro"/>
+  <xacro:include filename="$(find orbita3d_description)/urdf/orbita3d.urdf.xacro"/>
+
+
+  <!-- Orbita3d config -->
+  <xacro:arg name="config_file" default="$(find orbita3d_controller)/config/fake.yaml"/>
+
+
+  <!-- MODEL PARAMETERS -->
+  <xacro:property name="base_collision" value="true"/>
+  <xacro:property name="base_visual" value="true"/>
+  <xacro:property name="damping" value="0.1"/>
+  <xacro:property name="friction" value="0.1"/>
+
+  <xacro:property name="neck_length" value="0.05"/>
+  <xacro:property name="neck_radius" value="0.03"/>
+  <xacro:property name="neck_mass" value="0.5"/>
+  <xacro:property name="neck_offset_x" value="0"/>
+  <xacro:property name="neck_offset_y" value="0"/>
+  <xacro:property name="neck_offset_z" value="0.08"/>
+  <xacro:property name="neck_offset_yaw" value="0.0"/>
+
+
+
+
+  <!-- MODEL PARAMETERS -->
+
+
+
+    <material name="torsoblack">
+        <color rgba="0.5 0.5 0.5 1.0"/>
+    </material>
+
+    <material name="eyewhite">
+        <color rgba="1.0 1.0 1.0 1.0"/>
+    </material>
+
+
+  <link name="world"/>
+  <joint name="world_joint" type="fixed">
+    <origin xyz="0 0 1.0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="torso"/>
+  </joint>
+
+  <!-- TORSO -->
+  <link name="torso">
+    <xacro:if value="${base_collision}">
+      <collision>
+        <origin xyz="0 0 -0.5" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="1" radius="0.03"/>
+        </geometry>
+      </collision>
+    </xacro:if>
+    <xacro:if value="${base_visual}">
+      <visual>
+        <origin xyz="0.0 0 -0.05" rpy="0 0.0 0"/>
+        <geometry>
+          <box size="0.1 0.2 0.22"/>
+        </geometry>
+        <!-- <origin xyz="0 0 -0.5" rpy="0 0 0"/> -->
+        <!-- <geometry> -->
+        <!--   <cylinder length="1" radius="0.03"/> -->
+        <!-- </geometry> -->
+        <material name="torsoblack"/>
+      </visual>
+    </xacro:if>
+    <xacro:inertial_cuboid mass="10" xyz="0 0 0.5"  rpy="0 0 0" x_length="0.05" y_length="0.05" z_length="1"/>
+  </link>
+  <gazebo reference="torso">
+    <material>Gazebo/Black</material>
+    <static>true</static>
+  </gazebo>
+  <!-- TORSO -->
+
+
+  <!-- Neck style Orbita3d -->
+  <xacro:orbita3d
+    name="neck" parent="torso"
+    length="${neck_length}" radius="${neck_radius}" mass="${neck_mass}"
+    xyz="${neck_offset_x} ${neck_offset_y} ${neck_offset_z}" rpy="0 0 ${neck_offset_yaw}"
+    damping="${damping}" friction="${friction}"
+    config_file="$(arg config_file)"
+  />
+
+
+  <link name="tip">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0.0 0"/>
+      <geometry>
+          <sphere radius="0.06"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="tip_joint" type="fixed">
+    <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    <parent link="neck_ball_link"/>
+    <child link="tip"/>
+  </joint>
+
+
+  <link name="leye">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0.0 0"/>
+      <geometry>
+          <sphere radius="0.01"/>
+      </geometry>
+      <material name="eyewhite"/>
+    </visual>
+  </link>
+
+  <link name="reye">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0.0 0"/>
+      <geometry>
+          <sphere radius="0.01"/>
+      </geometry>
+      <material name="eyewhite"/>
+    </visual>
+  </link>
+
+  <joint name="leye_joint" type="fixed">
+    <origin xyz="0.05 0.025 0.01" rpy="0 0 0"/>
+    <parent link="tip"/>
+    <child link="leye"/>
+  </joint>
+
+  <joint name="reye_joint" type="fixed">
+    <origin xyz="0.05 -0.025 0.01" rpy="0 0 0"/>
+    <parent link="tip"/>
+    <child link="reye"/>
+  </joint>
+
+
+</robot>
