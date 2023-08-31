@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="$(find pollen_generic_description)/ros2_control/joint.ros2_control.xacro"/>
+
+    <xacro:macro name="orbita3d_control" params="name config_file">
+
+        <ros2_control name="${name}" type="system">
+            <hardware>
+                <xacro:unless value="$(arg use_fake_hardware)">
+                  <plugin>orbita3d_system_hwi/Orbita3dSystem</plugin>
+                    <param name="config_file">${config_file}</param>
+                </xacro:unless>
+
+                <xacro:if value="$(arg use_fake_hardware)">
+                    <!-- Use gazebo as hardware simulation. -->
+                    <xacro:if value="$(arg use_gazebo)">
+                        <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+                    </xacro:if>
+
+                    <!-- Use fake components. -->
+                    <xacro:unless value="$(arg use_gazebo)">
+                        <plugin>fake_components/GenericSystem</plugin>
+                    </xacro:unless>
+                </xacro:if>
+            </hardware>
+                 <xacro:position_joint_control name="${name}_roll"/>
+                 <xacro:position_joint_control name="${name}_pitch"/>
+                 <xacro:position_joint_control name="${name}_yaw"/>
+        </ros2_control>
+    </xacro:macro>
+</robot>

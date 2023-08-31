@@ -182,3 +182,25 @@ impl Orbita3dKinematicsModel {
         }
     }
 }
+
+#[no_mangle]
+pub extern "C" fn quaternion_to_intrinsic_roll_pitch_yaw(
+    quat: &[f64; 4],
+    rpy: &mut [f64; 3],
+) -> i32 {
+    let rot = conversion::quaternion_to_rotation_matrix(quat[0], quat[1], quat[2], quat[3]);
+    *rpy = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+
+    0
+}
+
+#[no_mangle]
+pub extern "C" fn intrinsic_roll_pitch_yaw_to_quaternion(
+    rpy: &[f64; 3],
+    quat: &mut [f64; 4],
+) -> i32 {
+    let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
+    *quat = conversion::rotation_matrix_to_quaternion(rot);
+
+    0
+}

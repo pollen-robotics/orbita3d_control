@@ -1,0 +1,12 @@
+<library path="orbita3d_system_hwi">
+
+  <class
+    name="orbita3d_system_hwi/Orbita3dSystem"
+    type="orbita3d_system_hwi::Orbita3dSystem"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Orbita3d hardware interface plugin.
+    </description>
+  </class>
+
+</library>

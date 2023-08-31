@@ -18,3 +18,4 @@ __pycache__/
 .coverage
 .ipynb_checkpoints
 orbita3d_c_api/python/orbita3d/_orbita3d
+.pytest_cache/
