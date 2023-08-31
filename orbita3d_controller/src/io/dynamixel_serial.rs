@@ -264,7 +264,7 @@ mod tests {
         let config = config.unwrap();
 
         if let Orbita3dIOConfig::DynamixelSerial(dxl_config) = config.io {
-            assert_eq!(config.kinematics_model.alpha, 50.0_f64.to_radians());
+            assert_eq!(config.kinematics_model.alpha, 54.0_f64.to_radians());
             assert_eq!(config.kinematics_model.gamma_min, 40.0_f64.to_radians());
             assert_eq!(config.kinematics_model.offset, 0.0);
             assert_eq!(config.kinematics_model.beta, PI / 2.0);
