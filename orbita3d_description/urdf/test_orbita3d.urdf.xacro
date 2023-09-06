@@ -6,6 +6,8 @@
 
 
   <xacro:include filename="$(find pollen_generic_description)/urdf/inertial_primitives.urdf.xacro"/>
+
+
   <xacro:include filename="$(find orbita3d_description)/urdf/orbita3d.urdf.xacro"/>
 
 
@@ -31,9 +33,6 @@
 
 
   <!-- MODEL PARAMETERS -->
-
-
-
     <material name="torsoblack">
         <color rgba="0.5 0.5 0.5 1.0"/>
     </material>
