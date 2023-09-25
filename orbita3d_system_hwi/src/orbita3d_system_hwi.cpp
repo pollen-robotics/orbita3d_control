@@ -169,23 +169,27 @@ Orbita3dSystem::on_activate(const rclcpp_lifecycle::State & /*previous_state*/)
 //       );
 //     ret= CallbackReturn::ERROR;
 //   }
-  //Torque limit
-  if (orbita3d_get_raw_motors_torque_limit(this->uid, &hw_states_torque_limit_) != 0) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("Orbita3dSystem"),
-      "(%s) READ TORQUE LIMIT ERROR!", info_.name.c_str()
-      );
-    ret= CallbackReturn::ERROR;
-  }
 
-  //velocity limit
-  if (orbita3d_get_raw_motors_velocity_limit(this->uid, &hw_states_speed_limit_) != 0) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("Orbita3dSystem"),
-      "(%s) READ SPEED LIMIT ERROR!", info_.name.c_str()
-      );
-    ret= CallbackReturn::ERROR;
-  }
+
+  //TODO
+
+  //Torque limit
+  // if (orbita3d_get_raw_motors_torque_limit(this->uid, &hw_states_torque_limit_) != 0) {
+  //   RCLCPP_ERROR(
+  //     rclcpp::get_logger("Orbita3dSystem"),
+  //     "(%s) READ TORQUE LIMIT ERROR!", info_.name.c_str()
+  //     );
+  //   ret= CallbackReturn::ERROR;
+  // }
+
+  // //velocity limit
+  // if (orbita3d_get_raw_motors_velocity_limit(this->uid, &hw_states_speed_limit_) != 0) {
+  //   RCLCPP_ERROR(
+  //     rclcpp::get_logger("Orbita3dSystem"),
+  //     "(%s) READ SPEED LIMIT ERROR!", info_.name.c_str()
+  //     );
+  //   ret= CallbackReturn::ERROR;
+  // }
 
   //PID gains
   double pids[3][3];
@@ -373,26 +377,29 @@ Orbita3dSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
 
 
   //Torque limit
-  if (orbita3d_get_raw_motors_torque_limit(this->uid, &hw_states_torque_limit_) != 0) {
+  //TODO
 
-    ret=hardware_interface::return_type::ERROR;
+  // if (orbita3d_get_raw_motors_torque_limit(this->uid, &hw_states_torque_limit_) != 0) {
 
-    RCLCPP_ERROR(
-      rclcpp::get_logger("Orbita3dSystem"),
-      "(%s) READ TORQUE LIMIT ERROR!", info_.name.c_str()
-      );
-  }
+  //   ret=hardware_interface::return_type::ERROR;
 
-  //velocity limit
-  if (orbita3d_get_raw_motors_velocity_limit(this->uid, &hw_states_speed_limit_) != 0) {
+  //   RCLCPP_ERROR(
+  //     rclcpp::get_logger("Orbita3dSystem"),
+  //     "(%s) READ TORQUE LIMIT ERROR!", info_.name.c_str()
+  //     );
+  // }
 
-    ret=hardware_interface::return_type::ERROR;
+  // //velocity limit
+  // if (orbita3d_get_raw_motors_velocity_limit(this->uid, &hw_states_speed_limit_) != 0) {
 
-    RCLCPP_ERROR(
-      rclcpp::get_logger("Orbita3dSystem"),
-      "(%s) READ SPEED LIMIT ERROR!", info_.name.c_str()
-      );
-  }
+  //   ret=hardware_interface::return_type::ERROR;
+
+  //   RCLCPP_ERROR(
+  //     rclcpp::get_logger("Orbita3dSystem"),
+  //     "(%s) READ SPEED LIMIT ERROR!", info_.name.c_str()
+  //     );
+  // }
+
 
   //PID gains
   double pids[3][3];
@@ -438,8 +445,9 @@ Orbita3dSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
 
   // We only change torque for all axes
 
-  bool torque = (hw_commands_torque_[0] == 1.0 && hw_commands_torque_[1] == 1.0 && hw_commands_torque_[2] == 1.0);
+  bool torque = (hw_commands_torque_[0] == 1.0) || (hw_commands_torque_[1] == 1.0) || (hw_commands_torque_[2] == 1.0);
   //TODO: we can go with orbita3d_set_raw_torque_limit
+
   if(torque)
   {
     if (orbita3d_enable_torque(this->uid, false) != 0) { //do not reset target
@@ -468,27 +476,28 @@ Orbita3dSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
 
 
   // speed limit
+  // TODO
 
-  if(orbita3d_set_raw_motors_velocity_limit(this->uid, &hw_commands_speed_limit_) != 0)
-  {
-    ret=hardware_interface::return_type::ERROR;
+  // if(orbita3d_set_raw_motors_velocity_limit(this->uid, &hw_commands_speed_limit_) != 0)
+  // {
+  //   ret=hardware_interface::return_type::ERROR;
 
-    RCLCPP_ERROR(
-      rclcpp::get_logger("Orbita3dSystem"),
-      "(%s) WRITE SPEED LIMIT ERROR!", info_.name.c_str()
-      );
-  }
+  //   RCLCPP_ERROR(
+  //     rclcpp::get_logger("Orbita3dSystem"),
+  //     "(%s) WRITE SPEED LIMIT ERROR!", info_.name.c_str()
+  //     );
+  // }
 
-  // torque limit
-  if(orbita3d_set_raw_motors_torque_limit(this->uid, &hw_commands_torque_limit_) != 0)
-  {
-    ret=hardware_interface::return_type::ERROR;
+  // // torque limit
+  // if(orbita3d_set_raw_motors_torque_limit(this->uid, &hw_commands_torque_limit_) != 0)
+  // {
+  //   ret=hardware_interface::return_type::ERROR;
 
-    RCLCPP_ERROR(
-      rclcpp::get_logger("Orbita3dSystem"),
-      "(%s) WRITE TORQUE LIMIT ERROR!", info_.name.c_str()
-      );
-  }
+  //   RCLCPP_ERROR(
+  //     rclcpp::get_logger("Orbita3dSystem"),
+  //     "(%s) WRITE TORQUE LIMIT ERROR!", info_.name.c_str()
+  //     );
+  // }
 
   // pid gains
   double pids[3][3];
