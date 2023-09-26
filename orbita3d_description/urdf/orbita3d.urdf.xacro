@@ -2,16 +2,17 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:include filename="$(find pollen_generic_description)/urdf/inertial_primitives.urdf.xacro"/>
+  <xacro:include filename="$(find pollen_generic_description)/urdf/materials.urdf.xacro"/>
   <xacro:include filename="$(find orbita3d_description)/ros2_control/orbita3d.ros2_control.xacro"/>
 
   <xacro:macro name="orbita3d" params="name parent length radius mass xyz rpy damping friction config_file">
 
-    <material name="orbita3d_yellow">
-        <color rgba="0.8 0.8 0.0 1"/>
-    </material>
-    <material name="orbita3d_grey">
-        <color rgba="0.8 0.8 0.8 1"/>
-    </material>
+    <!-- <material name="orbita3d_yellow"> -->
+    <!--     <color rgba="0.8 0.8 0.0 1"/> -->
+    <!-- </material> -->
+    <!-- <material name="orbita3d_grey"> -->
+    <!--     <color rgba="0.8 0.8 0.8 1"/> -->
+    <!-- </material> -->
 
     <!--
       Orbita3d
@@ -41,7 +42,8 @@
       	<geometry>
           <cylinder length="${length}" radius="${radius}"/>
       	</geometry>
-      	<material name="orbita3d_yellow"/>
+      	<!-- <material name="orbita3d_yellow"/> -->
+	<xacro:orbita3d_yellow/>
       </visual>
 
       <collision>
@@ -61,7 +63,9 @@
       	<geometry>
           <sphere radius="${radius*1.2}"/>
       	</geometry>
-      	<material name="orbita3d_grey"/>
+      	<!-- <material name="orbita3d_grey"/> -->
+	<xacro:orbita3d_grey/>
+
       </visual>
       <collision>
       	<origin xyz="0 0 0" rpy="0 0 0"/>
