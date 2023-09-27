@@ -327,7 +327,7 @@ Orbita3dSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
   double q[4];
   if (orbita3d_get_current_orientation(this->uid, &q) != 0) {
 
-    ret=hardware_interface::return_type::ERROR;
+    // ret=hardware_interface::return_type::ERROR;
 
     RCLCPP_ERROR(
       rclcpp::get_logger("Orbita3dSystem"),
@@ -341,7 +341,7 @@ Orbita3dSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
   bool torque_on=false;
   if(orbita3d_is_torque_on(this->uid, &torque_on)!=0)
   {
-    ret=hardware_interface::return_type::ERROR;
+    // ret=hardware_interface::return_type::ERROR;
 
     RCLCPP_ERROR(
       rclcpp::get_logger("Orbita3dSystem"),
@@ -405,7 +405,7 @@ Orbita3dSystem::read(const rclcpp::Time &, const rclcpp::Duration &)
   double pids[3][3];
   if (orbita3d_get_raw_motors_pid_gains(this->uid, &pids) != 0) {
 
-    ret=hardware_interface::return_type::ERROR;
+    // ret=hardware_interface::return_type::ERROR;
 
     RCLCPP_ERROR(
       rclcpp::get_logger("Orbita3dSystem"),
@@ -432,9 +432,9 @@ Orbita3dSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
   intrinsic_roll_pitch_yaw_to_quaternion(&hw_commands_position_, &q);
 
   if (orbita3d_set_target_orientation(this->uid, &q) != 0) {
-    ret=hardware_interface::return_type::ERROR;
+    // ret=hardware_interface::return_type::ERROR; //do not return error here, this will block the controller... cf: https://design.ros2.org/articles/node_lifecycle.html
 
-    RCLCPP_INFO_THROTTLE(
+    RCLCPP_ERROR_THROTTLE(
       rclcpp::get_logger("Orbita3dSystem"),
       clock_,
       LOG_THROTTLE_DURATION,
@@ -451,9 +451,9 @@ Orbita3dSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
   if(torque)
   {
     if (orbita3d_enable_torque(this->uid, false) != 0) { //do not reset target
-      ret=hardware_interface::return_type::ERROR;
+      // ret=hardware_interface::return_type::ERROR;
 
-      RCLCPP_INFO_THROTTLE(
+      RCLCPP_ERROR_THROTTLE(
         rclcpp::get_logger("Orbita3dSystem"),
         clock_,
         LOG_THROTTLE_DURATION,
@@ -463,9 +463,9 @@ Orbita3dSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
   }
   else{
       if (orbita3d_disable_torque(this->uid) != 0) {
-        ret=hardware_interface::return_type::ERROR;
+        // ret=hardware_interface::return_type::ERROR;
 
-        RCLCPP_INFO_THROTTLE(
+        RCLCPP_ERROR_THROTTLE(
           rclcpp::get_logger("Orbita3dSystem"),
           clock_,
           LOG_THROTTLE_DURATION,
@@ -508,7 +508,7 @@ Orbita3dSystem::write(const rclcpp::Time &, const rclcpp::Duration &)
   }
   if(orbita3d_set_raw_motors_pid_gains(this->uid, &pids) != 0)
   {
-    ret=hardware_interface::return_type::ERROR;
+    // ret=hardware_interface::return_type::ERROR;
 
     RCLCPP_ERROR(
       rclcpp::get_logger("Orbita3dSystem"),
