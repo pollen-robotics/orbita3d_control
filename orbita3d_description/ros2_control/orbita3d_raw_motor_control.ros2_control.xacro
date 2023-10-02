@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="orbita3d_actuator_control" params="name">
+      <gpio>
+        <state_interface name="speed_limit"/>
+        <command_interface name="speed_limit"/>
+
+        <state_interface name="torque_limit"/>
+        <command_interface name="torque_limit"/>
+
+        <state_interface name="p_gain"/>   
+        <command_interface name="p_gain"/>
+        <state_interface name="i_gain"/>   
+        <command_interface name="i_gain"/>
+        <state_interface name="d_gain"/>   
+        <command_interface name="d_gain"/>
+      </gpio>
+
+    </joint>
+  </xacro:macro>
+</robot>
+      
+
+
+    
