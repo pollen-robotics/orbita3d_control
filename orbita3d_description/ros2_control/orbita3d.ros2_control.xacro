@@ -26,15 +26,15 @@
                 </xacro:if>
             </hardware>
 
-            <xacro:orbita3d_actuator_control name="{name}"/>
+            <xacro:orbita3d_actuator_control name="${name}"/>
 
             <xacro:orbita3d_axis_control name="${name}_roll"/>
             <xacro:orbita3d_axis_control name="${name}_pitch"/>
             <xacro:orbita3d_axis_control name="${name}_yaw"/>
 
-            <xacro:orbita3d_raw_motor_control name="${name}_motor_1"/>
-            <xacro:orbita3d_raw_motor_control name="${name}_motor_2"/>
-            <xacro:orbita3d_raw_motor_control name="${name}_motor_3"/>
+            <xacro:orbita3d_raw_motor_control name="${name}_raw_motor_1"/>
+            <xacro:orbita3d_raw_motor_control name="${name}_raw_motor_2"/>
+            <xacro:orbita3d_raw_motor_control name="${name}_raw_motor_3"/>
 
         </ros2_control>
     </xacro:macro>
