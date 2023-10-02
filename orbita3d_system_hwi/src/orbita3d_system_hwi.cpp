@@ -46,6 +46,16 @@ Orbita3dSystem::on_init(const hardware_interface::HardwareInfo & info)
     return CallbackReturn::ERROR;
   }
 
+  long unsigned int nb_gpios_expected = 4; // Actuator + raw_motor_1 + raw_motor_2 + raw_motor_3
+  if (info.gpios.size() != nb_gpios_expected)
+  {
+    RCLCPP_ERROR(rclcpp::get_logger("Orbita3dSystem"),
+                 "Incorrect number of gpios, expected %ld, got \"%s\"", nb_gpios_expected,
+                 std::to_string(info.gpios.size()).c_str()
+      );
+    return CallbackReturn::ERROR;
+  }
+
 
   const char *config_file;
   bool from_config=false;
@@ -245,24 +255,6 @@ Orbita3dSystem::export_state_interfaces()
 {
   std::vector<hardware_interface::StateInterface> state_interfaces;
 
-  RCLCPP_INFO(
-    rclcpp::get_logger("Orbita3dSystem"),
-    "export state interface (%s) --- ACTUATOR", info_.name.c_str()
-  );
-  RCLCPP_INFO(
-    rclcpp::get_logger("Orbita3dSystem"),
-    "export state interface (%s) --- torque", info_.name.c_str()
-  );
-
-  state_interfaces.emplace_back(hardware_interface::StateInterface(
-    info_.name.c_str(), "torque", &hw_states_torque_));
-
-
-  RCLCPP_INFO(
-    rclcpp::get_logger("Orbita3dSystem"),
-    "export state interface (%s) --- JOINT", info_.name.c_str()
-  );
-
   for (std::size_t i = 0; i < 3; i++)
   {
     auto joint = info_.joints[i];
@@ -273,23 +265,45 @@ Orbita3dSystem::export_state_interfaces()
       joint.name, hardware_interface::HW_IF_VELOCITY, &hw_states_velocity_[i]));
     state_interfaces.emplace_back(hardware_interface::StateInterface(
       joint.name, hardware_interface::HW_IF_EFFORT, &hw_states_effort_[i]));
-    // state_interfaces.emplace_back(hardware_interface::StateInterface(
-    //   joint.name, "temperature", &hw_states_temperature_[i]));
-    state_interfaces.emplace_back(hardware_interface::StateInterface(
-      joint.name, "torque_limit", &hw_states_torque_limit_[i]));
-    state_interfaces.emplace_back(hardware_interface::StateInterface(
-      joint.name, "speed_limit", &hw_states_speed_limit_[i]));
-    state_interfaces.emplace_back(hardware_interface::StateInterface(
-      joint.name, "p_gain", &hw_states_p_gain_[i]));
-    state_interfaces.emplace_back(hardware_interface::StateInterface(
-      joint.name, "i_gain", &hw_states_i_gain_[i]));
-    state_interfaces.emplace_back(hardware_interface::StateInterface(
-      joint.name, "d_gain", &hw_states_d_gain_[i]));
+  }
 
-    RCLCPP_INFO(
-      rclcpp::get_logger("Orbita3dSystem"),
-      "export state interface (%s) \"%s\"!", info_.name.c_str(), joint.name.c_str()
+  for (std::size_t i = 0; i < 4; i++) {
+    auto gpio = info_.gpios[i];
+
+    if (gpio.name == info_.name.c_str()) {
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+      gpio.name, "torque", &hw_states_torque_));
+
+      RCLCPP_INFO(
+        rclcpp::get_logger("Orbita3dSystem"),
+        "export state interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str()
       );
+    }
+    else if (gpio.name.find("raw_motor") != std::string::npos) {
+      // state_interfaces.emplace_back(hardware_interface::StateInterface(
+      //   gpio.name, "temperature", &hw_states_temperature_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        gpio.name, "torque_limit", &hw_states_torque_limit_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        gpio.name, "speed_limit", &hw_states_speed_limit_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        gpio.name, "p_gain", &hw_states_p_gain_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        gpio.name, "i_gain", &hw_states_i_gain_[i]));
+      state_interfaces.emplace_back(hardware_interface::StateInterface(
+        gpio.name, "d_gain", &hw_states_d_gain_[i]));
+
+      RCLCPP_INFO(
+        rclcpp::get_logger("Orbita3dSystem"),
+        "export state interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str()
+      );
+    }
+    else {
+      RCLCPP_WARN(
+        rclcpp::get_logger("Orbita3dSystem"),
+        "Unknown state interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str()
+        );
+    }
   }
 
   return state_interfaces;
@@ -300,30 +314,54 @@ Orbita3dSystem::export_command_interfaces()
 {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
 
-  command_interfaces.emplace_back(hardware_interface::CommandInterface(
-    info_.name.c_str(), "torque", &hw_commands_torque_));
-
   for (std::size_t i = 0; i < 3; i++)
   {
     auto joint = info_.joints[i];
 
     command_interfaces.emplace_back(hardware_interface::CommandInterface(
       joint.name, hardware_interface::HW_IF_POSITION, &hw_commands_position_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      joint.name, "speed_limit", &hw_commands_speed_limit_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      joint.name, "torque_limit", &hw_commands_torque_limit_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      joint.name, "p_gain", &hw_commands_p_gain_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      joint.name, "i_gain", &hw_commands_i_gain_[i]));
-    command_interfaces.emplace_back(hardware_interface::CommandInterface(
-      joint.name, "d_gain", &hw_commands_d_gain_[i]));
 
     RCLCPP_INFO(
       rclcpp::get_logger("Orbita3dSystem"),
       "export command interface (%s) \"%s\"!", info_.name.c_str(), joint.name.c_str()
+    );
+  }
+
+  for (std::size_t i = 0; i < 4; i++) {
+    auto gpio = info_.gpios[i];
+
+    if (gpio.name == info_.name.c_str()) {
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(
+        info_.name.c_str(), "torque", &hw_commands_torque_));
+
+      RCLCPP_INFO(
+        rclcpp::get_logger("Orbita3dSystem"),
+        "export command interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str()
       );
+    }
+    else if (gpio.name.find("raw_motor") != std::string::npos) {
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(
+        gpio.name, "speed_limit", &hw_commands_speed_limit_[i]));
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(
+        gpio.name, "torque_limit", &hw_commands_torque_limit_[i]));
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(
+        gpio.name, "p_gain", &hw_commands_p_gain_[i]));
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(
+        gpio.name, "i_gain", &hw_commands_i_gain_[i]));
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(
+        gpio.name, "d_gain", &hw_commands_d_gain_[i]));
+
+      RCLCPP_INFO(
+        rclcpp::get_logger("Orbita3dSystem"),
+        "export command interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str()
+      );
+    }
+    else {
+      RCLCPP_WARN(
+        rclcpp::get_logger("Orbita3dSystem"),
+        "Unkown command interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str()
+        );
+    }
   }
 
   return command_interfaces;
