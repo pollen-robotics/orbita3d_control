@@ -13,6 +13,7 @@ impl<K: std::hash::Hash + Eq, V> SyncMap<K, V> {
         unsafe { (*self.0.get()).insert(key, value) }
     }
 
+    #[allow(dead_code)]
     pub fn get(&self, key: &K) -> Option<&V> {
         unsafe { (*self.0.get()).get(key) }
     }

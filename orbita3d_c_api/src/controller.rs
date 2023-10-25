@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ffi::CStr, sync::Mutex};
+use std::{ffi::CStr, sync::Mutex};
 
 use motor_toolbox_rs::PID;
 use once_cell::sync::Lazy;
