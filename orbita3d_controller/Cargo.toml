@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 cache_cache = "0.1.1"
 log = "0.4.20"
-motor_toolbox_rs = "0.2.0"
+motor_toolbox_rs = "0.2.1"
 orbita3d_kinematics = { version = "0.1.0", path = "../orbita3d_kinematics" }
 rustypot = "0.4.2"
 serde = { version = "1.0.183", features = ["derive"] }
