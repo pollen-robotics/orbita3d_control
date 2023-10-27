@@ -7,7 +7,7 @@ use orbita3d_controller::Orbita3dController;
 use crate::sync_map::SyncMap;
 
 static UID: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
-static CONTROLLER: Lazy<SyncMap<u32, Orbita3dController>> = Lazy::new(|| SyncMap::new());
+static CONTROLLER: Lazy<SyncMap<u32, Orbita3dController>> = Lazy::new(SyncMap::new);
 
 #[no_mangle]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
