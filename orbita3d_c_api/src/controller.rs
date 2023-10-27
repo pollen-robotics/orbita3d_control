@@ -1,12 +1,13 @@
-use std::{collections::HashMap, ffi::CStr, sync::Mutex};
+use std::{ffi::CStr, sync::Mutex};
 
 use motor_toolbox_rs::PID;
+use once_cell::sync::Lazy;
 use orbita3d_controller::Orbita3dController;
 
-lazy_static! {
-    static ref UID: Mutex<u32> = Mutex::new(0);
-    static ref CONTROLLER: Mutex<HashMap<u32, Orbita3dController>> = Mutex::new(HashMap::new());
-}
+use crate::sync_map::SyncMap;
+
+static UID: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
+static CONTROLLER: Lazy<SyncMap<u32, Orbita3dController>> = Lazy::new(SyncMap::new);
 
 #[no_mangle]
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
@@ -19,7 +20,7 @@ pub extern "C" fn orbita3d_controller_from_config(
     match Orbita3dController::with_config(configfile) {
         Ok(controller) => {
             *uid = get_available_uid();
-            CONTROLLER.lock().unwrap().insert(*uid, controller);
+            CONTROLLER.insert(*uid, controller);
             0
         }
         Err(_) => 1,
@@ -28,13 +29,7 @@ pub extern "C" fn orbita3d_controller_from_config(
 
 #[no_mangle]
 pub extern "C" fn orbita3d_is_torque_on(uid: u32, is_on: &mut bool) -> i32 {
-    match CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .is_torque_on()
-    {
+    match CONTROLLER.get_mut(&uid).unwrap().is_torque_on() {
         Ok(torque) => {
             *is_on = torque;
             0
@@ -46,8 +41,6 @@ pub extern "C" fn orbita3d_is_torque_on(uid: u32, is_on: &mut bool) -> i32 {
 #[no_mangle]
 pub extern "C" fn orbita3d_enable_torque(uid: u32, reset_target: bool) -> i32 {
     match CONTROLLER
-        .lock()
-        .unwrap()
         .get_mut(&uid)
         .unwrap()
         .enable_torque(reset_target)
@@ -59,13 +52,7 @@ pub extern "C" fn orbita3d_enable_torque(uid: u32, reset_target: bool) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn orbita3d_disable_torque(uid: u32) -> i32 {
-    match CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .disable_torque()
-    {
+    match CONTROLLER.get_mut(&uid).unwrap().disable_torque() {
         Ok(_) => 0,
         Err(_) => 1,
     }
@@ -73,13 +60,7 @@ pub extern "C" fn orbita3d_disable_torque(uid: u32) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_current_orientation(uid: u32, orientation: &mut [f64; 4]) -> i32 {
-    match CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .get_current_orientation()
-    {
+    match CONTROLLER.get_mut(&uid).unwrap().get_current_orientation() {
         Ok(ori) => {
             *orientation = ori;
             0
@@ -90,13 +71,7 @@ pub extern "C" fn orbita3d_get_current_orientation(uid: u32, orientation: &mut [
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_current_velocity(uid: u32, velocity: &mut [f64; 3]) -> i32 {
-    match CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .get_current_velocity()
-    {
+    match CONTROLLER.get_mut(&uid).unwrap().get_current_velocity() {
         Ok(vel) => {
             *velocity = vel;
             0
@@ -107,13 +82,7 @@ pub extern "C" fn orbita3d_get_current_velocity(uid: u32, velocity: &mut [f64; 3
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_current_torque(uid: u32, torque: &mut [f64; 3]) -> i32 {
-    match CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .get_current_torque()
-    {
+    match CONTROLLER.get_mut(&uid).unwrap().get_current_torque() {
         Ok(tor) => {
             *torque = tor;
             0
@@ -124,13 +93,7 @@ pub extern "C" fn orbita3d_get_current_torque(uid: u32, torque: &mut [f64; 3]) -
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_target_orientation(uid: u32, orientation: &mut [f64; 4]) -> i32 {
-    match CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .get_target_orientation()
-    {
+    match CONTROLLER.get_mut(&uid).unwrap().get_target_orientation() {
         Ok(ori) => {
             *orientation = ori;
             0
@@ -142,8 +105,6 @@ pub extern "C" fn orbita3d_get_target_orientation(uid: u32, orientation: &mut [f
 #[no_mangle]
 pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 4]) -> i32 {
     match CONTROLLER
-        .lock()
-        .unwrap()
         .get_mut(&uid)
         .unwrap()
         .set_target_orientation(*orientation)
@@ -156,8 +117,6 @@ pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_raw_motors_velocity_limit(uid: u32, limit: &mut [f64; 3]) -> i32 {
     match CONTROLLER
-        .lock()
-        .unwrap()
         .get_mut(&uid)
         .unwrap()
         .get_raw_motors_velocity_limit()
@@ -173,8 +132,6 @@ pub extern "C" fn orbita3d_get_raw_motors_velocity_limit(uid: u32, limit: &mut [
 #[no_mangle]
 pub extern "C" fn orbita3d_set_raw_motors_velocity_limit(uid: u32, limit: &[f64; 3]) -> i32 {
     match CONTROLLER
-        .lock()
-        .unwrap()
         .get_mut(&uid)
         .unwrap()
         .set_raw_motors_velocity_limit(*limit)
@@ -187,8 +144,6 @@ pub extern "C" fn orbita3d_set_raw_motors_velocity_limit(uid: u32, limit: &[f64;
 #[no_mangle]
 pub extern "C" fn orbita3d_get_raw_motors_torque_limit(uid: u32, limit: &mut [f64; 3]) -> i32 {
     match CONTROLLER
-        .lock()
-        .unwrap()
         .get_mut(&uid)
         .unwrap()
         .get_raw_motors_torque_limit()
@@ -204,8 +159,6 @@ pub extern "C" fn orbita3d_get_raw_motors_torque_limit(uid: u32, limit: &mut [f6
 #[no_mangle]
 pub extern "C" fn orbita3d_set_raw_motors_torque_limit(uid: u32, limit: &[f64; 3]) -> i32 {
     match CONTROLLER
-        .lock()
-        .unwrap()
         .get_mut(&uid)
         .unwrap()
         .set_raw_motors_torque_limit(*limit)
@@ -217,13 +170,7 @@ pub extern "C" fn orbita3d_set_raw_motors_torque_limit(uid: u32, limit: &[f64; 3
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_raw_motors_pid_gains(uid: u32, gains: &mut [[f64; 3]; 3]) -> i32 {
-    match CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .get_raw_motors_pid_gains()
-    {
+    match CONTROLLER.get_mut(&uid).unwrap().get_raw_motors_pid_gains() {
         Ok([pid_top, pid_middle, pid_bottom]) => {
             gains[0][0] = pid_top.p;
             gains[0][1] = pid_top.i;
@@ -243,28 +190,23 @@ pub extern "C" fn orbita3d_get_raw_motors_pid_gains(uid: u32, gains: &mut [[f64;
 
 #[no_mangle]
 pub extern "C" fn orbita3d_set_raw_motors_pid_gains(uid: u32, gains: &[[f64; 3]; 3]) -> i32 {
-    match CONTROLLER
-        .lock()
-        .unwrap()
-        .get_mut(&uid)
-        .unwrap()
-        .set_raw_motors_pid_gains([
-            PID {
-                p: gains[0][0],
-                i: gains[0][1],
-                d: gains[0][2],
-            },
-            PID {
-                p: gains[1][0],
-                i: gains[1][1],
-                d: gains[1][2],
-            },
-            PID {
-                p: gains[2][0],
-                i: gains[2][1],
-                d: gains[2][2],
-            },
-        ]) {
+    match CONTROLLER.get_mut(&uid).unwrap().set_raw_motors_pid_gains([
+        PID {
+            p: gains[0][0],
+            i: gains[0][1],
+            d: gains[0][2],
+        },
+        PID {
+            p: gains[1][0],
+            i: gains[1][1],
+            d: gains[1][2],
+        },
+        PID {
+            p: gains[2][0],
+            i: gains[2][1],
+            d: gains[2][2],
+        },
+    ]) {
         Ok(_) => 0,
         Err(_) => 1,
     }

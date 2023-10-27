@@ -1,7 +1,7 @@
 io: !DynamixelSerial
   serial_port: /dev/left_wrist
   id: 70
-  use_cache: false
+  use_cache: true
 disks:
   zeros: !ZeroStartup
   reduction: 4.26666667
