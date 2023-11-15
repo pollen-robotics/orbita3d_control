@@ -17,6 +17,7 @@
 //! ## Communication
 //! - [x] Fake motors
 //! - [x] Dynamixel like serial
+//! - [x] Poulpe serial dynamixel
 //! - [ ] EtherCAT communication
 //!
 //! # Examples
@@ -42,6 +43,8 @@ use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOC
 use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
+
+use crate::io::{CachedDynamixelPoulpeController, DynamixelPoulpeController};
 
 #[derive(Debug, Deserialize, Serialize)]
 /// Orbita3d Config
@@ -121,6 +124,32 @@ impl Orbita3dController {
                     )?;
 
                     log::info!("Using dynamixel controller {:?}", controller);
+
+                    Box::new(controller)
+                }
+            },
+            Orbita3dIOConfig::DynamixelPoulpe(dxl_config) => match dxl_config.use_cache {
+                true => {
+                    let controller = CachedDynamixelPoulpeController::new(
+                        &dxl_config.serial_port,
+                        dxl_config.id,
+                        config.disks.zeros,
+                        config.disks.reduction,
+                    )?;
+
+                    log::info!("Using cached poulpe dynamixel controller {:?}", controller);
+
+                    Box::new(controller)
+                }
+                false => {
+                    let controller = DynamixelPoulpeController::new(
+                        &dxl_config.serial_port,
+                        dxl_config.id,
+                        config.disks.zeros,
+                        config.disks.reduction,
+                    )?;
+
+                    log::info!("Using poulpe dynamixel controller {:?}", controller);
 
                     Box::new(controller)
                 }
