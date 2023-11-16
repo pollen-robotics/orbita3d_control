@@ -59,7 +59,7 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
         let current_on = RawMotorsIO::is_torque_on(self)?;
 
         if current_on != on {
-            MotorsController::set_torque(&mut self.inner, on)?;
+            RawMotorsIO::set_torque(&mut self.inner, on)?;
 
             self.torque_on.insert(self.inner.id(), on);
         }
@@ -68,13 +68,13 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
     }
 
     fn get_current_position(&mut self) -> Result<[f64; 3]> {
-        MotorsController::get_current_position(&mut self.inner)
+        RawMotorsIO::get_current_position(&mut self.inner)
     }
     fn get_current_velocity(&mut self) -> Result<[f64; 3]> {
-        MotorsController::get_current_velocity(&mut self.inner)
+        RawMotorsIO::get_current_velocity(&mut self.inner)
     }
     fn get_current_torque(&mut self) -> Result<[f64; 3]> {
-        MotorsController::get_current_torque(&mut self.inner)
+        RawMotorsIO::get_current_torque(&mut self.inner)
     }
 
     fn get_target_position(&mut self) -> Result<[f64; 3]> {
@@ -86,7 +86,7 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
         let current_position = RawMotorsIO::get_target_position(self)?;
 
         if current_position != position {
-            MotorsController::set_target_position(&mut self.inner, position)?;
+            RawMotorsIO::set_target_position(&mut self.inner, position)?;
 
             self.target_position.insert(self.inner.id(), position);
         }
@@ -103,7 +103,7 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
         let current_velocity = RawMotorsIO::get_velocity_limit(self)?;
 
         if current_velocity != velocity {
-            MotorsController::set_velocity_limit(&mut self.inner, velocity)?;
+            RawMotorsIO::set_velocity_limit(&mut self.inner, velocity)?;
 
             self.velocity_limit.insert(self.inner.id(), velocity);
         }
@@ -120,7 +120,7 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
         let current_torque = RawMotorsIO::get_torque_limit(self)?;
 
         if current_torque != torque {
-            MotorsController::set_torque_limit(&mut self.inner, torque)?;
+            RawMotorsIO::set_torque_limit(&mut self.inner, torque)?;
 
             self.torque_limit.insert(self.inner.id(), torque);
         }
@@ -137,7 +137,7 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
         let current_pid = RawMotorsIO::get_pid_gains(self)?;
 
         if current_pid != pid {
-            MotorsController::set_pid_gains(&mut self.inner, pid)?;
+            RawMotorsIO::set_pid_gains(&mut self.inner, pid)?;
 
             self.pid_gains.insert(self.inner.id(), pid);
         }
