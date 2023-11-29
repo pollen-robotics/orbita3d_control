@@ -1,4 +1,7 @@
-use std::time::Duration;
+use std::{
+    f64::consts::{FRAC_PI_2, PI},
+    time::Duration,
+};
 
 use clap::Parser;
 use orbita3d_kinematics::conversion;
@@ -99,8 +102,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         alpha: 0.9424777960769379,
         gamma_min: 0.0,
         offset: 0.0,
-        beta: 1.5707963267948966,
-        gamma_max: 3.141592653589793,
+        beta: FRAC_PI_2,
+        gamma_max: PI,
         passiv_arms_direct: true,
     };
 
