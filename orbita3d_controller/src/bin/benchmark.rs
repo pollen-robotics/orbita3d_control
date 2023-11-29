@@ -63,14 +63,18 @@ fn controller_hwi_iteration(
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    println!("Connecting to Orbita3d: {:?}", args.configfile);
+    println!("Benchmarking Orbita3d:");
+    println!("---------------------:");
+    println!("Results:");
+
+    println!("\tConnecting to Orbita3d: {:?}", args.configfile);
     let mut orbita3d = orbita3d_controller::Orbita3dController::with_config(&args.configfile)?;
 
     let dur = Duration::from_secs_f64(timeit_loops!(args.iterations, {
         let _ = orbita3d.get_current_orientation()?;
     }));
     println!(
-        "Reading current position: {} ms",
+        "\tReading current position: {} ms",
         dur.as_millis() as f64 / args.iterations as f64
     );
 
@@ -78,7 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         controller_hwi_read_iteration(&mut orbita3d)?;
     }));
     println!(
-        "Read hwi iteration loop: {} ms",
+        "\tRead hwi iteration loop: {} ms",
         dur.as_millis() as f64 / args.iterations as f64
     );
 
@@ -86,7 +90,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         controller_hwi_write_iteration(&mut orbita3d)?;
     }));
     println!(
-        "Write hwi iteration loop: {} ms",
+        "\tWrite hwi iteration loop: {} ms",
         dur.as_millis() as f64 / args.iterations as f64
     );
 
@@ -94,7 +98,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         controller_hwi_iteration(&mut orbita3d)?;
     }));
     println!(
-        "Read/Write hwi iteration loop: {} ms",
+        "\tRead/Write hwi iteration loop: {} ms",
         dur.as_millis() as f64 / args.iterations as f64
     );
 
@@ -112,7 +116,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         kin.compute_forward_kinematics(thetas);
     }));
     println!(
-        "Forward kinematics: {} µs",
+        "\tForward kinematics: {} µs",
         dur.as_micros() as f64 / args.iterations as f64
     );
 
@@ -121,7 +125,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let _ = kin.compute_inverse_kinematics(rot);
     }));
     println!(
-        "Inverse kinematics: {} µs",
+        "\tInverse kinematics: {} µs",
         dur.as_micros() as f64 / args.iterations as f64
     );
 
