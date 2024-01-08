@@ -190,6 +190,7 @@ pub extern "C" fn orbita3d_get_raw_motors_pid_gains(uid: u32, gains: &mut [[f64;
 
 #[no_mangle]
 pub extern "C" fn orbita3d_set_raw_motors_pid_gains(uid: u32, gains: &[[f64; 3]; 3]) -> i32 {
+    /*
     match CONTROLLER.get_mut(&uid).unwrap().set_raw_motors_pid_gains([
         PID {
             p: gains[0][0],
@@ -210,6 +211,9 @@ pub extern "C" fn orbita3d_set_raw_motors_pid_gains(uid: u32, gains: &[[f64; 3];
         Ok(_) => 0,
         Err(_) => 1,
     }
+    */
+    //TODO
+    0
 }
 
 fn get_available_uid() -> u32 {

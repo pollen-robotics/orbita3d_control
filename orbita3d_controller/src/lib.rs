@@ -244,6 +244,14 @@ impl Orbita3dController {
         self.inner.set_target_position(thetas)
     }
 
+    /// Set the target orientation (as quaternion (qx, qy, qz, qw))
+    pub fn set_target_orientation_fb(&mut self, target: [f64; 4]) -> Result<[f64;9]> {
+        let rot =
+            conversion::quaternion_to_rotation_matrix(target[0], target[1], target[2], target[3]);
+        let thetas = self.kinematics.compute_inverse_kinematics(rot)?;
+        self.inner.set_target_position_fb(thetas)
+    }
+
     /// Get the velocity limit of each raw motor (in rad/s)
     /// caution: this is the raw value used by the motors used inside the actuator, not a limit orbita3d orientation!
     pub fn get_raw_motors_velocity_limit(&mut self) -> Result<[f64; 3]> {
