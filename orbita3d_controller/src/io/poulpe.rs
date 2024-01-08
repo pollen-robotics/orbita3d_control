@@ -37,7 +37,7 @@ impl DynamixelPoulpeController {
     /// Creates a new DynamixelPoulpeController
     pub fn new(serial_port: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
         let mut controller = Self {
-            serial_port: serialport::new(serial_port, 1_000_000)
+            serial_port: serialport::new(serial_port, 2_000_000)
                 .timeout(Duration::from_millis(10))
                 .open()?,
             io: DynamixelSerialIO::v1(),
@@ -180,8 +180,8 @@ impl RawMotorsIO<3> for DynamixelPoulpeController {
         );
 
 	match fb{
-	    // Ok(fb)=>Ok([fb.position.top as f64,fb.position.middle as f64,fb.position.bottom as f64,fb.speed.top as f64,fb.speed.middle as f64,fb.speed.bottom as f64,fb.load.top as f64,fb.load.middle as f64,fb.load.bottom as f64]),
-	    Ok(fb)=>Ok(()),
+
+	    Ok(_)=>Ok(()),
 	    Err(e)=>Err(e),
 	}
 

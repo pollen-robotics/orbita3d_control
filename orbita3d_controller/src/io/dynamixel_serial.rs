@@ -37,7 +37,7 @@ impl DynamixelSerialController {
     /// Creates a new DynamixelSerialController
     pub fn new(serial_port: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
         let mut controller = Self {
-            serial_port: serialport::new(serial_port, 1_000_000)
+            serial_port: serialport::new(serial_port, 2_000_000)
                 .timeout(Duration::from_millis(10))
                 .open()?,
             io: DynamixelSerialIO::v1(),

@@ -93,6 +93,14 @@ pub struct Orbita3dController {
     kinematics: Orbita3dKinematicsModel,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Orbita3dFeedback {
+	pub orientation: [f64; 4],
+	pub velocity: [f64; 3],
+	pub torque: [f64; 3],
+}
+
+
 impl Orbita3dController {
     /// Creates a new Orbita3dController using the given configuration file.
     pub fn with_config(configfile: &str) -> Result<Self> {
@@ -245,11 +253,26 @@ impl Orbita3dController {
     }
 
     /// Set the target orientation (as quaternion (qx, qy, qz, qw))
-    pub fn set_target_orientation_fb(&mut self, target: [f64; 4]) -> Result<[f64;9]> {
+    pub fn set_target_orientation_fb(&mut self, target: [f64; 4]) -> Result<Orbita3dFeedback> {
         let rot =
             conversion::quaternion_to_rotation_matrix(target[0], target[1], target[2], target[3]);
         let thetas = self.kinematics.compute_inverse_kinematics(rot)?;
-        self.inner.set_target_position_fb(thetas)
+        let fb:Result<[f64;9]>=self.inner.set_target_position_fb(thetas);
+	match fb
+	{
+	    Ok(fb) => {
+		let rot = self.kinematics.compute_forward_kinematics([fb[0], fb[1], fb[2]]); //Why the f*ck can't I use slice here?
+		let vel=self.kinematics.compute_output_velocity(thetas, [fb[3],fb[4],fb[5]]);
+		let torque = self.kinematics.compute_output_torque(thetas, [fb[6],fb[7],fb[8]]);
+
+		Ok(Orbita3dFeedback {
+		    orientation: conversion::rotation_matrix_to_quaternion(rot),
+		    velocity:   [vel[0], vel[1], vel[2]],
+		    torque: [torque[0], torque[1], torque[2]]
+		})
+	    }
+	    Err(e) => Err(e)
+	}
     }
 
     /// Get the velocity limit of each raw motor (in rad/s)
