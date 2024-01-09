@@ -70,5 +70,15 @@ int main(int argc, char *argv[]) {
     quaternion_to_intrinsic_roll_pitch_yaw(&q, &rpy);
     printf("\trpy: %f %f %f\n", rpy[0], rpy[1], rpy[2]);
 
+
+    struct Orbita3dFeedback feedback;
+    //Set target orientation with feedback
+    if (orbita3d_set_target_orientation_fb(uid, &target_q, &feedback) != 0) {
+        return 1;
+    }
+    printf("Feedback: orientation %f %f %f %f velocity: %f %f %f torque: %f %f %f\n", feedback.orientation[0], feedback.orientation[1], feedback.orientation[2], feedback.orientation[3],feedback.velocity[0],feedback.velocity[1],feedback.velocity[2],feedback.torque[0],feedback.torque[1],feedback.torque[2]);
+
+
+
     return 0;
 }

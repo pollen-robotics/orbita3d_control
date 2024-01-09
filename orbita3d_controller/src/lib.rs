@@ -93,7 +93,10 @@ pub struct Orbita3dController {
     kinematics: Orbita3dKinematicsModel,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+
+
+#[derive(Debug, Deserialize, Serialize, Copy, Clone)]
+/// Feedback struct
 pub struct Orbita3dFeedback {
 	pub orientation: [f64; 4],
 	pub velocity: [f64; 3],
@@ -252,7 +255,7 @@ impl Orbita3dController {
         self.inner.set_target_position(thetas)
     }
 
-    /// Set the target orientation (as quaternion (qx, qy, qz, qw))
+    /// Set the target orientation (as quaternion (qx, qy, qz, qw)) with feedback
     pub fn set_target_orientation_fb(&mut self, target: [f64; 4]) -> Result<Orbita3dFeedback> {
         let rot =
             conversion::quaternion_to_rotation_matrix(target[0], target[1], target[2], target[3]);

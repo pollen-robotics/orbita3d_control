@@ -52,6 +52,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 		Ok(t) => println!("Torque is {}", t),
 		Err(e) => println!("Error: {}", e),
 	}
+	thread::sleep(Duration::from_millis(1));
+
+    let t=controller.enable_torque(true);
+	match t {
+		Ok(_) => println!("Torque is on"),
+		Err(e) => println!("Error: {}", e),
+	}
+	thread::sleep(Duration::from_millis(1));
+
 
     let now = SystemTime::now();
     let mut t = now.elapsed().unwrap().as_secs_f32();
@@ -73,6 +82,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
     }
+
+    let t=controller.disable_torque();
+    match t {
+	Ok(_) => println!("Torque is off"),
+	Err(e) => println!("Error: {}", e),
+    }
+    thread::sleep(Duration::from_millis(1000));
 
 
     Ok(())

@@ -3,6 +3,7 @@ use std::{ffi::CStr, sync::Mutex};
 use motor_toolbox_rs::PID;
 use once_cell::sync::Lazy;
 use orbita3d_controller::Orbita3dController;
+use orbita3d_controller::Orbita3dFeedback;
 
 use crate::sync_map::SyncMap;
 
@@ -115,6 +116,30 @@ pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 
 }
 
 #[no_mangle]
+pub extern "C" fn orbita3d_set_target_orientation_fb(uid: u32, orientation: &[f64; 4], feedback: &mut [f64; 10]) -> i32 {
+    match CONTROLLER
+        .get_mut(&uid)
+        .unwrap()
+        .set_target_orientation_fb(*orientation)
+    {
+        Ok(fb) => {
+	    feedback[0]=fb.orientation[0]; //FIXME: I don't know how to include the struct definition in the C bindings...
+	    feedback[1]=fb.orientation[1];
+	    feedback[2]=fb.orientation[2];
+	    feedback[3]=fb.orientation[3];
+	    feedback[4]=fb.velocity[0];
+	    feedback[5]=fb.velocity[1];
+	    feedback[6]=fb.velocity[2];
+	    feedback[7]=fb.torque[0];
+	    feedback[8]=fb.torque[1];
+	    feedback[9]=fb.torque[2];
+	    0
+	},
+        Err(_) => 1,
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn orbita3d_get_raw_motors_velocity_limit(uid: u32, limit: &mut [f64; 3]) -> i32 {
     match CONTROLLER
         .get_mut(&uid)
@@ -170,6 +195,7 @@ pub extern "C" fn orbita3d_set_raw_motors_torque_limit(uid: u32, limit: &[f64; 3
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_raw_motors_pid_gains(uid: u32, gains: &mut [[f64; 3]; 3]) -> i32 {
+    /*
     match CONTROLLER.get_mut(&uid).unwrap().get_raw_motors_pid_gains() {
         Ok([pid_top, pid_middle, pid_bottom]) => {
             gains[0][0] = pid_top.p;
@@ -186,6 +212,8 @@ pub extern "C" fn orbita3d_get_raw_motors_pid_gains(uid: u32, gains: &mut [[f64;
         }
         Err(_) => 1,
     }
+    */
+    0
 }
 
 #[no_mangle]
