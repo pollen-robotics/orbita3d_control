@@ -18,9 +18,9 @@ pub struct CachedDynamixelPoulpeController {
 }
 
 impl CachedDynamixelPoulpeController {
-    pub fn new(serial_port: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
+    pub fn new(serial_port: &str, id: u8, zero: ZeroType, axis_reductions: f64, motor_reductions: f64) -> Result<Self> {
         Ok(Self {
-            inner: DynamixelPoulpeController::new(serial_port, id, zero, reductions)?,
+            inner: DynamixelPoulpeController::new(serial_port, id, zero, axis_reductions, motor_reductions)?,
 
             torque_on: Cache::keep_last(),
             target_position: Cache::keep_last(),

@@ -6,6 +6,7 @@ use rustypot::{
 use serde::{Deserialize, Serialize};
 use serialport::SerialPort;
 use std::{f64::consts::PI, time::Duration};
+use std::{error::Error, thread, time::Instant};
 
 use crate::ZeroType;
 
@@ -29,13 +30,15 @@ pub struct DynamixelPoulpeController {
     id: u8,
 
     offsets: [Option<f64>; 3],
-    reduction: [Option<f64>; 3],
+    axis_reduction: [Option<f64>; 3],
+    motor_reduction: [Option<f64>; 3],
+    hall_indices: [Option<u8>; 3],
     limits: [Option<Limit>; 3],
 }
 
 impl DynamixelPoulpeController {
     /// Creates a new DynamixelPoulpeController
-    pub fn new(serial_port: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
+    pub fn new(serial_port: &str, id: u8, zero: ZeroType, axis_reductions: f64, motor_reductions: f64) -> Result<Self> {
         let mut controller = Self {
             serial_port: serialport::new(serial_port, 2_000_000)
                 .timeout(Duration::from_millis(10))
@@ -43,8 +46,11 @@ impl DynamixelPoulpeController {
             io: DynamixelSerialIO::v1(),
             id,
             offsets: [None; 3],
-            reduction: [Some(reductions); 3],
+            axis_reduction: [Some(axis_reductions); 3],
+            motor_reduction: [Some(motor_reductions); 3],
             limits: [None; 3],
+	    hall_indices: [None; 3],
+
         };
 
         match zero {
@@ -59,12 +65,14 @@ impl DynamixelPoulpeController {
                         controller.offsets[i] = Some(find_closest_offset_to_zero(
                             current_pos,
                             hardware_zero,
-                            reductions,
+                            axis_reductions,
                         ));
                     });
             }
             ZeroType::ZeroStartup(_) => {
                 let current_pos = MotorsController::get_current_position(&mut controller)?;
+		log::info!("ZeroStartup: {:?}", current_pos);
+
 
                 current_pos
                     .iter()
@@ -72,7 +80,39 @@ impl DynamixelPoulpeController {
                     .for_each(|(i, &current_pos)| {
                         controller.offsets[i] = Some(current_pos);
                     });
+
+
+
             }
+	    ZeroType::HallZero(zero) => {
+		//TODO
+                let current_pos = MotorsController::get_current_position(&mut controller)?;
+		thread::sleep(Duration::from_millis(1));
+                let hall_idx = orbita3d_poulpe::read_index_sensor(&controller.io, controller.serial_port.as_mut(), controller.id)?;
+		thread::sleep(Duration::from_millis(1));
+
+		log::info!("HallZero: pos {:?} hall_idx: {:?}", current_pos, hall_idx);
+
+                // current_pos
+                //     .iter()
+                //     .enumerate()
+                //     .for_each(|(i, &current_pos)| {
+                //         controller.offsets[i] = Some(current_pos);
+                //     });
+                zero.hardware_zero
+                    .iter()
+                    .zip(current_pos.iter())
+                    .enumerate()
+                    .for_each(|(i, (&hardware_zero, &current_pos))| {
+                        controller.offsets[i] = Some(find_closest_offset_to_zero(
+                            current_pos,
+                            hardware_zero,
+                            axis_reductions,
+                        ));
+                    });
+
+	    }
+
         }
 
         Ok(controller)
@@ -93,7 +133,12 @@ impl MotorsController<3> for DynamixelPoulpeController {
     }
 
     fn reduction(&self) -> [Option<f64>; 3] {
-        self.reduction
+	let mut reduction = [None; 3];
+        reduction.iter_mut().enumerate().for_each(|(i, r)| {
+			*r = Some(self.axis_reduction[i].unwrap());
+		});
+	reduction
+
     }
 
     fn limits(&self) -> [Option<motor_toolbox_rs::Limit>; 3] {
@@ -303,7 +348,8 @@ mod tests {
             } else {
                 panic!("Wrong config type");
             }
-            assert_eq!(config.disks.reduction, 4.2666667);
+            assert_eq!(config.disks.axis_reduction, 5.33333334);
+            assert_eq!(config.disks.motor_reduction, 35.0);
 
             assert_eq!(dxl_config.serial_port, "/dev/ttyACM0");
             assert_eq!(dxl_config.id, 42);

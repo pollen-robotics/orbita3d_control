@@ -1,8 +1,11 @@
 use orbita3d_controller::Orbita3dController;
-
-use std::f32::consts::PI;
+use orbita3d_kinematics::conversion;
+use std::f64::consts::PI;
 use std::time::SystemTime;
 use std::{error::Error, thread, time::Duration, time::Instant};
+
+use log::info;
+use log::Level;
 
 use clap::Parser;
 
@@ -40,30 +43,55 @@ struct Args {
 
 
 fn main() -> Result<(), Box<dyn Error>> {
+    env_logger::init();
     let args = Args::parse();
 
-    println!("Config file: {}", args.configfile);
+    log::info!("Config file: {}", args.configfile);
 
 
     let mut controller = Orbita3dController::with_config(&args.configfile)?;
 
     let t=controller.is_torque_on();
     match t {
-		Ok(t) => println!("Torque is {}", t),
-		Err(e) => println!("Error: {}", e),
+		Ok(t) => log::info!("Torque is {}", t),
+		Err(e) => log::error!("Error: {}", e),
 	}
-	thread::sleep(Duration::from_millis(1));
+	thread::sleep(Duration::from_millis(10));
+
+    let curtarget=controller.get_target_orientation()?;
+    log::info!("Current target: {:?}", curtarget);
+
+
+    let t=controller.disable_torque();
+	match t {
+		Ok(_) => log::info!("Torque is off"),
+		Err(e) => log::error!("Error: {}", e),
+	}
+    thread::sleep(Duration::from_millis(1000));
+    let curtarget=controller.get_target_orientation()?;
+    log::info!("Current target: {:?}", curtarget);
+
 
     let t=controller.enable_torque(true);
 	match t {
-		Ok(_) => println!("Torque is on"),
-		Err(e) => println!("Error: {}", e),
+		Ok(_) => log::info!("Torque is on"),
+		Err(e) => log::error!("Error: {}", e),
 	}
-	thread::sleep(Duration::from_millis(1));
-
+    thread::sleep(Duration::from_millis(1000));
+    let curtarget=controller.get_target_orientation()?;
+    log::info!("Current target: {:?}", curtarget);
 
     let now = SystemTime::now();
     let mut t = now.elapsed().unwrap().as_secs_f32();
+    let freq:f64=0.25;
+    let amplitude:f64=PI/8.0;
+
+    let init_pos=controller.get_current_orientation()?;
+    log::info!("Initial orientation: {:?}", init_pos);
+
+
+
+
     loop{
 
         if t > 10.0 {
@@ -72,21 +100,26 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         t = now.elapsed().unwrap().as_secs_f32();
 
-	let fb=controller.set_target_orientation_fb([0.0, 0.0, 0.0,1.0]);
+	let s=amplitude*(2.0*PI*freq*t as f64).sin();
+
+	let target_yaw_mat=conversion::intrinsic_roll_pitch_yaw_to_matrix(0.0, 0.0, s);
+	let target=conversion::rotation_matrix_to_quaternion(target_yaw_mat);
+
+
+	let fb=controller.set_target_orientation_fb(target);
 	match fb {
-		Ok(fb) => println!("Feedback: {:?}", fb),
-		Err(e) => println!("Error: {}", e),
+		Ok(fb) => log::info!("Feedback: {:?}", fb),
+		Err(e) => log::error!("Error: {}", e),
 	}
 
 	thread::sleep(Duration::from_millis(1));
-
 
     }
 
     let t=controller.disable_torque();
     match t {
-	Ok(_) => println!("Torque is off"),
-	Err(e) => println!("Error: {}", e),
+	Ok(_) => log::info!("Torque is off"),
+	Err(e) => log::error!("Error: {}", e),
     }
     thread::sleep(Duration::from_millis(1000));
 

@@ -73,6 +73,9 @@ impl DynamixelSerialController {
                         controller.offsets[i] = Some(current_pos);
                     });
             }
+	    ZeroType::HallZero(_) =>
+	    {//TODO
+	    }
         }
 
         Ok(controller)

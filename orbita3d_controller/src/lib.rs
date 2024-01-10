@@ -43,6 +43,7 @@ use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOC
 use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
+use std::{error::Error, thread, time::Duration, time::Instant};
 
 use crate::io::{CachedDynamixelPoulpeController, DynamixelPoulpeController};
 
@@ -62,8 +63,10 @@ pub struct Orbita3dConfig {
 pub struct DisksConfig {
     /// Zeros of each disk (in rad), used as an offset
     pub zeros: ZeroType,
-    /// Reduction between the motor and the disk
-    pub reduction: f64,
+    /// Reduction between the motor gearbox and the disk
+    pub axis_reduction: f64,
+    /// Motor gearbox reduction
+    pub motor_reduction: f64,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -74,6 +77,9 @@ pub enum ZeroType {
     ApproximateHardwareZero(ApproximateHardwareZero),
     /// ZeroStartup config
     ZeroStartup(ZeroStartup),
+    /// HallZero config
+    HallZero(HallZero),
+
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -82,6 +88,18 @@ pub struct ApproximateHardwareZero {
     /// Hardware zero of each disk (in rad)
     pub hardware_zero: [f64; 3],
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+/// HallZero config
+pub struct HallZero {
+    /// Hardware zero of each disk (in rad)
+    pub hardware_zero: [f64; 3],
+
+    /// Top/Middle/Bottom Hall active for the zero position
+    pub hall_indice: [u8; 3],
+
+}
+
 
 #[derive(Debug, Deserialize, Serialize)]
 /// ZeroStartup config
@@ -119,7 +137,7 @@ impl Orbita3dController {
                         &dxl_config.serial_port,
                         dxl_config.id,
                         config.disks.zeros,
-                        config.disks.reduction,
+                        config.disks.axis_reduction,
                     )?;
 
                     log::info!("Using cached dynamixel controller {:?}", controller);
@@ -131,7 +149,7 @@ impl Orbita3dController {
                         &dxl_config.serial_port,
                         dxl_config.id,
                         config.disks.zeros,
-                        config.disks.reduction,
+                        config.disks.axis_reduction,
                     )?;
 
                     log::info!("Using dynamixel controller {:?}", controller);
@@ -145,7 +163,8 @@ impl Orbita3dController {
                         &dxl_config.serial_port,
                         dxl_config.id,
                         config.disks.zeros,
-                        config.disks.reduction,
+                        config.disks.axis_reduction,
+			config.disks.motor_reduction,
                     )?;
 
                     log::info!("Using cached poulpe dynamixel controller {:?}", controller);
@@ -157,7 +176,8 @@ impl Orbita3dController {
                         &dxl_config.serial_port,
                         dxl_config.id,
                         config.disks.zeros,
-                        config.disks.reduction,
+                        config.disks.axis_reduction,
+			config.disks.motor_reduction,
                     )?;
 
                     log::info!("Using poulpe dynamixel controller {:?}", controller);
@@ -171,11 +191,12 @@ impl Orbita3dController {
                 let offsets = match config.disks.zeros {
                     ZeroType::ApproximateHardwareZero(zero) => zero.hardware_zero,
                     ZeroType::ZeroStartup(_) => controller.get_current_position()?,
+		    ZeroType::HallZero(zero) => zero.hardware_zero, //TODO
                 };
 
                 let controller = controller
                     .with_offsets(offsets.map(Some))
-                    .with_reduction([Some(config.disks.reduction); 3]);
+                    .with_reduction([Some(config.disks.axis_reduction); 3]);
 
                 log::info!("Using fake motors controller {:?}", controller);
 
@@ -204,7 +225,11 @@ impl Orbita3dController {
     pub fn enable_torque(&mut self, reset_target: bool) -> Result<()> {
         if reset_target {
             let thetas = self.inner.get_current_position()?;
+	    thread::sleep(Duration::from_millis(1));
             self.inner.set_target_position(thetas)?;
+	    // thread::sleep(Duration::from_millis(1000)); //FIXME: hack to wait the firmware cmd_filter converge
+	    thread::sleep(Duration::from_millis(1));
+
         }
         self.inner.set_torque([true; 3])
     }
