@@ -56,7 +56,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 		Ok(t) => log::info!("Torque is {}", t),
 		Err(e) => log::error!("Error: {}", e),
 	}
-	thread::sleep(Duration::from_millis(10));
+    thread::sleep(Duration::from_millis(10));
+    let cur=controller.get_current_orientation()?;
+    log::info!("Current orientation: {:?}", cur);
+    thread::sleep(Duration::from_millis(10));
 
     let curtarget=controller.get_target_orientation()?;
     log::info!("Current target: {:?}", curtarget);
@@ -72,12 +75,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     log::info!("Current target: {:?}", curtarget);
 
 
-    let t=controller.enable_torque(true);
-	match t {
-		Ok(_) => log::info!("Torque is on"),
-		Err(e) => log::error!("Error: {}", e),
-	}
-    thread::sleep(Duration::from_millis(1000));
+    // let t=controller.enable_torque(true);
+    // 	match t {
+    // 		Ok(_) => log::info!("Torque is on"),
+    // 		Err(e) => log::error!("Error: {}", e),
+    // 	}
+    // thread::sleep(Duration::from_millis(1000));
     let curtarget=controller.get_target_orientation()?;
     log::info!("Current target: {:?}", curtarget);
 
@@ -89,6 +92,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let init_pos=controller.get_current_orientation()?;
     log::info!("Initial orientation: {:?}", init_pos);
 
+    let _ =controller.set_target_orientation([0.0, 0.0, 0.0, 1.0]);
+    thread::sleep(Duration::from_millis(1000));
+    let init_pos=controller.get_current_orientation()?;
+    log::info!("zero orientation: {:?}", init_pos);
+    thread::sleep(Duration::from_millis(1000));
+    let r=controller.disable_torque();
+	match r {
+		Ok(_) => log::info!("Torque is off"),
+		Err(e) => log::error!("Error: {}", e),
+	}
+    thread::sleep(Duration::from_millis(10000));
 
 
 

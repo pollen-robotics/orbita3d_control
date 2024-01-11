@@ -227,7 +227,6 @@ impl Orbita3dController {
             let thetas = self.inner.get_current_position()?;
 	    thread::sleep(Duration::from_millis(1));
             self.inner.set_target_position(thetas)?;
-	    // thread::sleep(Duration::from_millis(1000)); //FIXME: hack to wait the firmware cmd_filter converge
 	    thread::sleep(Duration::from_millis(1));
 
         }

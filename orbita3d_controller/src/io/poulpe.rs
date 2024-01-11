@@ -88,28 +88,36 @@ impl DynamixelPoulpeController {
 		//TODO
                 let current_pos = MotorsController::get_current_position(&mut controller)?;
 		thread::sleep(Duration::from_millis(1));
-                let hall_idx = orbita3d_poulpe::read_index_sensor(&controller.io, controller.serial_port.as_mut(), controller.id)?;
+                let curr_hall = orbita3d_poulpe::read_index_sensor(&controller.io, controller.serial_port.as_mut(), controller.id)?;
+		let hall_idx:[u8;3]=[curr_hall.top,curr_hall.middle,curr_hall.bottom];
+		//let hall_idx:[u8;3]=[0,5,10]; //TEST
+		if hall_idx.contains(&255) //255 is the value when no hall sensor is detected
+		{
+		    log::error!("HallZero: Hall sensor not found! Check 'Donut' I2C connection or maybe configure another zeroing method?");
+		    return Err(Box::new(MissingResisterErrror("Hall sensor not found".to_string())));
+		}
+
 		thread::sleep(Duration::from_millis(1));
 
-		log::info!("HallZero: pos {:?} hall_idx: {:?}", current_pos, hall_idx);
+		log::debug!("HallZero: curr_pos: {:?} curr_hall_idx: {:?} hardware_zero: {:?} hall_zero: {:?}", current_pos, hall_idx,zero.hardware_zero,zero.hall_indice);
 
-                // current_pos
-                //     .iter()
-                //     .enumerate()
-                //     .for_each(|(i, &current_pos)| {
-                //         controller.offsets[i] = Some(current_pos);
-                //     });
                 zero.hardware_zero
                     .iter()
                     .zip(current_pos.iter())
+                    .zip(hall_idx.iter())
+                    .zip(zero.hall_indice.iter())
                     .enumerate()
-                    .for_each(|(i, (&hardware_zero, &current_pos))| {
-                        controller.offsets[i] = Some(find_closest_offset_to_zero(
+                    .for_each(|(i, (((&hardware_zero, &current_pos), &hall_zero), &hall_idx))| {
+                        controller.offsets[i] = Some(find_position_with_hall(
                             current_pos,
                             hardware_zero,
+			    hall_zero,
+			    hall_idx,
                             axis_reductions,
                         ));
                     });
+
+
 
 	    }
 
@@ -316,6 +324,41 @@ fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduct
     log::info!("best: {}", best);
     best
 }
+
+fn find_position_with_hall(current_position: f64, hardware_zero: f64, hall_zero: u8, hall_index:u8, reduction:f64) -> f64
+{
+    //! Find the current position corrected by the hall sensor
+    //! There is 16 Hall sensors on the disk output and a ratio 'reduction' between the disk and the motor gearbox output
+    //! We knwow the 'hall_zero' index which correspond to the index of the Hall sensor closest to the disk zero position
+    //! We also know the 'hall_index' which is the index of the Hall sensor closest to the current position
+    //! Finally we know the 'hardware_zero' which is the position of the disk zero
+
+    let mut offset:[f64;65]=[0.0;65]; // 16 Hall +/- 2 full turns => 3 turns: we fall back on the same position...
+    let hall_offset = 2.0 * PI / 16.0*reduction;
+    for i in 0..65
+    {
+	offset[i]=hardware_zero-(-((i as f64)-32.0) * hall_offset);
+
+    }
+
+    log::debug!("possible offset: {:?}", offset);
+    let pos=current_position-(hall_index as i16 - hall_zero as i16) as f64*hall_offset;
+    log::debug!("current pos with hall: {:?}", pos);
+
+    let best = offset
+        .iter()
+        .map(|&p| (p - pos).abs())
+        .enumerate()
+        .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+        .map(|(i, _)| offset[i])
+        .unwrap();
+
+    log::debug!("best match: {}", best);
+    best
+
+
+}
+
 
 #[cfg(test)]
 mod tests {
