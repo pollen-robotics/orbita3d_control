@@ -90,7 +90,7 @@ impl DynamixelPoulpeController {
 		thread::sleep(Duration::from_millis(1));
                 let curr_hall = orbita3d_poulpe::read_index_sensor(&controller.io, controller.serial_port.as_mut(), controller.id)?;
 		let hall_idx:[u8;3]=[curr_hall.top,curr_hall.middle,curr_hall.bottom];
-		//let hall_idx:[u8;3]=[0,5,10]; //TEST
+		let hall_idx:[u8;3]=[0,5,10]; //TEST
 		if hall_idx.contains(&255) //255 is the value when no hall sensor is detected
 		{
 		    log::error!("HallZero: Hall sensor not found! Check 'Donut' I2C connection or maybe configure another zeroing method?");
@@ -333,11 +333,11 @@ fn find_position_with_hall(current_position: f64, hardware_zero: f64, hall_zero:
     //! We also know the 'hall_index' which is the index of the Hall sensor closest to the current position
     //! Finally we know the 'hardware_zero' which is the position of the disk zero
 
-    let mut offset:[f64;65]=[0.0;65]; // 16 Hall +/- 2 full turns => 3 turns: we fall back on the same position...
+    let mut offset:[f64;95]=[0.0;95]; // 16 Hall +/- 2 full turns + 15 (=32+15=47) => 3 turns: we fall back on the same position...
     let hall_offset = 2.0 * PI / 16.0*reduction;
-    for i in 0..65
+    for i in 0..95
     {
-	offset[i]=hardware_zero-(-((i as f64)-32.0) * hall_offset);
+	offset[i]=hardware_zero-(-((i as f64)-47.0) * hall_offset);
 
     }
 

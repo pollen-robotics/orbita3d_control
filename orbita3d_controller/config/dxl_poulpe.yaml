@@ -3,11 +3,11 @@ io: !DynamixelPoulpe
   id: 42
   use_cache: false
 disks:
-  #zeros: !HallZero
-  #  hardware_zero: [1.2164431342815378, 0.11757235416558721, 0.01725832277930034]
-  #  hall_indice: [0, 5, 10]
+  # zeros: !HallZero
+   # hardware_zero: [1.2164431342815378, 0.11757235416558721, 0.01725832277930034]
+   # hall_indice: [0, 5, 10]
   zeros: !ZeroStartup
-  #axis_reduction: 5.333333333333333333
+  # axis_reduction: 5.333333333333333333
   axis_reduction: 4.2666667
   motor_reduction: 35.0
 kinematics_model:
