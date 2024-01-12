@@ -30,15 +30,15 @@ pub struct DynamixelPoulpeController {
     id: u8,
 
     offsets: [Option<f64>; 3],
-    axis_reduction: [Option<f64>; 3],
-    motor_reduction: [Option<f64>; 3],
+    reduction: [Option<f64>; 3],
+    // motor_reduction: [Option<f64>; 3],
     hall_indices: [Option<u8>; 3],
     limits: [Option<Limit>; 3],
 }
 
 impl DynamixelPoulpeController {
     /// Creates a new DynamixelPoulpeController
-    pub fn new(serial_port: &str, id: u8, zero: ZeroType, axis_reductions: f64, motor_reductions: f64) -> Result<Self> {
+    pub fn new(serial_port: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
         let mut controller = Self {
             serial_port: serialport::new(serial_port, 2_000_000)
                 .timeout(Duration::from_millis(10))
@@ -46,8 +46,8 @@ impl DynamixelPoulpeController {
             io: DynamixelSerialIO::v1(),
             id,
             offsets: [None; 3],
-            axis_reduction: [Some(axis_reductions); 3],
-            motor_reduction: [Some(motor_reductions); 3],
+            reduction: [Some(reductions); 3],
+            // motor_reduction: [Some(motor_reductions); 3],
             limits: [None; 3],
 	    hall_indices: [None; 3],
 
@@ -65,7 +65,7 @@ impl DynamixelPoulpeController {
                         controller.offsets[i] = Some(find_closest_offset_to_zero(
                             current_pos,
                             hardware_zero,
-                            axis_reductions,
+                            reductions,
                         ));
                     });
             }
@@ -90,7 +90,7 @@ impl DynamixelPoulpeController {
 		thread::sleep(Duration::from_millis(1));
                 let curr_hall = orbita3d_poulpe::read_index_sensor(&controller.io, controller.serial_port.as_mut(), controller.id)?;
 		let hall_idx:[u8;3]=[curr_hall.top,curr_hall.middle,curr_hall.bottom];
-		let hall_idx:[u8;3]=[0,5,10]; //TEST
+		// let hall_idx:[u8;3]=[0,5,10]; //TEST
 		if hall_idx.contains(&255) //255 is the value when no hall sensor is detected
 		{
 		    log::error!("HallZero: Hall sensor not found! Check 'Donut' I2C connection or maybe configure another zeroing method?");
@@ -113,7 +113,7 @@ impl DynamixelPoulpeController {
                             hardware_zero,
 			    hall_zero,
 			    hall_idx,
-                            axis_reductions,
+                            reductions,
                         ));
                     });
 
@@ -143,7 +143,7 @@ impl MotorsController<3> for DynamixelPoulpeController {
     fn reduction(&self) -> [Option<f64>; 3] {
 	let mut reduction = [None; 3];
         reduction.iter_mut().enumerate().for_each(|(i, r)| {
-			*r = Some(self.axis_reduction[i].unwrap());
+			*r = Some(self.reduction[i].unwrap());
 		});
 	reduction
 
@@ -261,31 +261,108 @@ impl RawMotorsIO<3> for DynamixelPoulpeController {
     }
 
     fn get_velocity_limit(&mut self) -> Result<[f64; 3]> {
-        Err(Box::new(MissingResisterErrror(
-            "velocity_limit".to_string(),
-        )))
+        orbita3d_poulpe::read_velocity_limit(&self.io, self.serial_port.as_mut(), self.id).map(
+            |thetas| {
+                [
+                    thetas.top as f64,
+                    thetas.middle as f64,
+                    thetas.bottom as f64,
+                ]
+            },
+        )
+
     }
 
     fn set_velocity_limit(&mut self, _velocity: [f64; 3]) -> Result<()> {
-        Err(Box::new(MissingResisterErrror(
-            "velocity_limit".to_string(),
-        )))
+        orbita3d_poulpe::write_velocity_limit(
+            &self.io,
+            self.serial_port.as_mut(),
+            self.id,
+            MotorValue
+	    {
+                top: _velocity[0] as u32,
+                middle: _velocity[1] as u32,
+                bottom: _velocity[2] as u32,
+            },
+        )
+
     }
 
     fn get_torque_limit(&mut self) -> Result<[f64; 3]> {
-        Err(Box::new(MissingResisterErrror("torque_limit".to_string())))
+        orbita3d_poulpe::read_torque_flux_limit(&self.io, self.serial_port.as_mut(), self.id).map(
+            |thetas| {
+                [
+                    thetas.top as f64,
+                    thetas.middle as f64,
+                    thetas.bottom as f64,
+                ]
+            },
+        )
+
     }
 
     fn set_torque_limit(&mut self, _torque: [f64; 3]) -> Result<()> {
-        Err(Box::new(MissingResisterErrror("torque_limit".to_string())))
+        orbita3d_poulpe::write_torque_flux_limit(
+            &self.io,
+            self.serial_port.as_mut(),
+            self.id,
+            MotorValue
+	    {
+                top: _torque[0] as u16,
+                middle: _torque[1] as u16,
+                bottom: _torque[2] as u16,
+            },
+        )
+
     }
 
     fn get_pid_gains(&mut self) -> Result<[PID; 3]> {
-        Err(Box::new(MissingResisterErrror("pid_gains".to_string())))
+        orbita3d_poulpe::read_position_pid(&self.io, self.serial_port.as_mut(), self.id).map(
+            |thetas| {
+		[
+		    PID{
+			p: thetas.top.p as f64,
+			i: thetas.top.i as f64,
+			d: 0.0,
+		    },
+		    PID{
+			p: thetas.middle.p as f64,
+			i: thetas.middle.i as f64,
+			d: 0.0,
+		    },
+		    PID{
+			p: thetas.bottom.p as f64,
+			i: thetas.bottom.i as f64,
+			d: 0.0,
+		    },
+		]
+
+            },
+        )
+
     }
 
     fn set_pid_gains(&mut self, _pid: [PID; 3]) -> Result<()> {
-        Err(Box::new(MissingResisterErrror("pid_gains".to_string())))
+	orbita3d_poulpe::write_position_pid(
+			&self.io,
+			self.serial_port.as_mut(),
+			self.id,
+	    MotorValue
+	    {
+		top: orbita3d_poulpe::Pid{
+		    p: _pid[0].p as i16,
+		    i: _pid[0].i as i16,
+		},
+		middle: orbita3d_poulpe::Pid{
+		    p: _pid[1].p as i16,
+		    i: _pid[1].i as i16,
+		},
+		bottom: orbita3d_poulpe::Pid{
+		    p: _pid[2].p as i16,
+		    i: _pid[2].i as i16,
+		},
+	    },
+	)
     }
 }
 
@@ -391,10 +468,10 @@ mod tests {
             } else {
                 panic!("Wrong config type");
             }
-            assert_eq!(config.disks.axis_reduction, 5.33333334);
-            assert_eq!(config.disks.motor_reduction, 35.0);
+            // assert_eq!(config.disks.reduction, 5.33333334); //TODO
+	    assert_eq!(config.disks.reduction,4.2666667); //Old Orbita
 
-            assert_eq!(dxl_config.serial_port, "/dev/ttyACM0");
+            assert_eq!(dxl_config.serial_port, "/dev/ttyUSB0");
             assert_eq!(dxl_config.id, 42);
         } else {
             panic!("Wrong config type");

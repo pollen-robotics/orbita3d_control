@@ -1,15 +1,14 @@
 io: !DynamixelPoulpe
   serial_port: /dev/ttyUSB0
   id: 42
-  use_cache: false
+  use_cache: true
 disks:
   # zeros: !HallZero
    # hardware_zero: [1.2164431342815378, 0.11757235416558721, 0.01725832277930034]
    # hall_indice: [0, 5, 10]
   zeros: !ZeroStartup
-  # axis_reduction: 5.333333333333333333
-  axis_reduction: 4.2666667
-  motor_reduction: 35.0
+  # reduction: 5.333333333333333333
+  reduction: 4.2666667
 kinematics_model:
   alpha: 0.9424777960769379 # 54 degrees
   gamma_min: 0.6981317007977318 # 40 degrees

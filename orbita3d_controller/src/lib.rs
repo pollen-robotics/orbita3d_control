@@ -64,9 +64,8 @@ pub struct DisksConfig {
     /// Zeros of each disk (in rad), used as an offset
     pub zeros: ZeroType,
     /// Reduction between the motor gearbox and the disk
-    pub axis_reduction: f64,
-    /// Motor gearbox reduction
-    pub motor_reduction: f64,
+    pub reduction: f64,
+
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -137,7 +136,7 @@ impl Orbita3dController {
                         &dxl_config.serial_port,
                         dxl_config.id,
                         config.disks.zeros,
-                        config.disks.axis_reduction,
+                        config.disks.reduction,
                     )?;
 
                     log::info!("Using cached dynamixel controller {:?}", controller);
@@ -149,7 +148,7 @@ impl Orbita3dController {
                         &dxl_config.serial_port,
                         dxl_config.id,
                         config.disks.zeros,
-                        config.disks.axis_reduction,
+                        config.disks.reduction,
                     )?;
 
                     log::info!("Using dynamixel controller {:?}", controller);
@@ -163,8 +162,7 @@ impl Orbita3dController {
                         &dxl_config.serial_port,
                         dxl_config.id,
                         config.disks.zeros,
-                        config.disks.axis_reduction,
-			config.disks.motor_reduction,
+                        config.disks.reduction,
                     )?;
 
                     log::info!("Using cached poulpe dynamixel controller {:?}", controller);
@@ -176,8 +174,7 @@ impl Orbita3dController {
                         &dxl_config.serial_port,
                         dxl_config.id,
                         config.disks.zeros,
-                        config.disks.axis_reduction,
-			config.disks.motor_reduction,
+                        config.disks.reduction,
                     )?;
 
                     log::info!("Using poulpe dynamixel controller {:?}", controller);
@@ -196,7 +193,7 @@ impl Orbita3dController {
 
                 let controller = controller
                     .with_offsets(offsets.map(Some))
-                    .with_reduction([Some(config.disks.axis_reduction); 3]);
+                    .with_reduction([Some(config.disks.reduction); 3]);
 
                 log::info!("Using fake motors controller {:?}", controller);
 

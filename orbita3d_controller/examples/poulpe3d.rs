@@ -65,6 +65,21 @@ fn main() -> Result<(), Box<dyn Error>> {
     log::info!("Current target: {:?}", curtarget);
 
 
+    thread::sleep(Duration::from_millis(10));
+    let vellimit=controller.get_raw_motors_velocity_limit()?;
+    log::info!("Vel limit: {:?}", vellimit);
+
+    thread::sleep(Duration::from_millis(10));
+    let torquelimit=controller.get_raw_motors_torque_limit()?;
+    log::info!("Torque limit: {:?}", torquelimit);
+
+
+    thread::sleep(Duration::from_millis(10));
+    let pid=controller.get_raw_motors_pid_gains()?;
+    log::info!("Pid: {:?}", pid);
+
+
+
     let t=controller.disable_torque();
 	match t {
 		Ok(_) => log::info!("Torque is off"),
