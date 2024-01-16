@@ -4,7 +4,7 @@ use rustypot::{
     DynamixelSerialIO,
 };
 use serde::{Deserialize, Serialize};
-use serialport::SerialPort;
+use serialport::{SerialPort, TTYPort};
 use std::{f64::consts::PI, time::Duration};
 use std::{error::Error, thread, time::Instant};
 
@@ -25,7 +25,9 @@ pub struct DynamixelPoulpeConfig {
 #[derive(Debug)]
 /// DynamixelPoulpeController - wrapper around the three disks motors
 pub struct DynamixelPoulpeController {
-    serial_port: Box<dyn SerialPort>,
+    // serial_port: Box<dyn SerialPort>,
+    // serial_port: TTYPort,
+    serial_port: Box<TTYPort>,
     io: DynamixelSerialIO,
     id: u8,
 
@@ -40,9 +42,9 @@ impl DynamixelPoulpeController {
     /// Creates a new DynamixelPoulpeController
     pub fn new(serial_port: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
         let mut controller = Self {
-            serial_port: serialport::new(serial_port, 2_000_000)
+            serial_port: Box::new(serialport::new(serial_port, 2_000_000)
                 .timeout(Duration::from_millis(10))
-                .open()?,
+                .open_native()?),
             io: DynamixelSerialIO::v1(),
             id,
             offsets: [None; 3],
@@ -53,9 +55,16 @@ impl DynamixelPoulpeController {
 
         };
 
+	// TTYPort::set_exclusive(&mut controller.serial_port, true)?;
+	controller.serial_port.set_exclusive(false)?;
+
+	log::info!("Creacting controller");
         match zero {
             ZeroType::ApproximateHardwareZero(zero) => {
+		log::info!("ApproximateHardwarezero");
+
                 let current_pos = MotorsController::get_current_position(&mut controller)?;
+		log::info!("Current position: {:?}", current_pos);
 
                 zero.hardware_zero
                     .iter()
@@ -70,8 +79,11 @@ impl DynamixelPoulpeController {
                     });
             }
             ZeroType::ZeroStartup(_) => {
+		log::info!("ZeroStartup");
+
                 let current_pos = MotorsController::get_current_position(&mut controller)?;
-		log::info!("ZeroStartup: {:?}", current_pos);
+
+		log::info!("Current position: {:?}", current_pos);
 
 
                 current_pos
@@ -85,11 +97,14 @@ impl DynamixelPoulpeController {
 
             }
 	    ZeroType::HallZero(zero) => {
-		//TODO
+		log::info!("HallZero");
+
                 let current_pos = MotorsController::get_current_position(&mut controller)?;
 		thread::sleep(Duration::from_millis(1));
                 let curr_hall = orbita3d_poulpe::read_index_sensor(&controller.io, controller.serial_port.as_mut(), controller.id)?;
 		let hall_idx:[u8;3]=[curr_hall.top,curr_hall.middle,curr_hall.bottom];
+		log::info!("Current position: {:?} current hall: {:?}", current_pos, curr_hall);
+
 		// let hall_idx:[u8;3]=[0,5,10]; //TEST
 		if hall_idx.contains(&255) //255 is the value when no hall sensor is detected
 		{
