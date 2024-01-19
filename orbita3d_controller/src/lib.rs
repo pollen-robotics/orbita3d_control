@@ -188,7 +188,7 @@ impl Orbita3dController {
                 let offsets = match config.disks.zeros {
                     ZeroType::ApproximateHardwareZero(zero) => zero.hardware_zero,
                     ZeroType::ZeroStartup(_) => controller.get_current_position()?,
-		    ZeroType::HallZero(zero) => zero.hardware_zero, //TODO
+		    ZeroType::HallZero(zero) => zero.hardware_zero,
                 };
 
                 let controller = controller
@@ -206,6 +206,8 @@ impl Orbita3dController {
             kinematics: config.kinematics_model,
         })
     }
+
+
 }
 
 impl Orbita3dController {
@@ -329,4 +331,8 @@ impl Orbita3dController {
     pub fn set_raw_motors_pid_gains(&mut self, gains: [PID; 3]) -> Result<()> {
         self.inner.set_pid_gains(gains)
     }
+    pub fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
+	self.inner.get_axis_sensors()
+    }
+
 }

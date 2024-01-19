@@ -160,4 +160,8 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
 
         Ok(())
     }
+    fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
+		RawMotorsIO::get_axis_sensors(&mut self.inner)
+	}
+
 }

@@ -1,5 +1,6 @@
 use cache_cache::Cache;
 use motor_toolbox_rs::{MotorsController, RawMotorsIO, Result, PID};
+use rustypot::device::orbita3d_poulpe;
 
 use crate::ZeroType;
 
@@ -40,6 +41,8 @@ impl CachedDynamixelPoulpeController {
 
         })
     }
+
+
 }
 
 impl MotorsController<3> for CachedDynamixelPoulpeController {
@@ -200,4 +203,10 @@ impl RawMotorsIO<3> for CachedDynamixelPoulpeController {
 
         Ok(())
     }
+    fn get_axis_sensors(&mut self) -> Result<[f64;3]>
+    {
+	RawMotorsIO::get_axis_sensors(&mut self.inner)
+
+    }
+
 }

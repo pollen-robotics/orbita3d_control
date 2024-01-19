@@ -1,5 +1,5 @@
 io: !DynamixelPoulpe
-  serial_port: /dev/ttyUSB0
+  serial_port: /dev/ttyUSB1
   id: 42
   use_cache: true
 disks:

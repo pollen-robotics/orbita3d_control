@@ -55,7 +55,7 @@ impl DynamixelPoulpeController {
 
         };
 
-	// TTYPort::set_exclusive(&mut controller.serial_port, true)?;
+
 	controller.serial_port.set_exclusive(false)?;
 
 	log::info!("Creacting controller");
@@ -140,6 +140,11 @@ impl DynamixelPoulpeController {
 
         Ok(controller)
     }
+
+    // pub fn find_hall(&mut self) -> Result<[u8;3]> {
+    // 	let curr_hall = orbita3d_poulpe::read_index_sensor(&self.io, self.serial_port.as_mut(), self.id)?;
+    // 	Ok([curr_hall.top,curr_hall.middle,curr_hall.bottom])
+    // }
 
     pub fn id(&self) -> u8 {
         self.id
@@ -379,6 +384,14 @@ impl RawMotorsIO<3> for DynamixelPoulpeController {
 	    },
 	)
     }
+    fn get_axis_sensors(&mut self) -> Result<[f64;3]>
+    {
+	let axis=orbita3d_poulpe::read_axis_sensor(&self.io, self.serial_port.as_mut(), self.id)?;
+	Ok([axis.top as f64,axis.middle as f64,axis.bottom as f64])
+
+    }
+
+
 }
 
 fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduction: f64) -> f64 {
