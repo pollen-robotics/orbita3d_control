@@ -135,14 +135,6 @@ impl DynamixelPoulpeController {
                     )));
                 }
 
-                if hall_idx.contains(&255)
-                //255 is the value when no hall sensor is detected
-                {
-                    log::error!("HallZero: Hall sensor offsets not found! Check 'Donut' I2C connection or maybe configure another zeroing method?");
-                    return Err(Box::new(MissingResisterErrror(
-                        "Hall sensor not found".to_string(),
-                    )));
-                }
                 let mut vidx = hall_idx.to_vec();
                 vidx.sort();
                 vidx.dedup();
@@ -157,13 +149,26 @@ impl DynamixelPoulpeController {
 
                 log::debug!("HallZero: curr_pos: {:?} curr_hall_idx: {:?} hardware_zero: {:?} hall_zero: {:?}", current_pos, hall_idx,zero.hardware_zero,zero.hall_indice);
 
+                //theoretical angle if we are at the center of the Hall sensor from the zero
+                // Top zero is exactly in the middle of Hall 15 and Hall 0 (-11.25° from Hall 0)
+                // Mid zero is exactly at -3.75° from Hall 5
+                // Bot zero is exactly at 3.75° from Hall 10
+
+                let mut zero_hall_offsets: [f64; 3] = [0.0, 0.0, 0.0];
+                zero_hall_offsets[0] =
+                    hall_diff(hall_idx[0], 0) * 22.5_f64.to_radians() + 11.25_f64.to_radians();
+                zero_hall_offsets[1] =
+                    hall_diff(hall_idx[1], 5) * 22.5_f64.to_radians() + 3.75_f64.to_radians();
+                zero_hall_offsets[2] =
+                    hall_diff(hall_idx[2], 10) * 22.5_f64.to_radians() - 3.75_f64.to_radians();
+
                 let mut found_turn: [i16; 3] = [0; 3];
 
                 zero.hardware_zero
                     .iter()
                     .zip(current_pos.iter())
                     .zip(hall_idx.iter())
-                    .zip(zero.hall_indice.iter())
+                    .zip(zero_hall_offsets.iter())
                     .enumerate()
                     .for_each(
                         |(i, (((&hardware_zero, &current_pos), &hall_idx), &hall_zero))| {
@@ -470,7 +475,7 @@ fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduct
 fn find_position_with_hall(
     current_position: f64,
     hardware_zero: f64,
-    hall_zero: u8,
+    hall_zero: f64,
     hall_index: u8,
     reduction: f64,
 ) -> (f64, i16) {
@@ -480,13 +485,13 @@ fn find_position_with_hall(
     //! We also know the 'hall_index' which is the index of the Hall sensor closest to the current position
     //! Finally we know the 'hardware_zero' which is the position of the disk zero
 
-    const MAX_TURN: usize = 1;
+    const MAX_TURN: usize = 3;
     let mut offset: [f64; MAX_TURN] = [0.0; MAX_TURN];
     let mut offset_search: [f64; MAX_TURN] = [0.0; MAX_TURN];
     let turn_offset = 2.0 * PI * reduction;
     let hall_offset = 2.0 * PI / 16.0 * reduction; //22.5° disk for each Hall sensor
 
-    let hall_diff = hall_diff(hall_index, hall_zero);
+    // let hall_diff = hall_diff(hall_index, hall_zero);
 
     let diff_gear = current_position * reduction - hardware_zero * reduction;
     let shortest_diff_gear = angle_diff(current_position * reduction, hardware_zero * reduction); //nul FIXME
@@ -497,11 +502,11 @@ fn find_position_with_hall(
     let mut gearbox_turn = 0.0;
 
     log::debug!(
-        "Diff: {:?} shortest diff: {:?} shortest_to_zero {:?} hall_diff: {:?}",
+        "Diff: {:?} shortest diff: {:?} shortest_to_zero {:?} hall_zero_angle: {:?}",
         diff_gear,
         shortest_diff_gear,
         shortest_to_zero,
-        hall_diff
+        hall_zero
     );
 
     // TODO: Trouver combien de passage par zero connaissant le point de départ, le point d'arrivé ainsi qu'une distance min et max parcourue
@@ -509,53 +514,44 @@ fn find_position_with_hall(
 
     for i in 0..offset.len() {
         // theoretical position of the gearbox starting from the zero and moving toward detected hall
-        offset_search[i] = (hardware_zero * reduction)
-            + hall_diff * hall_offset
-            + (i as f64 - (offset.len() / 2) as f64) * turn_offset; //if we "roll" the gearbox
-        offset_search[i] %= TAU; //in gearbox
+        // offset_search[i] = (hardware_zero * reduction)
+        //     + hall_diff * hall_offset
+        //     + (i as f64 - (offset.len() / 2) as f64) * turn_offset; //if we "roll" the gearbox
+        // offset_search[i] %= TAU; //in gearbox
 
-        // FIXME: trouver l'angle exact
-        // - ajouter le nombre de tours gearbox
+        offset_search[i] = (hardware_zero * reduction) % TAU
+            + (hall_zero * reduction) % TAU
+            + ((i as f64 - (offset.len() / 2) as f64) * turn_offset) % TAU;
+        offset_search[i] %= TAU;
 
-        // did the gearbox sensor cross its zero? (the sensor is in [0;2Pi[ )
-        if !(pos - hardware_zero * reduction > (hall_diff) * hall_offset
-            && pos - hardware_zero * reduction <= (hall_diff + hall_diff.signum()) * hall_offset)
-        {
-            // gearbox_turn = hall_diff.abs().div_euclid(3.0) * hall_diff.signum();
+        let residual = angle_diff(
+            pos,
+            (hardware_zero * reduction) % TAU + (hall_zero * reduction) % TAU,
+        ) / reduction;
 
-            if hall_diff.signum() >= 0.0 {
-                // we know we moved in the trigo orientation
-                log::debug!("Crossing (positive), gearbox turn: {:?}", gearbox_turn);
-                offset[i] = -shortest_to_zero / reduction
-                    + (i as f64 - (offset.len() / 2) as f64) * turn_offset / reduction;
-            // - gearbox_turn * TAU / reduction;
-            } else {
-                log::debug!("Crossing (negative), gearbox turn: {:?}", gearbox_turn);
-                offset[i] = -(shortest_to_zero - TAU) / reduction
-                    + (i as f64 - (offset.len() / 2) as f64) * turn_offset / reduction;
-                // - gearbox_turn * TAU / reduction;
-            }
-        } else {
-            //ça a l'air de marchoter
-            log::debug!("No crossing ");
-
-            offset[i] =
-                hardware_zero + (i as f64 - (offset.len() / 2) as f64) * turn_offset / reduction;
-            // -gearbox_turn * TAU / reduction;
-        }
+        offset[i] = current_position
+            - hall_zero
+            - residual
+            - (i as f64 - (offset.len() / 2) as f64)
+                * (turn_offset / reduction - TAU * (reduction - reduction.floor()) / reduction);
 
         //in orbita ref
     }
 
+    log::debug!(
+        "Residual (gearbox) {:?} (orbita) {:?}",
+        angle_diff(pos, (hall_zero * reduction) % TAU),
+        angle_diff(pos, (hall_zero * reduction) % TAU) / reduction
+    );
     log::debug!("possible offset (orbita domain): {:?}", offset);
     log::debug!("searching offset (gearbox domain): {:?}", offset_search);
 
     log::debug!(
         "current pos (gearbox): {:?} hardware_zero (gearbox): {:?} hall_idx: {:?} hall_zero: {:?} hall_offset: {:?} turn_offset: {:?}",
-        current_position* reduction,
+        pos,
         hardware_zero * reduction,
         hall_index as f64,
-        hall_zero as f64,
+        hall_zero,
         hall_offset,
 	turn_offset
     );
@@ -570,7 +566,11 @@ fn find_position_with_hall(
     //     .unwrap();
     let best = offset_search
         .iter()
-        .map(|&p| angle_diff(p, pos).abs())
+        .map(|&p| {
+            let d = angle_diff(p, pos).abs();
+            log::debug!("Diff search: {:?}", d);
+            d
+        })
         .enumerate()
         .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
         .map(|(i, _)| offset[i])
