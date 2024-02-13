@@ -100,19 +100,6 @@ impl DynamixelPoulpeController {
 
                 thread::sleep(Duration::from_millis(1));
 
-                // for i in 0..10000 {
-                //     let current_pos = MotorsController::get_current_position(&mut controller)?;
-                //     thread::sleep(Duration::from_millis(10));
-                //     let current_pos2 = orbita3d_poulpe::read_current_position(
-                //         &controller.io,
-                //         controller.serial_port.as_mut(),
-                //         controller.id,
-                //     )?;
-
-                //     thread::sleep(Duration::from_millis(10));
-                //     log::error!("CUR POS: {:?} {:?}", current_pos, current_pos2);
-                // }
-
                 let curr_hall = orbita3d_poulpe::read_index_sensor(
                     &controller.io,
                     controller.serial_port.as_mut(),
@@ -126,6 +113,7 @@ impl DynamixelPoulpeController {
                     curr_hall
                 );
 
+                // Security, is there a mis-detection?
                 if hall_idx.contains(&255)
                 //255 is the value when no hall sensor is detected
                 {
@@ -135,6 +123,7 @@ impl DynamixelPoulpeController {
                     )));
                 }
 
+                // Security is there a duplicate?
                 let mut vidx = hall_idx.to_vec();
                 vidx.sort();
                 vidx.dedup();
@@ -184,6 +173,8 @@ impl DynamixelPoulpeController {
                         },
                     );
                 log::debug!("Offsets: {:?}, turns: {:?}", controller.offsets, found_turn);
+
+                // Security, did we found the same number of turn for each arm? (FIXME?)
                 if !(found_turn[0] == found_turn[1] && found_turn[1] == found_turn[2]) {
                     log::error!("HallZero: Incoherent offsets!!");
                     controller.offsets[0] = None;
@@ -198,11 +189,6 @@ impl DynamixelPoulpeController {
 
         Ok(controller)
     }
-
-    // pub fn find_hall(&mut self) -> Result<[u8;3]> {
-    // 	let curr_hall = orbita3d_poulpe::read_index_sensor(&self.io, self.serial_port.as_mut(), self.id)?;
-    // 	Ok([curr_hall.top,curr_hall.middle,curr_hall.bottom])
-    // }
 
     pub fn id(&self) -> u8 {
         self.id
@@ -509,15 +495,8 @@ fn find_position_with_hall(
         hall_zero
     );
 
-    // TODO: Trouver combien de passage par zero connaissant le point de départ, le point d'arrivé ainsi qu'une distance min et max parcourue
-    // distance max parcourue entre hall_diff -1 et hall_diff
-
     for i in 0..offset.len() {
         // theoretical position of the gearbox starting from the zero and moving toward detected hall
-        // offset_search[i] = (hardware_zero * reduction)
-        //     + hall_diff * hall_offset
-        //     + (i as f64 - (offset.len() / 2) as f64) * turn_offset; //if we "roll" the gearbox
-        // offset_search[i] %= TAU; //in gearbox
 
         offset_search[i] = (hardware_zero * reduction) % TAU
             + (hall_zero * reduction) % TAU
@@ -529,6 +508,7 @@ fn find_position_with_hall(
             (hardware_zero * reduction) % TAU + (hall_zero * reduction) % TAU,
         ) / reduction;
 
+        // Offset to apply
         offset[i] = current_position
             - hall_zero
             - residual
@@ -555,15 +535,7 @@ fn find_position_with_hall(
         hall_offset,
 	turn_offset
     );
-    // log::debug!("current pos with hall offset (gearbox): {:?}", pos);
 
-    // let best = offset
-    //     .iter()
-    //     .map(|&p| (p - pos).abs())
-    //     .enumerate()
-    //     .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-    //     .map(|(i, _)| offset[i])
-    //     .unwrap();
     let best = offset_search
         .iter()
         .map(|&p| {
