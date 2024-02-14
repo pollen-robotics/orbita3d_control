@@ -1,0 +1,15 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="orbita3d_actuator_control" params="name">
+
+    <gpio name="${name}">
+      <state_interface name="torque">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+
+      <command_interface name="torque"/>
+
+    </gpio>
+
+  </xacro:macro>
+</robot>

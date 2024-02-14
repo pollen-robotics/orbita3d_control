@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:include filename="$(find pollen_generic_description)/ros2_control/joint.ros2_control.xacro"/>
+  <xacro:include filename="$(find orbita3d_description)/ros2_control/orbita3d_actuator_control.ros2_control.xacro"/>
+  <xacro:include filename="$(find orbita3d_description)/ros2_control/orbita3d_axis_control.ros2_control.xacro"/>
+  <xacro:include filename="$(find orbita3d_description)/ros2_control/orbita3d_raw_motor_control.ros2_control.xacro"/>
 
     <xacro:macro name="orbita3d_control" params="name config_file">
 
@@ -23,9 +25,17 @@
                     </xacro:unless>
                 </xacro:if>
             </hardware>
-                 <xacro:position_joint_control name="${name}_roll"/>
-                 <xacro:position_joint_control name="${name}_pitch"/>
-                 <xacro:position_joint_control name="${name}_yaw"/>
+
+            <xacro:orbita3d_actuator_control name="${name}"/>
+
+            <xacro:orbita3d_axis_control name="${name}_roll"/>
+            <xacro:orbita3d_axis_control name="${name}_pitch"/>
+            <xacro:orbita3d_axis_control name="${name}_yaw"/>
+
+            <xacro:orbita3d_raw_motor_control name="${name}_raw_motor_1"/>
+            <xacro:orbita3d_raw_motor_control name="${name}_raw_motor_2"/>
+            <xacro:orbita3d_raw_motor_control name="${name}_raw_motor_3"/>
+
         </ros2_control>
     </xacro:macro>
 </robot>
