@@ -43,7 +43,7 @@ use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOC
 use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
-use std::{error::Error, thread, time::Duration, time::Instant};
+use std::{thread, time::Duration};
 
 use crate::io::{CachedDynamixelPoulpeController, DynamixelPoulpeController};
 
@@ -65,7 +65,6 @@ pub struct DisksConfig {
     pub zeros: ZeroType,
     /// Reduction between the motor gearbox and the disk
     pub reduction: f64,
-
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -78,7 +77,6 @@ pub enum ZeroType {
     ZeroStartup(ZeroStartup),
     /// HallZero config
     HallZero(HallZero),
-
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -96,9 +94,7 @@ pub struct HallZero {
 
     /// Top/Middle/Bottom Hall active for the zero position
     pub hall_indice: [u8; 3],
-
 }
-
 
 #[derive(Debug, Deserialize, Serialize)]
 /// ZeroStartup config
@@ -110,16 +106,13 @@ pub struct Orbita3dController {
     kinematics: Orbita3dKinematicsModel,
 }
 
-
-
 #[derive(Debug, Deserialize, Serialize, Copy, Clone)]
 /// Feedback struct
 pub struct Orbita3dFeedback {
-	pub orientation: [f64; 4],
-	pub velocity: [f64; 3],
-	pub torque: [f64; 3],
+    pub orientation: [f64; 4],
+    pub velocity: [f64; 3],
+    pub torque: [f64; 3],
 }
-
 
 impl Orbita3dController {
     /// Creates a new Orbita3dController using the given configuration file.
@@ -188,7 +181,7 @@ impl Orbita3dController {
                 let offsets = match config.disks.zeros {
                     ZeroType::ApproximateHardwareZero(zero) => zero.hardware_zero,
                     ZeroType::ZeroStartup(_) => controller.get_current_position()?,
-		    ZeroType::HallZero(zero) => zero.hardware_zero,
+                    ZeroType::HallZero(zero) => zero.hardware_zero,
                 };
 
                 let controller = controller
@@ -206,8 +199,6 @@ impl Orbita3dController {
             kinematics: config.kinematics_model,
         })
     }
-
-
 }
 
 impl Orbita3dController {
@@ -224,10 +215,9 @@ impl Orbita3dController {
     pub fn enable_torque(&mut self, reset_target: bool) -> Result<()> {
         if reset_target {
             let thetas = self.inner.get_current_position()?;
-	    thread::sleep(Duration::from_millis(1));
+            thread::sleep(Duration::from_millis(1));
             self.inner.set_target_position(thetas)?;
-	    thread::sleep(Duration::from_millis(1));
-
+            thread::sleep(Duration::from_millis(1));
         }
         self.inner.set_torque([true; 3])
     }
@@ -283,22 +273,27 @@ impl Orbita3dController {
         let rot =
             conversion::quaternion_to_rotation_matrix(target[0], target[1], target[2], target[3]);
         let thetas = self.kinematics.compute_inverse_kinematics(rot)?;
-        let fb:Result<[f64;9]>=self.inner.set_target_position_fb(thetas);
-	match fb
-	{
-	    Ok(fb) => {
-		let rot = self.kinematics.compute_forward_kinematics([fb[0], fb[1], fb[2]]); //Why the f*ck can't I use slice here?
-		let vel=self.kinematics.compute_output_velocity(thetas, [fb[3],fb[4],fb[5]]);
-		let torque = self.kinematics.compute_output_torque(thetas, [fb[6],fb[7],fb[8]]);
+        let fb: Result<[f64; 9]> = self.inner.set_target_position_fb(thetas);
+        match fb {
+            Ok(fb) => {
+                let rot = self
+                    .kinematics
+                    .compute_forward_kinematics([fb[0], fb[1], fb[2]]); //Why the f*ck can't I use slice here?
+                let vel = self
+                    .kinematics
+                    .compute_output_velocity(thetas, [fb[3], fb[4], fb[5]]);
+                let torque = self
+                    .kinematics
+                    .compute_output_torque(thetas, [fb[6], fb[7], fb[8]]);
 
-		Ok(Orbita3dFeedback {
-		    orientation: conversion::rotation_matrix_to_quaternion(rot),
-		    velocity:   [vel[0], vel[1], vel[2]],
-		    torque: [torque[0], torque[1], torque[2]]
-		})
-	    }
-	    Err(e) => Err(e)
-	}
+                Ok(Orbita3dFeedback {
+                    orientation: conversion::rotation_matrix_to_quaternion(rot),
+                    velocity: [vel[0], vel[1], vel[2]],
+                    torque: [torque[0], torque[1], torque[2]],
+                })
+            }
+            Err(e) => Err(e),
+        }
     }
 
     /// Get the velocity limit of each raw motor (in rad/s)
@@ -332,7 +327,6 @@ impl Orbita3dController {
         self.inner.set_pid_gains(gains)
     }
     pub fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
-	self.inner.get_axis_sensors()
+        self.inner.get_axis_sensors()
     }
-
 }
