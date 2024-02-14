@@ -3,10 +3,10 @@ io: !DynamixelPoulpe
   id: 42
   use_cache: true
 disks:
-  zeros: !HallZero
-    hardware_zero: [0.988902747631073, 0.728014200925827, 0.4328247159719467]
-    hall_indice: [0, 5, 11]
-  # zeros: !ZeroStartup
+  # zeros: !HallZero
+    # hardware_zero: [0.988902747631073, 0.728014200925827, 0.4328247159719467]
+    # hall_indice: [0, 5, 11]
+  zeros: !ZeroStartup
   reduction: 5.333333333333333333
   # reduction: 4.2666667 #old Orbita
 kinematics_model:
