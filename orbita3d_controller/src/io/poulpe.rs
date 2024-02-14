@@ -434,8 +434,8 @@ fn find_position_with_hall(
 
     let mut offset: [f64; 95] = [0.0; 95]; // 16 Hall +/- 2 full turns + 15 (=32+15=47) => 3 turns: we fall back on the same position...
     let hall_offset = 2.0 * PI / 16.0 * reduction;
-    for i in 0..95 {
-        offset[i] = hardware_zero - (-((i as f64) - 47.0) * hall_offset);
+    for (i, offset_value) in offset.iter_mut().enumerate() {
+        *offset_value = hardware_zero - (-((i as f64) - 47.0) * hall_offset);
     }
 
     log::debug!("possible offset: {:?}", offset);
