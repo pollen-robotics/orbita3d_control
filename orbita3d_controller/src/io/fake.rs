@@ -26,6 +26,7 @@ mod tests {
             }
             assert_eq!(config.disks.reduction, 1.0);
 
+
             assert_eq!(config.kinematics_model.gamma_min, 0.0);
             assert_eq!(config.kinematics_model.offset, 0.0);
             assert_eq!(config.kinematics_model.beta, PI / 2.0);
