@@ -8,7 +8,6 @@ use serialport::{SerialPort, TTYPort};
 use std::{error::Error, thread, time::Instant};
 use std::{f64::consts::PI, f64::consts::TAU, time::Duration};
 
-
 use crate::ZeroType;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -35,8 +34,6 @@ pub struct DynamixelPoulpeController {
     offsets: [Option<f64>; 3],
     reduction: [Option<f64>; 3],
     // motor_reduction: [Option<f64>; 3],
-    hall_indice: [Option<u8>; 3],
-
     limits: [Option<Limit>; 3],
 }
 
@@ -55,8 +52,6 @@ impl DynamixelPoulpeController {
             reduction: [Some(reductions); 3],
             // motor_reduction: [Some(motor_reductions); 3],
             limits: [None; 3],
-
-            // hall_indices: [None; 3],
         };
 
         controller.serial_port.set_exclusive(false)?;
@@ -166,7 +161,6 @@ impl DynamixelPoulpeController {
                     .for_each(
                         |(i, (((&hardware_zero, &current_pos), &hall_idx), &hall_zero))| {
                             let res = find_position_with_hall(
-
                                 current_pos,
                                 hardware_zero,
                                 hall_zero,
@@ -189,7 +183,6 @@ impl DynamixelPoulpeController {
                         "Hall sensor not found".to_string(),
                     )));
                 }
-
             }
         }
 
