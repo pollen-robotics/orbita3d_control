@@ -1,3 +1,4 @@
+use crate::ZeroType;
 use motor_toolbox_rs::{Limit, MissingResisterErrror, MotorsController, RawMotorsIO, Result, PID};
 use rustypot::{
     device::orbita3d_poulpe::{self, MotorValue},
@@ -6,8 +7,6 @@ use rustypot::{
 use serde::{Deserialize, Serialize};
 use serialport::SerialPort;
 use std::{f64::consts::PI, time::Duration};
-
-use crate::ZeroType;
 
 #[derive(Debug, Deserialize, Serialize)]
 /// DynamixelSerial Config
@@ -73,9 +72,8 @@ impl DynamixelSerialController {
                         controller.offsets[i] = Some(current_pos);
                     });
             }
-	    ZeroType::HallZero(_) =>
-	    {//TODO
-	    }
+            ZeroType::HallZero(_) => { //TODO
+            }
         }
 
         Ok(controller)
@@ -107,21 +105,24 @@ impl MotorsController<3> for DynamixelSerialController {
 impl RawMotorsIO<3> for DynamixelSerialController {
     fn is_torque_on(&mut self) -> Result<[bool; 3]> {
         let on = orbita3d_poulpe::read_torque_enable(&self.io, self.serial_port.as_mut(), self.id);
-	match on{
-	    Ok(on)=>Ok([on.top, on.middle, on.bottom]),
-	    Err(e)=>Err(e),
-	}
-
+        match on {
+            Ok(on) => Ok([on.top, on.middle, on.bottom]),
+            Err(e) => Err(e),
+        }
     }
 
     fn set_torque(&mut self, on: [bool; 3]) -> Result<()> {
         assert!(on.iter().all(|&t| t == on[0]));
-        orbita3d_poulpe::write_torque_enable(&self.io, self.serial_port.as_mut(), self.id, MotorValue {
-			top: on[0],
-			middle: on[1],
-			bottom: on[2],
-		})
-
+        orbita3d_poulpe::write_torque_enable(
+            &self.io,
+            self.serial_port.as_mut(),
+            self.id,
+            MotorValue {
+                top: on[0],
+                middle: on[1],
+                bottom: on[2],
+            },
+        )
     }
 
     fn get_current_position(&mut self) -> Result<[f64; 3]> {
@@ -148,61 +149,73 @@ impl RawMotorsIO<3> for DynamixelSerialController {
     }
 
     fn get_target_position(&mut self) -> Result<[f64; 3]> {
-        orbita3d_poulpe::read_target_position(&self.io, self.serial_port.as_mut(), self.id).map(|thetas| {
-            [
-                thetas.top as f64,
-                thetas.middle as f64,
-                thetas.bottom as f64,
-            ]
-        })
+        orbita3d_poulpe::read_target_position(&self.io, self.serial_port.as_mut(), self.id).map(
+            |thetas| {
+                [
+                    thetas.top as f64,
+                    thetas.middle as f64,
+                    thetas.bottom as f64,
+                ]
+            },
+        )
     }
 
     fn set_target_position(&mut self, position: [f64; 3]) -> Result<()> {
-        let fb=orbita3d_poulpe::write_target_position(
+        let fb = orbita3d_poulpe::write_target_position(
             &self.io,
             self.serial_port.as_mut(),
             self.id,
-            MotorValue{
+            MotorValue {
                 top: position[0] as f32,
                 middle: position[1] as f32,
                 bottom: position[2] as f32,
             },
         );
-	match fb{
-		Ok(_)=>Ok(()),
-		Err(e)=>Err(e)
-	}
-
+        match fb {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 
     fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 9]> {
-        let fb=orbita3d_poulpe::write_target_position(
+        let fb = orbita3d_poulpe::write_target_position(
             &self.io,
             self.serial_port.as_mut(),
             self.id,
-            MotorValue{
+            MotorValue {
                 top: position[0] as f32,
                 middle: position[1] as f32,
                 bottom: position[2] as f32,
             },
         );
-	match fb{
-	    Ok(fb)=>Ok([fb.position.top as f64,fb.position.middle as f64,fb.position.bottom as f64,fb.speed.top as f64,fb.speed.middle as f64,fb.speed.bottom as f64,fb.load.top as f64,fb.load.middle as f64,fb.load.bottom as f64]),
-	    Err(e)=>Err(e),
-	}
-
+        match fb {
+            Ok(fb) => Ok([
+                fb.position.top as f64,
+                fb.position.middle as f64,
+                fb.position.bottom as f64,
+                fb.speed.top as f64,
+                fb.speed.middle as f64,
+                fb.speed.bottom as f64,
+                fb.load.top as f64,
+                fb.load.middle as f64,
+                fb.load.bottom as f64,
+            ]),
+            Err(e) => Err(e),
+        }
     }
 
     fn get_velocity_limit(&mut self) -> Result<[f64; 3]> {
-	Err(Box::new(MissingResisterErrror("velocity_limit".to_string())))
-
+        Err(Box::new(MissingResisterErrror(
+            "velocity_limit".to_string(),
+        )))
     }
 
     fn set_velocity_limit(&mut self, velocity: [f64; 3]) -> Result<()> {
         assert!(velocity[0] == velocity[1] && velocity[1] == velocity[2]);
 
-	Err(Box::new(MissingResisterErrror("velocity_limit".to_string())))
-
+        Err(Box::new(MissingResisterErrror(
+            "velocity_limit".to_string(),
+        )))
     }
 
     fn get_torque_limit(&mut self) -> Result<[f64; 3]> {
@@ -215,19 +228,15 @@ impl RawMotorsIO<3> for DynamixelSerialController {
 
     fn get_pid_gains(&mut self) -> Result<[PID; 3]> {
         Err(Box::new(MissingResisterErrror("pid".to_string())))
-
     }
 
     fn set_pid_gains(&mut self, pid: [PID; 3]) -> Result<()> {
         assert!(pid[0] == pid[1] && pid[1] == pid[2]);
         Err(Box::new(MissingResisterErrror("pid".to_string())))
-
     }
-    fn get_axis_sensors(&mut self) -> Result<[f64;3]>
-    {
-	Err(Box::new(MissingResisterErrror("axis_sensors".to_string())))
+    fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
+        Err(Box::new(MissingResisterErrror("axis_sensors".to_string())))
     }
-
 }
 
 fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduction: f64) -> f64 {

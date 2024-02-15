@@ -31,6 +31,12 @@ pub fn matrix_to_intrinsic_roll_pitch_yaw(rot: Rotation3<f64>) -> [f64; 3] {
     [roll, pitch, yaw]
 }
 
+pub fn quaternion_to_roll_pitch_yaw(quat: [f64; 4]) -> [f64; 3] {
+    let q = UnitQuaternion::from_quaternion(Quaternion::new(quat[3], quat[0], quat[1], quat[2]));
+    let rpy = q.euler_angles();
+    [rpy.0, rpy.1, rpy.2]
+}
+
 /// Convert from `Vector3<f64>` to `\[`f64;3`\]`
 pub fn vector3_to_array(v: Vector3<f64>) -> [f64; 3] {
     [v.x, v.y, v.z]

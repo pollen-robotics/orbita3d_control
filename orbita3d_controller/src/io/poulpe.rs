@@ -1,12 +1,13 @@
 use motor_toolbox_rs::{Limit, MissingResisterErrror, MotorsController, RawMotorsIO, Result, PID};
 use rustypot::{
-    device::orbita3d_poulpe::{self, MotorValue},
+    device::orbita3d_poulpe::{self, MotorPositionSpeedLoad, MotorValue},
     DynamixelSerialIO,
 };
 use serde::{Deserialize, Serialize};
-use serialport::TTYPort;
-use std::thread;
-use std::{f64::consts::PI, time::Duration};
+use serialport::{SerialPort, TTYPort};
+use std::{error::Error, thread, time::Instant};
+use std::{f64::consts::PI, f64::consts::TAU, time::Duration};
+
 
 use crate::ZeroType;
 
@@ -34,7 +35,8 @@ pub struct DynamixelPoulpeController {
     offsets: [Option<f64>; 3],
     reduction: [Option<f64>; 3],
     // motor_reduction: [Option<f64>; 3],
-    // hall_indices: [Option<u8>; 3],
+    hall_indice: [Option<u8>; 3],
+
     limits: [Option<Limit>; 3],
 }
 
@@ -53,6 +55,7 @@ impl DynamixelPoulpeController {
             reduction: [Some(reductions); 3],
             // motor_reduction: [Some(motor_reductions); 3],
             limits: [None; 3],
+
             // hall_indices: [None; 3],
         };
 
@@ -96,7 +99,10 @@ impl DynamixelPoulpeController {
                 log::info!("HallZero");
 
                 let current_pos = MotorsController::get_current_position(&mut controller)?;
+                let current_gearbox = MotorsController::get_axis_sensors(&mut controller)?;
+
                 thread::sleep(Duration::from_millis(1));
+
                 let curr_hall = orbita3d_poulpe::read_index_sensor(
                     &controller.io,
                     controller.serial_port.as_mut(),
@@ -104,16 +110,29 @@ impl DynamixelPoulpeController {
                 )?;
                 let hall_idx: [u8; 3] = [curr_hall.top, curr_hall.middle, curr_hall.bottom];
                 log::info!(
-                    "Current position: {:?} current hall: {:?}",
+                    "Current position: {:?} axis: {:?} current hall: {:?}",
                     current_pos,
+                    current_gearbox,
                     curr_hall
                 );
 
-                // let hall_idx:[u8;3]=[0,5,10]; //TEST
+                // Security, is there a mis-detection?
                 if hall_idx.contains(&255)
                 //255 is the value when no hall sensor is detected
                 {
-                    log::error!("HallZero: Hall sensor not found! Check 'Donut' I2C connection or maybe configure another zeroing method?");
+                    log::error!("HallZero: Hall sensor offsets not found! Check 'Donut' I2C connection or maybe configure another zeroing method?");
+                    return Err(Box::new(MissingResisterErrror(
+                        "Hall sensor not found".to_string(),
+                    )));
+                }
+
+                // Security is there a duplicate?
+                let mut vidx = hall_idx.to_vec();
+                vidx.sort();
+                vidx.dedup();
+                if vidx.len() != 3 {
+                    log::error!("HallZero: Duplicate in hall indices! Initialization failed...");
+
                     return Err(Box::new(MissingResisterErrror(
                         "Hall sensor not found".to_string(),
                     )));
@@ -123,33 +142,59 @@ impl DynamixelPoulpeController {
 
                 log::debug!("HallZero: curr_pos: {:?} curr_hall_idx: {:?} hardware_zero: {:?} hall_zero: {:?}", current_pos, hall_idx,zero.hardware_zero,zero.hall_indice);
 
+                //theoretical angle if we are at the center of the Hall sensor from the zero
+                // Top zero is exactly in the middle of Hall 15 and Hall 0 (-11.25° from Hall 0)
+                // Mid zero is exactly at -3.75° from Hall 5
+                // Bot zero is exactly at 3.75° from Hall 10
+
+                let mut zero_hall_offsets: [f64; 3] = [0.0, 0.0, 0.0];
+                zero_hall_offsets[0] =
+                    hall_diff(hall_idx[0], 0) * 22.5_f64.to_radians() + 11.25_f64.to_radians();
+                zero_hall_offsets[1] =
+                    hall_diff(hall_idx[1], 5) * 22.5_f64.to_radians() + 3.75_f64.to_radians();
+                zero_hall_offsets[2] =
+                    hall_diff(hall_idx[2], 10) * 22.5_f64.to_radians() - 3.75_f64.to_radians();
+
+                let mut found_turn: [i16; 3] = [0; 3];
+
                 zero.hardware_zero
                     .iter()
                     .zip(current_pos.iter())
                     .zip(hall_idx.iter())
-                    .zip(zero.hall_indice.iter())
+                    .zip(zero_hall_offsets.iter())
                     .enumerate()
                     .for_each(
-                        |(i, (((&hardware_zero, &current_pos), &hall_zero), &hall_idx))| {
-                            controller.offsets[i] = Some(find_position_with_hall(
+                        |(i, (((&hardware_zero, &current_pos), &hall_idx), &hall_zero))| {
+                            let res = find_position_with_hall(
+
                                 current_pos,
                                 hardware_zero,
                                 hall_zero,
                                 hall_idx,
                                 reductions,
-                            ));
+                            );
+                            controller.offsets[i] = Some(res.0);
+                            found_turn[i] = res.1;
                         },
                     );
+                log::debug!("Offsets: {:?}, turns: {:?}", controller.offsets, found_turn);
+
+                // Security, did we found the same number of turn for each arm? (FIXME?)
+                if !(found_turn[0] == found_turn[1] && found_turn[1] == found_turn[2]) {
+                    log::error!("HallZero: Incoherent offsets!!");
+                    controller.offsets[0] = None;
+                    controller.offsets[1] = None;
+                    controller.offsets[2] = None;
+                    return Err(Box::new(MissingResisterErrror(
+                        "Hall sensor not found".to_string(),
+                    )));
+                }
+
             }
         }
 
         Ok(controller)
     }
-
-    // pub fn find_hall(&mut self) -> Result<[u8;3]> {
-    // 	let curr_hall = orbita3d_poulpe::read_index_sensor(&self.io, self.serial_port.as_mut(), self.id)?;
-    // 	Ok([curr_hall.top,curr_hall.middle,curr_hall.bottom])
-    // }
 
     pub fn id(&self) -> u8 {
         self.id
@@ -422,36 +467,131 @@ fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduct
 fn find_position_with_hall(
     current_position: f64,
     hardware_zero: f64,
-    hall_zero: u8,
+    hall_zero: f64,
     hall_index: u8,
     reduction: f64,
-) -> f64 {
+) -> (f64, i16) {
     //! Find the current position corrected by the hall sensor
     //! There is 16 Hall sensors on the disk output and a ratio 'reduction' between the disk and the motor gearbox output
     //! We knwow the 'hall_zero' index which correspond to the index of the Hall sensor closest to the disk zero position
     //! We also know the 'hall_index' which is the index of the Hall sensor closest to the current position
     //! Finally we know the 'hardware_zero' which is the position of the disk zero
 
-    let mut offset: [f64; 95] = [0.0; 95]; // 16 Hall +/- 2 full turns + 15 (=32+15=47) => 3 turns: we fall back on the same position...
-    let hall_offset = 2.0 * PI / 16.0 * reduction;
-    for (i, offset_value) in offset.iter_mut().enumerate() {
-        *offset_value = hardware_zero - (-((i as f64) - 47.0) * hall_offset);
+    const MAX_TURN: usize = 3;
+    let mut offset: [f64; MAX_TURN] = [0.0; MAX_TURN];
+    let mut offset_search: [f64; MAX_TURN] = [0.0; MAX_TURN];
+    let turn_offset = 2.0 * PI * reduction;
+    let hall_offset = 2.0 * PI / 16.0 * reduction; //22.5° disk for each Hall sensor
+
+    // let hall_diff = hall_diff(hall_index, hall_zero);
+
+    let diff_gear = current_position * reduction - hardware_zero * reduction;
+    let shortest_diff_gear = angle_diff(current_position * reduction, hardware_zero * reduction); //nul FIXME
+    let shortest_to_zero = angle_diff(0.0, hardware_zero * reduction);
+
+    let pos = (current_position * reduction) % TAU; //this should be the raw gearbox position
+    let shortest_to_current = angle_diff(0.0, pos);
+    let mut gearbox_turn = 0.0;
+
+    log::debug!(
+        "Diff: {:?} shortest diff: {:?} shortest_to_zero {:?} hall_zero_angle: {:?}",
+        diff_gear,
+        shortest_diff_gear,
+        shortest_to_zero,
+        hall_zero
+    );
+
+    for i in 0..offset.len() {
+        // theoretical position of the gearbox starting from the zero and moving toward detected hall
+
+        offset_search[i] = (hardware_zero * reduction) % TAU
+            + (hall_zero * reduction) % TAU
+            + ((i as f64 - (offset.len() / 2) as f64) * turn_offset) % TAU;
+        offset_search[i] %= TAU;
+
+        let residual = angle_diff(
+            pos,
+            (hardware_zero * reduction) % TAU + (hall_zero * reduction) % TAU,
+        ) / reduction;
+
+        // Offset to apply
+        offset[i] = current_position
+            - hall_zero
+            - residual
+            - (i as f64 - (offset.len() / 2) as f64)
+                * (turn_offset / reduction - TAU * (reduction - reduction.floor()) / reduction);
+
+        //in orbita ref
     }
 
-    log::debug!("possible offset: {:?}", offset);
-    let pos = current_position - (hall_index as i16 - hall_zero as i16) as f64 * hall_offset;
-    log::debug!("current pos with hall: {:?}", pos);
+    log::debug!(
+        "Residual (gearbox) {:?} (orbita) {:?}",
+        angle_diff(pos, (hall_zero * reduction) % TAU),
+        angle_diff(pos, (hall_zero * reduction) % TAU) / reduction
+    );
+    log::debug!("possible offset (orbita domain): {:?}", offset);
+    log::debug!("searching offset (gearbox domain): {:?}", offset_search);
 
-    let best = offset
+    log::debug!(
+        "current pos (gearbox): {:?} hardware_zero (gearbox): {:?} hall_idx: {:?} hall_zero: {:?} hall_offset: {:?} turn_offset: {:?}",
+        pos,
+        hardware_zero * reduction,
+        hall_index as f64,
+        hall_zero,
+        hall_offset,
+	turn_offset
+    );
+
+    let best = offset_search
         .iter()
-        .map(|&p| (p - pos).abs())
+        .map(|&p| {
+            let d = angle_diff(p, pos).abs();
+            log::debug!("Diff search: {:?}", d);
+            d
+        })
         .enumerate()
         .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
         .map(|(i, _)| offset[i])
         .unwrap();
 
-    log::debug!("best match: {}", best);
-    best
+    let best_idx = offset.iter().position(|&x| x == best).unwrap();
+    log::debug!(
+        "best offset (orbita domain): {} gearbox domain: {:?}",
+        best,
+        offset_search[best_idx]
+    );
+    log::debug!(
+        "It corresponds to {} turn (orbita domain)",
+        best_idx as i16 - (offset.len() / 2) as i16
+    );
+
+    (best, best_idx as i16 - (offset.len() / 2) as i16)
+}
+
+pub fn angle_diff(angle_a: f64, angle_b: f64) -> f64 {
+    let mut angle = angle_a - angle_b;
+    angle = (angle + PI) % TAU - PI;
+    if angle < -PI {
+        angle + TAU
+    } else {
+        angle
+    }
+}
+
+pub fn hall_diff(hall_a: u8, hall_b: u8) -> f64 {
+    // shortest hall difference (16 discrete Hall)
+    let d: f64 = hall_a as f64 - hall_b as f64;
+    if d >= 0.0 {
+        if d >= 8.0 {
+            d - 16.0
+        } else {
+            d
+        }
+    } else if d >= -8.0 {
+        d
+    } else {
+        d + 16.0
+    }
 }
 
 #[cfg(test)]

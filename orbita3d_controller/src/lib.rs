@@ -326,6 +326,8 @@ impl Orbita3dController {
     pub fn set_raw_motors_pid_gains(&mut self, gains: [PID; 3]) -> Result<()> {
         self.inner.set_pid_gains(gains)
     }
+
+    /// Get the axis sensors values (gearbox mounted absolute magnetic encoder)
     pub fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
         self.inner.get_axis_sensors()
     }
