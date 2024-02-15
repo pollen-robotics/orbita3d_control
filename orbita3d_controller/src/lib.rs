@@ -43,7 +43,7 @@ use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOC
 use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
-use std::{error::Error, thread, time::Duration, time::Instant};
+use std::{thread, time::Duration};
 
 use crate::io::{CachedDynamixelPoulpeController, DynamixelPoulpeController};
 
