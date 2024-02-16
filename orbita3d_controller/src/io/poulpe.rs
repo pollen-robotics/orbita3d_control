@@ -52,6 +52,7 @@ impl DynamixelPoulpeController {
             reduction: [Some(reductions); 3],
             // motor_reduction: [Some(motor_reductions); 3],
             limits: [None; 3],
+            // hall_indices: [None; 3],
         };
 
         controller.serial_port.set_exclusive(false)?;
@@ -127,6 +128,7 @@ impl DynamixelPoulpeController {
                 vidx.dedup();
                 if vidx.len() != 3 {
                     log::error!("HallZero: Duplicate in hall indices! Initialization failed...");
+
                     return Err(Box::new(MissingResisterErrror(
                         "Hall sensor not found".to_string(),
                     )));
