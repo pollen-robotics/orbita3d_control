@@ -1,6 +1,6 @@
 io: !DynamixelPoulpe
   serial_port: /dev/ttyUSB0
-  id: 42
+  id: 52
   use_cache: true
 disks:
   # zeros: !HallZero

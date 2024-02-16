@@ -34,7 +34,6 @@ pub struct DynamixelPoulpeController {
     offsets: [Option<f64>; 3],
     reduction: [Option<f64>; 3],
     // motor_reduction: [Option<f64>; 3],
-    hall_indice: [Option<u8>; 3],
     limits: [Option<Limit>; 3],
 }
 
@@ -53,7 +52,6 @@ impl DynamixelPoulpeController {
             reduction: [Some(reductions); 3],
             // motor_reduction: [Some(motor_reductions); 3],
             limits: [None; 3],
-            hall_indice: [None; 3],
         };
 
         controller.serial_port.set_exclusive(false)?;
