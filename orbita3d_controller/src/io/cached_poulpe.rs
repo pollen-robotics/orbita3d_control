@@ -110,19 +110,19 @@ impl RawMotorsIO<3> for CachedDynamixelPoulpeController {
         let cpos: [f64; 3] = [fb[0], fb[1], fb[2]];
         // let cpos:[f64;3]=[0.0;3];
         // cpos.clone_from_slice(&fb[0..3]);
-        let cvel: [f64; 3] = [fb[3], fb[4], fb[5]];
-        let ctorque: [f64; 3] = [fb[6], fb[7], fb[8]];
+        // let cvel: [f64; 3] = [fb[3], fb[4], fb[5]];
+        // let ctorque: [f64; 3] = [fb[6], fb[7], fb[8]];
 
         self.current_position.insert(self.inner.id(), cpos); //I would like to be able to use a slice here &fb[0..3] but it doesn't work
-        self.current_velocity.insert(self.inner.id(), cvel);
-        self.current_torque.insert(self.inner.id(), ctorque);
+                                                             // self.current_velocity.insert(self.inner.id(), cvel);
+                                                             // self.current_torque.insert(self.inner.id(), ctorque);
 
         // }
 
         Ok(())
     }
 
-    fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 9]> {
+    fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 3]> {
         // let current_position = RawMotorsIO::get_target_position(self)?;
 
         // let mut fb:[f64;9]=[0.0;9];
@@ -134,12 +134,12 @@ impl RawMotorsIO<3> for CachedDynamixelPoulpeController {
         let cpos: [f64; 3] = [fb[0], fb[1], fb[2]];
         // let cpos:[f64;3]=[0.0;3];
         // cpos.clone_from_slice(&fb[0..3]);
-        let cvel: [f64; 3] = [fb[3], fb[4], fb[5]];
-        let ctorque: [f64; 3] = [fb[6], fb[7], fb[8]];
+        // let cvel: [f64; 3] = [fb[3], fb[4], fb[5]];
+        // let ctorque: [f64; 3] = [fb[6], fb[7], fb[8]];
 
         self.current_position.insert(self.inner.id(), cpos); //I would like to be able to use a slice here &fb[0..3] but it doesn't work
-        self.current_velocity.insert(self.inner.id(), cvel);
-        self.current_torque.insert(self.inner.id(), ctorque);
+                                                             // self.current_velocity.insert(self.inner.id(), cvel);
+                                                             // self.current_torque.insert(self.inner.id(), ctorque);
 
         // }
 

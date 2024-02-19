@@ -105,12 +105,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     thread::sleep(Duration::from_millis(1000));
 
     //DEBUGGING
-    let r = controller.disable_torque();
-    match r {
-        Ok(_) => log::info!("Torque is off"),
-        Err(e) => log::error!("Error: {}", e),
-    }
-    thread::sleep(Duration::from_millis(10000));
+    // let r = controller.disable_torque();
+    // match r {
+    //     Ok(_) => log::info!("Torque is off"),
+    //     Err(e) => log::error!("Error: {}", e),
+    // }
+    // thread::sleep(Duration::from_millis(10000));
 
     let now = SystemTime::now();
     let mut t = now.elapsed().unwrap().as_secs_f32();
@@ -124,8 +124,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         t = now.elapsed().unwrap().as_secs_f32();
 
-        // let s = amplitude * (2.0 * PI * freq * t as f64).sin();
-        let s = (t as f64) / 10.0 * std::f64::consts::TAU;
+        let s = amplitude * (2.0 * PI * freq * t as f64).sin();
+        // let s = (t as f64) / 10.0 * std::f64::consts::TAU;
 
         let target_yaw_mat = conversion::intrinsic_roll_pitch_yaw_to_matrix(0.0, 0.0, s);
         let target = conversion::rotation_matrix_to_quaternion(target_yaw_mat);
@@ -136,6 +136,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // log::info!("Feedback: {:?}", fb);
                 let rpy = conversion::quaternion_to_roll_pitch_yaw(fb.orientation);
                 log::info!("rpy: {:?}", rpy);
+                println!("{:?} {:?} {:?} {:?} {:?}", t, s, rpy[0], rpy[1], rpy[2]);
             }
             Err(e) => log::error!("Error: {}", e),
         }

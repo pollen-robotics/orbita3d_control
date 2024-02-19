@@ -177,7 +177,7 @@ impl RawMotorsIO<3> for DynamixelSerialController {
         }
     }
 
-    fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 9]> {
+    fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 3]> {
         let fb = orbita3d_poulpe::write_target_position(
             &self.io,
             self.serial_port.as_mut(),
@@ -193,12 +193,12 @@ impl RawMotorsIO<3> for DynamixelSerialController {
                 fb.position.top as f64,
                 fb.position.middle as f64,
                 fb.position.bottom as f64,
-                fb.speed.top as f64,
-                fb.speed.middle as f64,
-                fb.speed.bottom as f64,
-                fb.load.top as f64,
-                fb.load.middle as f64,
-                fb.load.bottom as f64,
+                // fb.speed.top as f64,
+                // fb.speed.middle as f64,
+                // fb.speed.bottom as f64,
+                // fb.load.top as f64,
+                // fb.load.middle as f64,
+                // fb.load.bottom as f64,
             ]),
             Err(e) => Err(e),
         }
