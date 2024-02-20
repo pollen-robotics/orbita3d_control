@@ -94,21 +94,18 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
         Ok(())
     }
 
-
-    fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64;9]> {
+    fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 3]> {
         let current_position = RawMotorsIO::get_target_position(self)?;
 
-	let mut fb = [0.0;9];
+        let mut fb = [0.0; 3];
         if current_position != position {
-            fb=RawMotorsIO::set_target_position_fb(&mut self.inner, position)?;
+            fb = RawMotorsIO::set_target_position_fb(&mut self.inner, position)?;
 
             self.target_position.insert(self.inner.id(), position);
         }
 
         Ok(fb)
     }
-
-
 
     fn get_velocity_limit(&mut self) -> Result<[f64; 3]> {
         self.velocity_limit
@@ -161,7 +158,6 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
         Ok(())
     }
     fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
-		RawMotorsIO::get_axis_sensors(&mut self.inner)
-	}
-
+        RawMotorsIO::get_axis_sensors(&mut self.inner)
+    }
 }

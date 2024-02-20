@@ -4,7 +4,6 @@ use motor_toolbox_rs::PID;
 use once_cell::sync::Lazy;
 use orbita3d_controller::Orbita3dController;
 
-use std::{thread, time::Duration};
 use crate::sync_map::SyncMap;
 
 static UID: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
@@ -124,7 +123,11 @@ pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 
 }
 
 #[no_mangle]
-pub extern "C" fn orbita3d_set_target_orientation_fb(uid: u32, orientation: &[f64; 4], feedback: &mut [f64; 10]) -> i32 {
+pub extern "C" fn orbita3d_set_target_orientation_fb(
+    uid: u32,
+    orientation: &[f64; 4],
+    feedback: &mut [f64; 10],
+) -> i32 {
     // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
@@ -132,18 +135,18 @@ pub extern "C" fn orbita3d_set_target_orientation_fb(uid: u32, orientation: &[f6
         .set_target_orientation_fb(*orientation)
     {
         Ok(fb) => {
-	    feedback[0]=fb.orientation[0]; //FIXME: I don't know how to include the struct definition in the C bindings...
-	    feedback[1]=fb.orientation[1];
-	    feedback[2]=fb.orientation[2];
-	    feedback[3]=fb.orientation[3];
-	    feedback[4]=fb.velocity[0];
-	    feedback[5]=fb.velocity[1];
-	    feedback[6]=fb.velocity[2];
-	    feedback[7]=fb.torque[0];
-	    feedback[8]=fb.torque[1];
-	    feedback[9]=fb.torque[2];
-	    0
-	},
+            feedback[0] = fb.orientation[0]; //FIXME: I don't know how to include the struct definition in the C bindings...
+            feedback[1] = fb.orientation[1];
+            feedback[2] = fb.orientation[2];
+            feedback[3] = fb.orientation[3];
+            feedback[4] = fb.velocity[0];
+            feedback[5] = fb.velocity[1];
+            feedback[6] = fb.velocity[2];
+            feedback[7] = fb.torque[0];
+            feedback[8] = fb.torque[1];
+            feedback[9] = fb.torque[2];
+            0
+        }
         Err(_) => 1,
     }
 }
@@ -225,7 +228,6 @@ pub extern "C" fn orbita3d_get_raw_motors_pid_gains(uid: u32, gains: &mut [[f64;
         }
         Err(_) => 1,
     }
-
 }
 
 #[no_mangle]
@@ -251,8 +253,6 @@ pub extern "C" fn orbita3d_set_raw_motors_pid_gains(uid: u32, gains: &[[f64; 3];
         Ok(_) => 0,
         Err(_) => 1,
     }
-
-
 }
 
 fn get_available_uid() -> u32 {
