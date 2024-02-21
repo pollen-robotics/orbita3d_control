@@ -213,7 +213,7 @@ impl Orbita3dController {
     /// # Arguments
     /// * reset_target: if true, the target position will be reset to the current position
     pub fn enable_torque(&mut self, reset_target: bool) -> Result<()> {
-        if reset_target {
+        if !self.is_torque_on()? && reset_target {
             let thetas = self.inner.get_current_position()?;
             thread::sleep(Duration::from_millis(1));
             self.inner.set_target_position(thetas)?;
