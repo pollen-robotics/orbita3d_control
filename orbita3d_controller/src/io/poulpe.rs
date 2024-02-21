@@ -1,11 +1,11 @@
 use motor_toolbox_rs::{Limit, MissingResisterErrror, MotorsController, RawMotorsIO, Result, PID};
 use rustypot::{
-    device::orbita3d_poulpe::{self, MotorPositionSpeedLoad, MotorValue},
+    device::orbita3d_poulpe::{self, MotorValue},
     DynamixelSerialIO,
 };
 use serde::{Deserialize, Serialize};
-use serialport::{SerialPort, TTYPort};
-use std::{error::Error, thread, time::Instant};
+use serialport::TTYPort;
+use std::thread;
 use std::{f64::consts::PI, f64::consts::TAU, time::Duration};
 
 use crate::ZeroType;
@@ -483,8 +483,9 @@ fn find_position_with_hall(
     let shortest_to_zero = angle_diff(0.0, hardware_zero * reduction);
 
     let pos = (current_position * reduction) % TAU; //this should be the raw gearbox position
-    let shortest_to_current = angle_diff(0.0, pos);
-    let mut gearbox_turn = 0.0;
+
+    // let shortest_to_current = angle_diff(0.0, pos);
+    // let mut gearbox_turn = 0.0;
 
     log::debug!(
         "Diff: {:?} shortest diff: {:?} shortest_to_zero {:?} hall_zero_angle: {:?}",
