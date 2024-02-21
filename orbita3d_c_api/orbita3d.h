@@ -36,7 +36,7 @@ int32_t orbita3d_set_target_orientation(uint32_t uid, const double (*orientation
 
 int32_t orbita3d_set_target_orientation_fb(uint32_t uid,
                                            const double (*orientation)[4],
-                                           double (*feedback)[10]);
+                                           double (*feedback)[4]);
 
 int32_t orbita3d_get_raw_motors_velocity_limit(uint32_t uid, double (*limit)[3]);
 

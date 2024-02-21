@@ -488,7 +488,7 @@ namespace orbita3d_system_hwi
     double q[4];
     intrinsic_roll_pitch_yaw_to_quaternion(&hw_commands_position_, &q);
 
-    double fb[10];
+    double fb[4];
     if (orbita3d_set_target_orientation_fb(this->uid, &q, &fb) != 0)
     {
       // ret=hardware_interface::return_type::ERROR; //do not return error here, this will block the controller... cf: https://design.ros2.org/articles/node_lifecycle.html
@@ -506,13 +506,13 @@ namespace orbita3d_system_hwi
     q[3] = fb[3];
     quaternion_to_intrinsic_roll_pitch_yaw(&q, &hw_states_position_);
 
-    hw_states_velocity_[0] = fb[4];
-    hw_states_velocity_[1] = fb[5];
-    hw_states_velocity_[2] = fb[6];
+    // hw_states_velocity_[0] = fb[4];
+    // hw_states_velocity_[1] = fb[5];
+    // hw_states_velocity_[2] = fb[6];
 
-    hw_states_effort_[0] = fb[7];
-    hw_states_effort_[1] = fb[8];
-    hw_states_effort_[2] = fb[9];
+    // hw_states_effort_[0] = fb[7];
+    // hw_states_effort_[1] = fb[8];
+    // hw_states_effort_[2] = fb[9];
 
     rclcpp::sleep_for(std::chrono::milliseconds(1)); // This one should not be necessary in cached mode but otherwise I have some error (drawback: it reduces the frequency)
     // We only change torque for all axes
