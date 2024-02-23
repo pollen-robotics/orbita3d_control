@@ -1,5 +1,5 @@
 io: !DynamixelPoulpe
-  serial_port: /dev/ttyUSB0
+  serial_port: /dev/reachy2_neck
   id: 10
   use_cache: true
 disks:
