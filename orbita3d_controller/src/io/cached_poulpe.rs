@@ -33,9 +33,12 @@ impl CachedDynamixelPoulpeController {
             pid_gains: Cache::keep_last(),
 
             //Or expiration time?
-            current_position: Cache::keep_last(),
-            current_velocity: Cache::keep_last(),
-            current_torque: Cache::keep_last(),
+            // current_position: Cache::keep_last(),
+            // current_velocity: Cache::keep_last(),
+            // current_torque: Cache::keep_last(),
+            current_position: Cache::with_expiry_duration(std::time::Duration::from_millis(100)),
+            current_velocity: Cache::with_expiry_duration(std::time::Duration::from_millis(100)),
+            current_torque: Cache::with_expiry_duration(std::time::Duration::from_millis(100)),
         })
     }
 }

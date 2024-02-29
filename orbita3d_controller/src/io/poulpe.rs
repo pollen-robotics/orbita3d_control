@@ -77,6 +77,11 @@ impl DynamixelPoulpeController {
                         ));
                     });
             }
+            ZeroType::FirmwareZero(_) => {
+                log::info!(
+                    "FirmwareZero => zero has been done in firmware, no need to do it here."
+                );
+            }
             ZeroType::ZeroStartup(_) => {
                 log::info!("ZeroStartup");
 
