@@ -3,35 +3,44 @@ use motor_toolbox_rs::{MotorsController, RawMotorsIO, Result, PID};
 
 use crate::ZeroType;
 
-use super::DynamixelSerialController;
+use super::DynamixelPoulpeController;
 
 #[derive(Debug)]
-/// CachedDynamixelSerialController - Cached version of the DynamixelSerialController
-pub struct CachedDynamixelSerialController {
-    inner: DynamixelSerialController,
+/// CachedDynamixelPoulpeController - Cached version of the DynamixelPoulpeController
+pub struct CachedDynamixelPoulpeController {
+    inner: DynamixelPoulpeController,
 
     torque_on: Cache<u8, [bool; 3]>,
     target_position: Cache<u8, [f64; 3]>,
     velocity_limit: Cache<u8, [f64; 3]>,
     torque_limit: Cache<u8, [f64; 3]>,
     pid_gains: Cache<u8, [PID; 3]>,
+
+    current_position: Cache<u8, [f64; 3]>,
+    current_velocity: Cache<u8, [f64; 3]>,
+    current_torque: Cache<u8, [f64; 3]>,
 }
 
-impl CachedDynamixelSerialController {
+impl CachedDynamixelPoulpeController {
     pub fn new(serial_port: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
         Ok(Self {
-            inner: DynamixelSerialController::new(serial_port, id, zero, reductions)?,
+            inner: DynamixelPoulpeController::new(serial_port, id, zero, reductions)?,
 
             torque_on: Cache::keep_last(),
             target_position: Cache::keep_last(),
             velocity_limit: Cache::keep_last(),
             torque_limit: Cache::keep_last(),
             pid_gains: Cache::keep_last(),
+
+            //Or expiration time?
+            current_position: Cache::keep_last(),
+            current_velocity: Cache::keep_last(),
+            current_torque: Cache::keep_last(),
         })
     }
 }
 
-impl MotorsController<3> for CachedDynamixelSerialController {
+impl MotorsController<3> for CachedDynamixelPoulpeController {
     fn io(&mut self) -> &mut dyn RawMotorsIO<3> {
         self
     }
@@ -49,7 +58,7 @@ impl MotorsController<3> for CachedDynamixelSerialController {
     }
 }
 
-impl RawMotorsIO<3> for CachedDynamixelSerialController {
+impl RawMotorsIO<3> for CachedDynamixelPoulpeController {
     fn is_torque_on(&mut self) -> Result<[bool; 3]> {
         self.torque_on
             .entry(self.inner.id())
@@ -68,13 +77,22 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
     }
 
     fn get_current_position(&mut self) -> Result<[f64; 3]> {
-        RawMotorsIO::get_current_position(&mut self.inner)
+        // RawMotorsIO::get_current_position(&mut self.inner)
+        self.current_position
+            .entry(self.inner.id())
+            .or_try_insert_with(|_| RawMotorsIO::get_current_position(&mut self.inner))
     }
     fn get_current_velocity(&mut self) -> Result<[f64; 3]> {
-        RawMotorsIO::get_current_velocity(&mut self.inner)
+        // RawMotorsIO::get_current_velocity(&mut self.inner)
+        self.current_velocity
+            .entry(self.inner.id())
+            .or_try_insert_with(|_| RawMotorsIO::get_current_velocity(&mut self.inner))
     }
     fn get_current_torque(&mut self) -> Result<[f64; 3]> {
-        RawMotorsIO::get_current_torque(&mut self.inner)
+        self.current_torque
+            .entry(self.inner.id())
+            .or_try_insert_with(|_| RawMotorsIO::get_current_torque(&mut self.inner))
+        // RawMotorsIO::get_current_torque(&mut self.inner)
     }
 
     fn get_target_position(&mut self) -> Result<[f64; 3]> {
@@ -83,26 +101,47 @@ impl RawMotorsIO<3> for CachedDynamixelSerialController {
             .or_try_insert_with(|_| RawMotorsIO::get_target_position(&mut self.inner))
     }
     fn set_target_position(&mut self, position: [f64; 3]) -> Result<()> {
-        let current_position = RawMotorsIO::get_target_position(self)?;
+        // let current_position = RawMotorsIO::get_target_position(self)?;
+        //we at least always write the target
+        // if current_position != position {
+        let fb = RawMotorsIO::set_target_position_fb(&mut self.inner, position)?;
 
-        if current_position != position {
-            RawMotorsIO::set_target_position(&mut self.inner, position)?;
+        self.target_position.insert(self.inner.id(), position);
+        let cpos: [f64; 3] = [fb[0], fb[1], fb[2]];
+        // let cpos:[f64;3]=[0.0;3];
+        // cpos.clone_from_slice(&fb[0..3]);
+        // let cvel: [f64; 3] = [fb[3], fb[4], fb[5]];
+        // let ctorque: [f64; 3] = [fb[6], fb[7], fb[8]];
 
-            self.target_position.insert(self.inner.id(), position);
-        }
+        self.current_position.insert(self.inner.id(), cpos); //I would like to be able to use a slice here &fb[0..3] but it doesn't work
+                                                             // self.current_velocity.insert(self.inner.id(), cvel);
+                                                             // self.current_torque.insert(self.inner.id(), ctorque);
+
+        // }
 
         Ok(())
     }
 
     fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 3]> {
-        let current_position = RawMotorsIO::get_target_position(self)?;
+        // let current_position = RawMotorsIO::get_target_position(self)?;
 
-        let mut fb = [0.0; 3];
-        if current_position != position {
-            fb = RawMotorsIO::set_target_position_fb(&mut self.inner, position)?;
+        // let mut fb:[f64;9]=[0.0;9];
+        //we at least always write the target
+        // if current_position != position {
+        let fb = RawMotorsIO::set_target_position_fb(&mut self.inner, position)?;
 
-            self.target_position.insert(self.inner.id(), position);
-        }
+        self.target_position.insert(self.inner.id(), position);
+        let cpos: [f64; 3] = [fb[0], fb[1], fb[2]];
+        // let cpos:[f64;3]=[0.0;3];
+        // cpos.clone_from_slice(&fb[0..3]);
+        // let cvel: [f64; 3] = [fb[3], fb[4], fb[5]];
+        // let ctorque: [f64; 3] = [fb[6], fb[7], fb[8]];
+
+        self.current_position.insert(self.inner.id(), cpos); //I would like to be able to use a slice here &fb[0..3] but it doesn't work
+                                                             // self.current_velocity.insert(self.inner.id(), cvel);
+                                                             // self.current_torque.insert(self.inner.id(), ctorque);
+
+        // }
 
         Ok(fb)
     }

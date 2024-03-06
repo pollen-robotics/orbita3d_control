@@ -36,6 +36,34 @@ int main(int argc, char *argv[]) {
     }
     printf("Torque is %s\n", is_on ? "on" : "off");
 
+
+    printf("Turning torque off\n");
+    if (orbita3d_disable_torque(uid) != 0) {
+        return 1;
+    }
+    if (orbita3d_is_torque_on(uid, &is_on) != 0) {
+        return 1;
+    }
+    printf("Torque is %s\n", is_on ? "on" : "off");
+
+
+    printf("Getting current vel\n");
+    double v[3];
+    if (orbita3d_get_current_velocity(uid, &v) != 0) {
+        return 1;
+    }
+    printf("\tvel: %f %f %f\n", v[0], v[1], v[2]);
+
+
+    printf("Getting current torque\n");
+    double t[3];
+    if (orbita3d_get_current_torque(uid, &t) != 0) {
+        return 1;
+    }
+    printf("\ttorque: %f %f %f\n", t[0], t[1], t[2]);
+
+
+
     printf("Getting current orientation\n");
     double q[4];
     if (orbita3d_get_current_orientation(uid, &q) != 0) {
@@ -69,6 +97,16 @@ int main(int argc, char *argv[]) {
     }
     quaternion_to_intrinsic_roll_pitch_yaw(&q, &rpy);
     printf("\trpy: %f %f %f\n", rpy[0], rpy[1], rpy[2]);
+
+
+    double feedback[10];
+    //Set target orientation with feedback
+    if (orbita3d_set_target_orientation_fb(uid, &target_q, &feedback) != 0) {
+        return 1;
+    }
+    printf("Feedback: orientation %f %f %f %f velocity: %f %f %f torque: %f %f %f\n", feedback[0], feedback[1], feedback[2], feedback[3],feedback[4],feedback[5],feedback[6],feedback[7],feedback[8],feedback[9]);
+
+
 
     return 0;
 }
