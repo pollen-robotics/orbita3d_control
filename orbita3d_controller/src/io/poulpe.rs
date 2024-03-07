@@ -605,7 +605,7 @@ mod tests {
 
     #[test]
     fn parse_config_file() {
-        let f = std::fs::File::open("./config/dxl_poulpe.yaml").unwrap();
+        let f = std::fs::File::open("./config/dxl_poulpe_test.yaml").unwrap();
 
         let config: Result<Orbita3dConfig, _> = serde_yaml::from_reader(f);
         assert!(config.is_ok());
@@ -624,8 +624,8 @@ mod tests {
             } else {
                 panic!("Wrong config type");
             }
-            // assert_eq!(config.disks.reduction, 5.33333334); //TODO
-            assert_eq!(config.disks.reduction, 4.2666667); //Old Orbita
+            assert_eq!(config.disks.reduction, 5.333333333333333333);
+            // assert_eq!(config.disks.reduction, 4.2666667); //Old Orbita
 
             assert_eq!(dxl_config.serial_port, "/dev/ttyUSB0");
             assert_eq!(dxl_config.id, 42);
