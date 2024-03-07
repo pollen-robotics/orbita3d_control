@@ -40,12 +40,24 @@ fn main() -> Result<(), Box<dyn Error>> {
         *s *= 12.0 / 64.0; //FIXME how to get the ratio?
     }
 
-    println!("Zeros to write to the yaml config");
+    // println!("Zeros to write to the yaml config");
+    // println!();
+    // println!("disks:");
+    // println!("  zeros: !HallZero");
+    // println!("    hardware_zero: {:?}", axis_sensors);
+    // println!("    hall_indice: [0, 5, 11] (FIXME: This should be known from the hardware)");
+
+    println!("Zeros to pass to cargo at the firmware compile time");
     println!();
-    println!("disks:");
-    println!("  zeros: !HallZero");
-    println!("    hardware_zero: {:?}", axis_sensors);
-    println!("    hall_indice: [0, 5, 11] (FIXME: This should be known from the hardware)");
+    println!(
+        "{:.32},{:.32},{:.32}",
+        axis_sensors[0], axis_sensors[0], axis_sensors[0]
+    );
+    println!("Cargo command line for a release firmware:");
+    println!(
+        "DEFMT_LOG=off ZEROS={:.32},{:.32},{:.32} cargo run --release",
+        axis_sensors[0], axis_sensors[0], axis_sensors[0]
+    );
 
     Ok(())
 }
