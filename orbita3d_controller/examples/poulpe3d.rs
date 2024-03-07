@@ -2,10 +2,10 @@ use orbita3d_controller::Orbita3dController;
 use orbita3d_kinematics::conversion;
 use std::f64::consts::PI;
 use std::time::SystemTime;
-use std::{error::Error, thread, time::Duration, time::Instant};
+use std::{error::Error, thread, time::Duration};
 
-use log::info;
-use log::Level;
+// use log::info;
+// use log::Level;
 
 use clap::Parser;
 
