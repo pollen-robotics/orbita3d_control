@@ -4,7 +4,7 @@ io: !DynamixelPoulpe
   use_cache: true
 disks:
   zeros: !ZeroStartup
-  reduction: 5.333333333333333333
+  reduction: 5.3333334
 kinematics_model:
   alpha: 0.9424777960769379 # 54 degrees
   gamma_min: 0.6981317007977318 # 40 degrees
