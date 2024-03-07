@@ -126,7 +126,7 @@ pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 
 pub extern "C" fn orbita3d_set_target_orientation_fb(
     uid: u32,
     orientation: &[f64; 4],
-    feedback: &mut [f64; 10],
+    feedback: &mut [f64; 4],
 ) -> i32 {
     // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
@@ -139,12 +139,12 @@ pub extern "C" fn orbita3d_set_target_orientation_fb(
             feedback[1] = fb.orientation[1];
             feedback[2] = fb.orientation[2];
             feedback[3] = fb.orientation[3];
-            feedback[4] = fb.velocity[0];
-            feedback[5] = fb.velocity[1];
-            feedback[6] = fb.velocity[2];
-            feedback[7] = fb.torque[0];
-            feedback[8] = fb.torque[1];
-            feedback[9] = fb.torque[2];
+            // feedback[4] = fb.velocity[0];
+            // feedback[5] = fb.velocity[1];
+            // feedback[6] = fb.velocity[2];
+            // feedback[7] = fb.torque[0];
+            // feedback[8] = fb.torque[1];
+            // feedback[9] = fb.torque[2];
             0
         }
         Err(_) => 1,
