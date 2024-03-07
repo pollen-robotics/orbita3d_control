@@ -126,6 +126,7 @@ pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 
 pub extern "C" fn orbita3d_set_target_orientation_fb(
     uid: u32,
     orientation: &[f64; 4],
+    // feedback: &mut [f64; 10],
     feedback: &mut [f64; 4],
 ) -> i32 {
     // thread::sleep(Duration::from_millis(1));
