@@ -46,12 +46,13 @@ impl DynamixelPoulpeController {
                     .timeout(Duration::from_millis(10))
                     .open_native()?,
             ),
-            io: DynamixelSerialIO::v1().with_post_delay(Duration::from_millis(1)),
+            io: DynamixelSerialIO::v1(),
             id,
             offsets: [None; 3],
             reduction: [Some(reductions); 3],
             // motor_reduction: [Some(motor_reductions); 3],
             limits: [None; 3],
+            // hall_indices: [None; 3],
         };
 
         controller.serial_port.set_exclusive(false)?;
@@ -75,6 +76,11 @@ impl DynamixelPoulpeController {
                             reductions,
                         ));
                     });
+            }
+            ZeroType::FirmwareZero(_) => {
+                log::info!(
+                    "FirmwareZero => zero has been done in firmware, no need to do it here."
+                );
             }
             ZeroType::ZeroStartup(_) => {
                 log::info!("ZeroStartup");
@@ -483,9 +489,8 @@ fn find_position_with_hall(
     let shortest_to_zero = angle_diff(0.0, hardware_zero * reduction);
 
     let pos = (current_position * reduction) % TAU; //this should be the raw gearbox position
-
-    // let shortest_to_current = angle_diff(0.0, pos);
-    // let mut gearbox_turn = 0.0;
+    let _shortest_to_current = angle_diff(0.0, pos);
+    let _gearbox_turn = 0.0;
 
     log::debug!(
         "Diff: {:?} shortest diff: {:?} shortest_to_zero {:?} hall_zero_angle: {:?}",
@@ -600,7 +605,7 @@ mod tests {
 
     #[test]
     fn parse_config_file() {
-        let f = std::fs::File::open("./config/dxl_poulpe.yaml").unwrap();
+        let f = std::fs::File::open("./config/dxl_poulpe_test.yaml").unwrap();
 
         let config: Result<Orbita3dConfig, _> = serde_yaml::from_reader(f);
         assert!(config.is_ok());
@@ -619,8 +624,8 @@ mod tests {
             } else {
                 panic!("Wrong config type");
             }
-            // assert_eq!(config.disks.reduction, 5.33333334); //TODO
-            assert_eq!(config.disks.reduction, 4.2666667); //Old Orbita
+            assert_eq!(config.disks.reduction, 5.3333334);
+            // assert_eq!(config.disks.reduction, 4.2666667); //Old Orbita
 
             assert_eq!(dxl_config.serial_port, "/dev/ttyUSB0");
             assert_eq!(dxl_config.id, 42);

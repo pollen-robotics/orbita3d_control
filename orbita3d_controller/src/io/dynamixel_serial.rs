@@ -47,6 +47,11 @@ impl DynamixelSerialController {
         };
 
         match zero {
+            ZeroType::FirmwareZero(_) => {
+                log::info!(
+                    "FirmwareZero => zero has been done in firmware, no need to do it here."
+                );
+            }
             ZeroType::ApproximateHardwareZero(zero) => {
                 let current_pos = MotorsController::get_current_position(&mut controller)?;
 

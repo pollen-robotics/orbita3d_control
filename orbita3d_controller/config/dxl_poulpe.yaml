@@ -1,12 +1,14 @@
 io: !DynamixelPoulpe
   serial_port: /dev/ttyUSB0
-  id: 52
+  id: 42
   use_cache: true
 disks:
   # zeros: !HallZero
+    # hardware_zero: [1.0023498237133026, 0.7403826713562012, 0.42886966466903687]
     # hardware_zero: [0.988902747631073, 0.728014200925827, 0.4328247159719467]
     # hall_indice: [0, 5, 11]
-  zeros: !ZeroStartup
+  # zeros: !ZeroStartup
+  zeros: !FirmwareZero
   reduction: 5.333333333333333333
   # reduction: 4.2666667 #old Orbita
 kinematics_model:

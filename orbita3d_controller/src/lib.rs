@@ -77,7 +77,13 @@ pub enum ZeroType {
     ZeroStartup(ZeroStartup),
     /// HallZero config
     HallZero(HallZero),
+    /// FirmwareZero config
+    FirmwareZero(FirmwareZero),
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+/// Firmwarezero config
+pub struct FirmwareZero;
 
 #[derive(Debug, Deserialize, Serialize)]
 /// ApproximateHardwareZero config
@@ -182,6 +188,7 @@ impl Orbita3dController {
                     ZeroType::ApproximateHardwareZero(zero) => zero.hardware_zero,
                     ZeroType::ZeroStartup(_) => controller.get_current_position()?,
                     ZeroType::HallZero(zero) => zero.hardware_zero,
+                    ZeroType::FirmwareZero(_) => [0.0, 0.0, 0.0],
                 };
 
                 let controller = controller
