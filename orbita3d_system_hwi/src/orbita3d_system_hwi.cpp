@@ -498,14 +498,30 @@ namespace orbita3d_system_hwi
           clock_,
           LOG_THROTTLE_DURATION,
           "(%s) WRITE TARGET ORIENTATION ERROR!", info_.name.c_str());
+
+
+      //Still try to read the position
+      double q2[4];
+      if (orbita3d_get_current_orientation(this->uid, &q2) != 0) {
+
+        // ret=hardware_interface::return_type::ERROR;
+
+        RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+        "(%s) READ ORIENTATION ERROR!", info_.name.c_str()
+          );
+      } else {
+        quaternion_to_intrinsic_roll_pitch_yaw(&q2, &hw_states_position_);
+      }
+
     }
-
-    q[0] = fb[0];
-    q[1] = fb[1];
-    q[2] = fb[2];
-    q[3] = fb[3];
-    quaternion_to_intrinsic_roll_pitch_yaw(&q, &hw_states_position_);
-
+    else{
+      q[0] = fb[0];
+      q[1] = fb[1];
+      q[2] = fb[2];
+      q[3] = fb[3];
+      quaternion_to_intrinsic_roll_pitch_yaw(&q, &hw_states_position_);
+    }
     // hw_states_velocity_[0] = fb[4];
     // hw_states_velocity_[1] = fb[5];
     // hw_states_velocity_[2] = fb[6];

@@ -46,7 +46,8 @@ impl DynamixelPoulpeController {
                     .timeout(Duration::from_millis(10))
                     .open_native()?,
             ),
-            io: DynamixelSerialIO::v1(),
+            // io: DynamixelSerialIO::v1(),
+            io: DynamixelSerialIO::v1().with_post_delay(Duration::from_micros(1000)),
             id,
             offsets: [None; 3],
             reduction: [Some(reductions); 3],

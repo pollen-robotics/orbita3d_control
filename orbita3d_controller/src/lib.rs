@@ -279,7 +279,9 @@ impl Orbita3dController {
     pub fn set_target_orientation_fb(&mut self, target: [f64; 4]) -> Result<Orbita3dFeedback> {
         let rot =
             conversion::quaternion_to_rotation_matrix(target[0], target[1], target[2], target[3]);
+
         let thetas = self.kinematics.compute_inverse_kinematics(rot)?;
+
         let fb: Result<[f64; 3]> = self.inner.set_target_position_fb(thetas);
         match fb {
             Ok(fb) => {
