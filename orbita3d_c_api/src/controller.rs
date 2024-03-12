@@ -256,6 +256,27 @@ pub extern "C" fn orbita3d_set_raw_motors_pid_gains(uid: u32, gains: &[[f64; 3];
     }
 }
 
+#[no_mangle]
+pub extern "C" fn orbita3d_get_board_state(uid: u32, state: &mut u8) -> i32 {
+    // thread::sleep(Duration::from_millis(1));
+    match CONTROLLER.get_mut(&uid).unwrap().get_board_state() {
+        Ok(s) => {
+            *state = s;
+            0
+        }
+        Err(_) => 1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_set_board_state(uid: u32, state: &u8) -> i32 {
+    // thread::sleep(Duration::from_millis(1));
+    match CONTROLLER.get_mut(&uid).unwrap().set_board_state(*state) {
+        Ok(_) => 0,
+        Err(_) => 1,
+    }
+}
+
 fn get_available_uid() -> u32 {
     let mut uid = UID.lock().unwrap();
     *uid += 1;

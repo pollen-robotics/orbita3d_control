@@ -426,6 +426,14 @@ impl RawMotorsIO<3> for DynamixelPoulpeController {
         let axis = orbita3d_poulpe::read_axis_sensor(&self.io, self.serial_port.as_mut(), self.id)?;
         Ok([axis.top as f64, axis.middle as f64, axis.bottom as f64])
     }
+
+    fn get_board_state(&mut self) -> Result<u8> {
+        orbita3d_poulpe::read_board_state(&self.io, self.serial_port.as_mut(), self.id)
+    }
+
+    fn set_board_state(&mut self, state: u8) -> Result<()> {
+        orbita3d_poulpe::write_board_state(&self.io, self.serial_port.as_mut(), self.id, state)
+    }
 }
 
 fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduction: f64) -> f64 {

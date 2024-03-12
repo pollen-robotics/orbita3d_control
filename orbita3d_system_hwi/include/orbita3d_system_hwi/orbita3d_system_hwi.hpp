@@ -33,6 +33,7 @@ private:
   double hw_states_torque_;
   double hw_commands_torque_;
 
+
   double hw_states_position_[3];
   double hw_states_velocity_[3];
   double hw_states_effort_[3];
