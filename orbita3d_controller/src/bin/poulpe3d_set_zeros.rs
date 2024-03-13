@@ -51,12 +51,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!();
     println!(
         "{:.32},{:.32},{:.32}",
-        axis_sensors[0], axis_sensors[0], axis_sensors[0]
+        axis_sensors[0], axis_sensors[1], axis_sensors[2]
     );
     println!("Cargo command line for a release firmware:");
     println!(
         "DEFMT_LOG=off ZEROS={:.32},{:.32},{:.32} cargo run --release",
-        axis_sensors[0], axis_sensors[0], axis_sensors[0]
+        axis_sensors[0], axis_sensors[1], axis_sensors[2]
     );
 
     Ok(())
