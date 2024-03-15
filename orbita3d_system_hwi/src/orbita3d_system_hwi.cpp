@@ -233,13 +233,15 @@ namespace orbita3d_system_hwi
 
     hw_states_error_= 0;
     hw_commands_error_= 0;
-    if (orbita3d_get_board_state(this->uid, &hw_states_error_) != 0)
+    std::uint8_t errors=0;
+    if (orbita3d_get_board_state(this->uid, &errors) != 0)
     {
       RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),
           "(%s) READ BOARD STATE ERROR!", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
     }
+    hw_states_error_= errors;
 
 
     this->last_timestamp_ = clock_.now();
@@ -293,7 +295,7 @@ namespace orbita3d_system_hwi
             "export state interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str());
 
         state_interfaces.emplace_back(hardware_interface::StateInterface(
-            gpio.name, "errors", &hw_states_errors_));
+            gpio.name, "error", &hw_states_error_));
 
         RCLCPP_INFO(
             rclcpp::get_logger("Orbita3dSystem"),
@@ -426,9 +428,11 @@ namespace orbita3d_system_hwi
     }
     hw_states_torque_ = torque_on ? 1.0 : 0.0;
 
+    uint8_t errors=0;
+
     if(loop_counter_read==100)
     {
-      if (orbita3d_get_board_state(this->uid, &hw_states_error_) != 0)
+      if (orbita3d_get_board_state(this->uid, &errors) != 0)
       {
         RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),
@@ -439,6 +443,7 @@ namespace orbita3d_system_hwi
     }
     else
     {
+      hw_states_error_=errors;
       loop_counter_read++;
     }
 
@@ -610,9 +615,11 @@ namespace orbita3d_system_hwi
     }
 
 
+    uint8_t errors=hw_commands_error_;
+
     if(loop_counter_write==100)
     {
-      if (orbita3d_set_board_state(this->uid, &hw_commands_error_) != 0)
+      if (orbita3d_set_board_state(this->uid, &errors) != 0)
       {
         RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),

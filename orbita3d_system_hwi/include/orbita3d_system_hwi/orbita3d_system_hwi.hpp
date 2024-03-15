@@ -33,8 +33,8 @@ private:
   double hw_states_torque_;
   double hw_commands_torque_;
 
-  uint32_t hw_states_error_;
-  uint32_t hw_commands_error_;
+  double hw_states_error_;
+  double hw_commands_error_;
 
   double hw_states_position_[3];
   double hw_states_velocity_[3];
