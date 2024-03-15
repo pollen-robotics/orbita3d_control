@@ -202,4 +202,12 @@ impl RawMotorsIO<3> for CachedDynamixelPoulpeController {
     fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
         RawMotorsIO::get_axis_sensors(&mut self.inner)
     }
+
+    fn get_board_state(&mut self) -> Result<u8> {
+        RawMotorsIO::get_board_state(&mut self.inner)
+    }
+
+    fn set_board_state(&mut self, state: u8) -> Result<()> {
+        RawMotorsIO::set_board_state(&mut self.inner, state)
+    }
 }

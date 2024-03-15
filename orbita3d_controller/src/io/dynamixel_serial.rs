@@ -242,6 +242,12 @@ impl RawMotorsIO<3> for DynamixelSerialController {
     fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
         Err(Box::new(MissingResisterErrror("axis_sensors".to_string())))
     }
+    fn get_board_state(&mut self) -> Result<u8> {
+        Err(Box::new(MissingResisterErrror("board_state".to_string())))
+    }
+    fn set_board_state(&mut self, _state: u8) -> Result<()> {
+        Err(Box::new(MissingResisterErrror("board_state".to_string())))
+    }
 }
 
 fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduction: f64) -> f64 {

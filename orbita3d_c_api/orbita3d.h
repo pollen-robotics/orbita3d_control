@@ -50,6 +50,10 @@ int32_t orbita3d_get_raw_motors_pid_gains(uint32_t uid, double (*gains)[3][3]);
 
 int32_t orbita3d_set_raw_motors_pid_gains(uint32_t uid, const double (*gains)[3][3]);
 
+int32_t orbita3d_get_board_state(uint32_t uid, uint8_t *state);
+
+int32_t orbita3d_set_board_state(uint32_t uid, const uint8_t *state);
+
 /// Create a new Orbita3dKinematicsModel.
 Orbita3dKinematicsModel create_orbita3d_kinematics_model(double alpha,
                                                          double gamma_min,

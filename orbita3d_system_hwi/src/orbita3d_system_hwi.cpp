@@ -109,6 +109,9 @@ namespace orbita3d_system_hwi
     auto ret = CallbackReturn::SUCCESS;
 
     hw_states_torque_ = std::numeric_limits<double>::quiet_NaN();
+    loop_counter_read=0;
+    loop_counter_write=0;
+
 
     for (int i = 0; i < 3; i++)
     {
@@ -227,6 +230,18 @@ namespace orbita3d_system_hwi
       hw_commands_d_gain_[i] = hw_states_d_gain_[i];
     }
 
+
+    hw_states_error_= 0;
+    hw_commands_error_= 0;
+    if (orbita3d_get_board_state(this->uid, &hw_states_error_) != 0)
+    {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ BOARD STATE ERROR!", info_.name.c_str());
+      // ret= CallbackReturn::ERROR;
+    }
+
+
     this->last_timestamp_ = clock_.now();
 
     RCLCPP_INFO(
@@ -276,6 +291,14 @@ namespace orbita3d_system_hwi
         RCLCPP_INFO(
             rclcpp::get_logger("Orbita3dSystem"),
             "export state interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str());
+
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+            gpio.name, "errors", &hw_states_errors_));
+
+        RCLCPP_INFO(
+            rclcpp::get_logger("Orbita3dSystem"),
+            "export state interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str());
+
       }
       else if (gpio.name.find("raw_motor") != std::string::npos)
       {
@@ -402,6 +425,23 @@ namespace orbita3d_system_hwi
           "(%s) Error getting torque status!", info_.name.c_str());
     }
     hw_states_torque_ = torque_on ? 1.0 : 0.0;
+
+    if(loop_counter_read==100)
+    {
+      if (orbita3d_get_board_state(this->uid, &hw_states_error_) != 0)
+      {
+        RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ BOARD STATE ERROR!", info_.name.c_str());
+        // ret= CallbackReturn::ERROR;
+      }
+      loop_counter_read=0;
+    }
+    else
+    {
+      loop_counter_read++;
+    }
+
 
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
 
@@ -530,7 +570,7 @@ namespace orbita3d_system_hwi
     // hw_states_effort_[1] = fb[8];
     // hw_states_effort_[2] = fb[9];
 
-    rclcpp::sleep_for(std::chrono::milliseconds(1)); // This one should not be necessary in cached mode but otherwise I have some error (drawback: it reduces the frequency)
+    // rclcpp::sleep_for(std::chrono::milliseconds(1)); // This one should not be necessary in cached mode but otherwise I have some error (drawback: it reduces the frequency)
     // We only change torque for all axes
 
     // TODO: we can go with orbita3d_set_raw_torque_limit
@@ -568,6 +608,24 @@ namespace orbita3d_system_hwi
             "(%s) WRITE TORQUE ERROR!", info_.name.c_str());
       }
     }
+
+
+    if(loop_counter_write==100)
+    {
+      if (orbita3d_set_board_state(this->uid, &hw_commands_error_) != 0)
+      {
+        RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) WRITE BOARD STATE ERROR!", info_.name.c_str());
+        // ret= CallbackReturn::ERROR;
+      }
+      loop_counter_write=0;
+    }
+    else
+    {
+      loop_counter_write++;
+    }
+
 
     // if(torque)
     // {

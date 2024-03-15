@@ -340,4 +340,13 @@ impl Orbita3dController {
     pub fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
         self.inner.get_axis_sensors()
     }
+
+    /// Get the board state register
+    pub fn get_board_state(&mut self) -> Result<u8> {
+        self.inner.get_board_state()
+    }
+    /// Get the board state register
+    pub fn set_board_state(&mut self, state: u8) -> Result<()> {
+        self.inner.set_board_state(state)
+    }
 }
