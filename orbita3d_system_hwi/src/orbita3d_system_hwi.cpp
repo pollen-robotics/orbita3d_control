@@ -295,7 +295,7 @@ namespace orbita3d_system_hwi
             "export state interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str());
 
         state_interfaces.emplace_back(hardware_interface::StateInterface(
-            gpio.name, "error", &hw_states_error_));
+            gpio.name, "errors", &hw_states_error_));
 
         RCLCPP_INFO(
             rclcpp::get_logger("Orbita3dSystem"),
