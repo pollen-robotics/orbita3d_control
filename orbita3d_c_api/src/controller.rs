@@ -5,6 +5,7 @@ use once_cell::sync::Lazy;
 use orbita3d_controller::Orbita3dController;
 
 use crate::sync_map::SyncMap;
+use env_logger;
 
 static UID: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
 static CONTROLLER: Lazy<SyncMap<u32, Orbita3dController>> = Lazy::new(SyncMap::new);
@@ -20,6 +21,8 @@ pub extern "C" fn orbita3d_controller_from_config(
     uid: &mut u32,
 ) -> i32 {
     let configfile = unsafe { CStr::from_ptr(configfile) }.to_str().unwrap();
+
+    let _ = env_logger::try_init();
 
     match Orbita3dController::with_config(configfile) {
         Ok(controller) => {
