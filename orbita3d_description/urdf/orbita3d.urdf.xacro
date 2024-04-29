@@ -30,52 +30,107 @@
     </link>
 
     <link name="${name}_link">
-      <visual>
-      	<origin xyz="0 0 ${length/2}" rpy="0 0 0"/>
-      	<geometry>
-          <cylinder length="${length}" radius="${radius}"/>
-      	</geometry>
-      	<xacro:orbita3d_yellow/>
-      </visual>
+      <!-- <visual> -->
+      <!-- 	<origin xyz="0 0 0" rpy="0 0 0"/> -->
+      <!-- 	<geometry> -->
+      <!--     <cylinder length="${length}" radius="${radius}"/> -->
+      <!-- 	</geometry> -->
+      <!-- 	<xacro:orbita3d_grey/> -->
+      <!-- </visual> -->
 
-      <collision>
-      	<origin xyz="0 0 ${length/2}" rpy="0 0 0"/>
-      	<geometry>
-          <cylinder length="${length}" radius="${radius}"/>
-      	</geometry>
-      </collision>
+      <!-- <collision> -->
+      <!-- 	<origin xyz="0 0 ${length/2}" rpy="0 0 0"/> -->
+      <!-- 	<geometry> -->
+      <!--     <cylinder length="${length}" radius="${radius}"/> -->
+      <!-- 	</geometry> -->
+      <!-- </collision> -->
 
-      <xacro:inertial_cuboid mass="${mass*0.48}" xyz="0 0 ${-length/2}"  rpy="0 0 0" x_length="${radius*2}" y_length="${radius*2}" z_length="${length}">
+      <xacro:inertial_cuboid mass="${mass*0.98}" xyz="0 0 ${-length/2}"  rpy="0 0 0" x_length="${radius*2}" y_length="${radius*2}" z_length="${length}">
       </xacro:inertial_cuboid>
     </link>
 
     <link name="${name}_ball_link">
-      <visual>
-      	<origin xyz="0 0 0" rpy="0 0 0"/>
-      	<geometry>
-          <sphere radius="${radius*1.2}"/>
-      	</geometry>
-      	<xacro:orbita3d_grey/>
+      <!-- <visual> -->
+      <!-- 	<origin xyz="0 0 0" rpy="0 0 0"/> -->
+      <!-- 	<geometry> -->
+      <!--     <sphere radius="${radius*1.2}"/> -->
+      <!-- 	</geometry> -->
+      <!-- 	<xacro:orbita3d_grey/> -->
 
-      </visual>
-      <collision>
-      	<origin xyz="0 0 0" rpy="0 0 0"/>
-      	<geometry>
-          <sphere radius="${radius*1.2}"/>
-      	</geometry>
-      </collision>
-      <xacro:inertial_sphere mass="${mass*0.5}" diameter="${2*radius*1.2}"/>
+      <!-- </visual> -->
+      <!-- <collision> -->
+      <!-- 	<origin xyz="0 0 0" rpy="0 0 0"/> -->
+      <!-- 	<geometry> -->
+      <!--     <sphere radius="${radius*1.2}"/> -->
+      <!-- 	</geometry> -->
+      <!-- </collision> -->
+      <!-- <xacro:inertial_sphere mass="${mass*0.5}" diameter="${2*radius*1.2}"/> -->
     </link>
 
     <joint name="${name}_ball_joint" type="fixed">
+
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <parent link="${name}_link"/>
       <child link="${name}_ball_link"/>
     </joint>
 
-    <joint name="${name}_roll" type="revolute">
+    <link name="${name}_base_link">
+      <visual>
+	<origin xyz="0 0 0.0672" rpy="0 0 0"/>
+	<geometry>
+          <cylinder radius="0.0278" length="0.0336"/>
+	</geometry>
+	<xacro:orbita3d_grey/>
+      </visual>
+    </link>
+
+    <joint name="${name}_base_joint" type="fixed">
+
+      <!-- <origin xyz="0 0 0" rpy="0 0 0"/> -->
+    <xacro:if value="${name == 'r_wrist'}">
+      <origin xyz="${xyz}" rpy="3.141592 0 1.5707963267948966"/>
+    </xacro:if>
+    <xacro:if value="${name == 'l_wrist'}">
+      <origin xyz="${xyz}" rpy="3.141592 0 1.5707963267948966"/>
+    </xacro:if>
+    <xacro:if value="${name == 'neck'}">
       <origin xyz="${xyz}" rpy="${rpy}"/>
+    </xacro:if>
+
       <parent link="${parent}"/>
+      <child link="${name}_base_link"/>
+    </joint>
+
+
+
+    <link name="${name}_out_link">
+    </link>
+
+    <joint name="${name}_out_joint" type="fixed">
+
+      <!-- <origin xyz="0 0 0" rpy="0 0 0"/> -->
+    <xacro:if value="${name == 'r_wrist'}">
+      <origin xyz="0 0 0" rpy="3.141592 0 0"/>
+    </xacro:if>
+    <xacro:if value="${name == 'l_wrist'}">
+      <origin xyz="0 0 0" rpy="3.141592 0 0"/>
+    </xacro:if>
+    <xacro:if value="${name == 'neck'}">
+      <origin xyz="0 0 0" rpy="3.141592 0 0"/>
+    </xacro:if>
+
+      <parent link="${name}_ball_link"/>
+      <child link="${name}_out_link"/>
+    </joint>
+
+
+
+    <joint name="${name}_roll" type="revolute">
+      <!-- <origin xyz="${xyz}" rpy="${rpy}"/> -->
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <!-- <parent link="${parent}"/> -->
+      <parent link="${name}_base_link"/>
+
       <child link="${name}_dummy_link1"/>
       <axis xyz="1 0 0"/>
       <limit lower="-0.35" upper="0.35" effort="1000.0" velocity="100.0"/>
