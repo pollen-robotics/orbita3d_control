@@ -116,7 +116,8 @@
       <origin xyz="0 0 0" rpy="3.141592 0 0"/>
     </xacro:if>
     <xacro:if value="${name == 'neck'}">
-      <origin xyz="0 0 0" rpy="3.141592 0 0"/>
+      <!-- <origin xyz="0 0 0" rpy="3.141592 0 0"/> -->
+      <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:if>
 
       <parent link="${name}_ball_link"/>
