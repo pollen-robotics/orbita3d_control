@@ -75,13 +75,13 @@
     </joint>
 
     <link name="${name}_base_link">
-      <visual>
-	<origin xyz="0 0 0.0672" rpy="0 0 0"/>
-	<geometry>
-          <cylinder radius="0.0278" length="0.0336"/>
-	</geometry>
-	<xacro:orbita3d_grey/>
-      </visual>
+      <!-- <visual> -->
+      <!-- 	<origin xyz="0 0 0.0672" rpy="0 0 0"/> -->
+      <!-- 	<geometry> -->
+      <!--     <cylinder radius="0.0278" length="0.0336"/> -->
+      <!-- 	</geometry> -->
+      <!-- 	<xacro:orbita3d_grey/> -->
+      <!-- </visual> -->
     </link>
 
     <joint name="${name}_base_joint" type="fixed">
