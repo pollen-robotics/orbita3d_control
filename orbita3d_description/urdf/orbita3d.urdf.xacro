@@ -10,14 +10,16 @@
     <!--
       Orbita3d
 
-    link                      (joint)
+    link                         (joint)
 
-    ${parent}                  (${name}_roll)
-      ${name}_dummy_link1      (${name}_pitch)
-        ${name}_dummy_link2    (${name}_yaw)
-          ${name}_link         (${name}_ball_joint)
-            ${name}_ball_link
+    ${parent}                    (${name}_base_joint) fixed
+      ${name}_base_link          (${name}_roll) revolute
+        ${name}_dummy_link1      (${name}_pitch) revolute
+          ${name}_dummy_link2    (${name}_yaw) revolute
+            ${name}_link         (${name}_ball_joint) fixed
+              ${name}_ball_link
     -->
+
 
     <link name="${name}_dummy_link1">
       <xacro:inertial_cuboid mass="${mass*0.01}" xyz="0 0 0"  rpy="0 0 0" x_length="${radius*2}" y_length="${radius*2}" z_length="${length}">
@@ -65,6 +67,11 @@
       <!-- 	</geometry> -->
       <!-- </collision> -->
       <!-- <xacro:inertial_sphere mass="${mass*0.5}" diameter="${2*radius*1.2}"/> -->
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
     </link>
 
     <joint name="${name}_ball_joint" type="fixed">
@@ -82,6 +89,11 @@
       <!-- 	</geometry> -->
       <!-- 	<xacro:orbita3d_grey/> -->
       <!-- </visual> -->
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
     </link>
 
     <joint name="${name}_base_joint" type="fixed">
@@ -104,6 +116,11 @@
 
 
     <link name="${name}_out_link">
+      <inertial>
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <mass value="0.001"/>
+        <inertia ixx="1.0e-6" ixy="1.0e-8" ixz="1.0e-8" iyy="1.0e-6" iyz="1.0e-8" izz="1.0e-6"/>
+      </inertial>
     </link>
 
     <joint name="${name}_out_joint" type="fixed">
