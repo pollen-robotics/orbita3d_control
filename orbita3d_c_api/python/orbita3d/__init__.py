@@ -258,8 +258,9 @@ class Orbita3dController:
         q = ffi.new("double(*)[4]", tuple(q))
         check(lib.orbita3d_set_target_orientation(self.uid, q))
 
-    def set_target_orientation_fb(self, q: Tuple[float, float, float, float]) -> Tuple[float, float, float, float, float, float, float, float, float, float]:
-
+    def set_target_orientation_fb(
+        self, q: Tuple[float, float, float, float]
+    ) -> Tuple[float, float, float, float, float, float, float, float, float, float]:
         """Set the target orientation of the end-effector.
 
         Args:
@@ -269,8 +270,6 @@ class Orbita3dController:
         fb = ffi.new("double(*)[10]")
         check(lib.orbita3d_set_target_orientation_fb(self.uid, q, fb))
         return tuple(fb[0])
-
-
 
     def get_raw_motors_velocity_limit(self) -> Tuple[float, float, float]:
         """Get the raw motors velocity limit.
