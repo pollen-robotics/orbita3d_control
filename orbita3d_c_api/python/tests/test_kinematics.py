@@ -14,9 +14,8 @@ model = KinematicsModel(
 )
 
 
-
 def test_kinematics_position():
-    rpy = np.random.uniform(-np.deg2rad(30), np.deg2rad(30), size=(3, ))
+    rpy = np.random.uniform(-np.deg2rad(30), np.deg2rad(30), size=(3,))
     q = Rotation.from_euler("xyz", rpy).as_quat()
 
     disks = model.inverse_position(q)
