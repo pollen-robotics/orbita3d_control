@@ -478,7 +478,7 @@ namespace orbita3d_system_hwi
     // Torque limit
 
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
-    /*
+    
     if (orbita3d_get_raw_motors_torque_limit(this->uid, &hw_states_torque_limit_) != 0) {
 
       // ret=hardware_interface::return_type::ERROR;
@@ -502,7 +502,7 @@ namespace orbita3d_system_hwi
     }
 
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
-
+    /*
     //PID gains
     double pids[3][3];
     if (orbita3d_get_raw_motors_pid_gains(this->uid, &pids) != 0) {
@@ -661,7 +661,7 @@ namespace orbita3d_system_hwi
     // }
 
     // speed limit
-    /*
+    
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
     if(orbita3d_set_raw_motors_velocity_limit(this->uid, &hw_commands_speed_limit_) != 0)
     {
@@ -683,6 +683,7 @@ namespace orbita3d_system_hwi
         "(%s) WRITE TORQUE LIMIT ERROR!", info_.name.c_str()
         );
     }
+    /*
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
     // pid gains
     double pids[3][3];
