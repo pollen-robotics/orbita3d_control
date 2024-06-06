@@ -1,5 +1,5 @@
 use motor_toolbox_rs::{Limit, MissingResisterErrror, MotorsController, RawMotorsIO, Result, PID};
-use poulpe_ethercat_multiplexer::client::PoulpeRemoteClient;
+use poulpe_ethercat_grpc::client::PoulpeRemoteClient;
 use serde::{Deserialize, Serialize};
 use serialport::TTYPort;
 use std::thread;
@@ -33,8 +33,15 @@ pub struct EthercatPoulpeController {
 impl EthercatPoulpeController {
     /// Creates a new EthercatPoulpeController
     pub fn new(url: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
+        let io = match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], Duration::from_millis(5)){
+            Ok(io) => io,
+            Err(e) => {
+                error!("Error while connecting to EthercatPoulpeController: {:?}", e);
+                return Err("Error while connecting to EthercatPoulpeController".into());
+            }
+        };
         let mut poulpe_controller = EthercatPoulpeController {
-            io: PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], Duration::from_millis(5)),
+            io,
             id: id as u16,
             offsets: [None; 3],
             reduction: [Some(reductions); 3],

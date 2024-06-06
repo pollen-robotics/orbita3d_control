@@ -17,7 +17,7 @@ serde_yaml = "0.9.25"
 serialport = "4.2.2"
 timeit = "0.1.2"
 clap = { version = "4.0.32", features = ["derive"] }
-poulpe_ethercat_multiplexer = { path = "../poulpe_ethercat_controller/poulpe_ethercat_multiplexer" }
+poulpe_ethercat_grpc = { path = "/home/reachy/dev/poulpe_ethercat_controller/poulpe_ethercat_grpc" }
 
 [dev-dependencies]
 rand = "0.8.5"
