@@ -21,7 +21,12 @@
 
                     <!-- Use fake components. -->
                     <xacro:unless value="$(arg use_gazebo)">
-                        <plugin>fake_components/GenericSystem</plugin>
+		      <!-- Standard ROS fake system -->
+                        <!-- <plugin>fake_components/GenericSystem</plugin> -->
+
+			<!-- Pollen controller fake system -->
+			<plugin>orbita3d_system_hwi/Orbita3dSystem</plugin>
+			<param name="config_file">${config_file}</param>
                     </xacro:unless>
                 </xacro:if>
             </hardware>
