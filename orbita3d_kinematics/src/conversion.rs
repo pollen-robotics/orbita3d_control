@@ -31,10 +31,22 @@ pub fn matrix_to_intrinsic_roll_pitch_yaw(rot: Rotation3<f64>) -> [f64; 3] {
     [roll, pitch, yaw]
 }
 
+// pub fn quaternion_to_roll_pitch_yaw(quat: [f64; 4]) -> [f64; 3] {
+//     let q = UnitQuaternion::from_quaternion(Quaternion::new(quat[3], quat[0], quat[1], quat[2]));
+//     let rpy = q.euler_angles();
+//     [rpy.0, rpy.1, rpy.2]
+// }
+
 pub fn quaternion_to_roll_pitch_yaw(quat: [f64; 4]) -> [f64; 3] {
     let q = UnitQuaternion::from_quaternion(Quaternion::new(quat[3], quat[0], quat[1], quat[2]));
-    let rpy = q.euler_angles();
-    [rpy.0, rpy.1, rpy.2]
+    let mat = q.to_rotation_matrix();
+    matrix_to_intrinsic_roll_pitch_yaw(mat)
+}
+
+pub fn quaternion_to_intrinsic_roll_pitch_yaw(quat: [f64; 4]) -> [f64; 3] {
+    let q = UnitQuaternion::from_quaternion(Quaternion::new(quat[3], quat[0], quat[1], quat[2]));
+    let mat = q.to_rotation_matrix();
+    matrix_to_intrinsic_roll_pitch_yaw(mat)
 }
 
 /// Convert from `Vector3<f64>` to `\[`f64;3`\]`

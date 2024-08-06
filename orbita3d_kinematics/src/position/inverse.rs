@@ -19,7 +19,7 @@ impl std::fmt::Display for InverseSolutionErrorKind {
             }
             InverseSolutionErrorKind::InvalidSolution(rot, gammas) => write!(
                 f,
-                "Invalid solution found for rotation matrix: {} (gammas: {})",
+                "Invalid solution found for rotation matrix: {} (gammas: {}) => disk angles are out of bounds.",
                 rot, gammas
             ),
         }
@@ -49,22 +49,59 @@ impl Orbita3dKinematicsModel {
             }
         }
 
-        let gammas = compute_gammas(thetas);
-        for g in gammas.iter() {
-            if !((*g > self.gamma_min) && (*g < self.gamma_max)) {
-                return Err(InverseSolutionErrorKind::InvalidSolution(rot, gammas));
+        // TODO: for now everything is working un modulo 2pi, but it prevents multiturn. A better way would be to work in the multiturn range and check gamma for all solutions +/- 2pi to find a feasible one?
+        // // TODO: extract as a usable fonction
+        // let gammas = compute_gammas(thetas);
+        // for g in gammas.iter() {
+        //     if !((*g > self.gamma_min) && (*g < self.gamma_max)) {
+        //         return Err(InverseSolutionErrorKind::InvalidSolution(rot, gammas));
+        //     }
+        // }
+
+        let _ = match self.check_gammas(thetas) {
+            Ok(()) => Ok(thetas),
+            Err(e) => {
+                println!("{e}");
+                Err(InverseSolutionErrorKind::InvalidSolution(
+                    rot,
+                    compute_gammas(thetas),
+                ))
             }
-        }
+        };
 
         let d1 = thetas[0];
         let d2 = thetas[1] - 120.0_f64.to_radians();
         let d3 = thetas[2] + 120.0_f64.to_radians();
+        println!(
+            "BEFORE ATAN2 d1: {}, d2: {}, d3: {} AFTER ATAN2 d1: {}, d2: {}, d3: {}",
+            d1,
+            d2,
+            d3,
+            d1.sin().atan2(d1.cos()),
+            d2.sin().atan2(d2.cos()),
+            d3.sin().atan2(d3.cos())
+        );
+
+        //TODO, check gammas after the atan2?
 
         Ok([
             d1.sin().atan2(d1.cos()),
             d2.sin().atan2(d2.cos()),
             d3.sin().atan2(d3.cos()),
+            // d1, d2, d3,
         ])
+    }
+
+    pub fn check_gammas(&self, thetas: Vector3<f64>) -> Result<(), Box<dyn std::error::Error>> {
+        let gammas = compute_gammas(thetas);
+        for g in gammas.iter() {
+            if !((*g > self.gamma_min) && (*g < self.gamma_max)) {
+                return Err(
+                    "Gammas out of range: ! {self.gamma_min} < {gammas} < {self.gamma_max}".into(),
+                );
+            }
+        }
+        Ok(())
     }
 
     fn find_thetas_from_v(&self, v: Matrix3<f64>) -> Vector3<f64> {
@@ -147,6 +184,8 @@ fn compute_gammas(thetas: Vector3<f64>) -> Vector3<f64> {
         (th[2] - th[1]).rem_euclid(2.0 * PI),
         (th[0] - th[2]).rem_euclid(2.0 * PI),
     ])
+
+    // Vector3::from_row_slice(&[(th[1] - th[0]), (th[2] - th[1]), (th[0] - th[2])])
 }
 
 #[cfg(test)]

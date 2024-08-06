@@ -275,6 +275,21 @@ impl Orbita3dController {
         self.inner.set_target_position(thetas)
     }
 
+    /// Set the target orientation fro the roll pitch yaw intrinsic angles (taking ulti turn into account)
+    pub fn set_target_rpy_orientation(&mut self, target: [f64; 3]) -> Result<()> {
+        let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(target[0], target[1], target[2]);
+        let mut thetas = self.kinematics.compute_inverse_kinematics(rot)?;
+
+        // Check if |yaw|>=Pi => means that we have to deal with the [-Pi, Pi] range of the rotation matrix
+        if target[2].abs() >= std::f64::consts::PI {
+            let nb_turns = (target[2] / std::f64::consts::TAU).trunc(); //number of full turn
+            let multiturn_offset = std::f64::consts::TAU * (target[2].signum() + nb_turns);
+            thetas.iter_mut().for_each(|x| *x += multiturn_offset);
+        }
+
+        self.inner.set_target_position(thetas)
+    }
+
     /// Set the target orientation (as quaternion (qx, qy, qz, qw)) with feedback
     pub fn set_target_orientation_fb(&mut self, target: [f64; 4]) -> Result<Orbita3dFeedback> {
         let rot =
@@ -305,23 +320,134 @@ impl Orbita3dController {
         }
     }
 
+    /// Set the target orientation from roll pitch yaw intrinsic angles with feedback => returns feedback rpy
+    pub fn set_target_rpy_orientation_fb(&mut self, target: [f64; 3]) -> Result<[f64; 3]> {
+        let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(target[0], target[1], target[2]);
+        let mut thetas = self.kinematics.compute_inverse_kinematics(rot)?;
+
+        // Check if |yaw|>Pi => means that we have to deal with the [-Pi, Pi[ range of the rotation matrix
+        // if target[2] > std::f64::consts::PI || target[2] <= -std::f64::consts::PI {
+        let mut multiturn_offset: f64 = 0.0;
+        if target[2].abs() >= std::f64::consts::PI {
+            let nb_turns = (target[2] / std::f64::consts::TAU).trunc(); //number of full turn
+
+            if nb_turns.abs() >= 1.0 {
+                multiturn_offset = std::f64::consts::TAU * (nb_turns);
+            } else {
+                //outside [-pi,pi], but maybe not full turn
+                multiturn_offset = std::f64::consts::TAU * (target[2].signum());
+            }
+
+            log::warn!("Yaw more than Pi, nb full turns: {nb_turns}, offset: {multiturn_offset} theta before: {:?}",thetas);
+
+            //apply the offset to the disk of wrong sign (edge case) or all disks if we have at least one full turn
+            thetas.iter_mut().for_each(|x| {
+                if nb_turns.abs() >= 1.0 || (x.signum() != multiturn_offset.signum()) {
+                    *x += multiturn_offset
+                }
+            });
+            log::warn!("Thetas after offset: {:?}", thetas);
+        }
+
+        let fb: Result<[f64; 3]> = self.inner.set_target_position_fb(thetas);
+
+        match fb {
+            Ok(fb) => {
+                let rot = self
+                    .kinematics
+                    .compute_forward_kinematics([fb[0], fb[1], fb[2]]); //Why the f*ck can't I use slice here?
+                                                                        // let vel = self
+                                                                        //     .kinematics
+                                                                        //     .compute_output_velocity(thetas, [fb[3], fb[4], fb[5]]);
+                                                                        // let torque = self
+                                                                        //     .kinematics
+                                                                        //     .compute_output_torque(thetas, [fb[6], fb[7], fb[8]]);
+
+                // When do we know that the |yaw|>=180°? is min(disks)>=180°? check if forward/inverse is the same?
+                let ik = self.kinematics.compute_inverse_kinematics(rot);
+                let mut ik_disks: [f64; 3] = [0.0, 0.0, 0.0];
+                match ik {
+                    Ok(disks) => {
+                        if (fb[0] - disks[0]).abs() >= 0.01_f64.to_radians()
+                            || (fb[1] - disks[1]).abs() >= 0.01_f64.to_radians()
+                            || (fb[2] - disks[2]).abs() >= 0.01_f64.to_radians()
+                        {
+                            log::debug!("IK/FK mismatch. Probable >180° rotation of disks");
+
+                            //Extract the "yaw" component of the disks
+                            let mut rpy = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+                            log::debug!("=> rpy: {:?}", rpy);
+                            let rot_noyaw =
+                                conversion::intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], 0.0);
+                            let ik_noyaw = self.kinematics.compute_inverse_kinematics(rot_noyaw);
+                            match ik_noyaw {
+                                Ok(disks_noyaw) => {
+                                    let disk_yaw_comp: [f64; 3] = [
+                                        fb[0] - disks_noyaw[0],
+                                        fb[1] - disks_noyaw[1],
+                                        fb[2] - disks_noyaw[2],
+                                    ];
+                                    // What is the sign of the disk angles? if the yaw >180° the sum is positive, if yaw<-180° the sum is negative
+                                    let mut disk_yaw_avg: f64 = disk_yaw_comp.iter().sum();
+                                    disk_yaw_avg /= 3.0;
+                                    log::debug!(
+                                        "AVERAGE YAW: {} YAW COMPONENT: {:?} NO_YAW: {:?}",
+                                        disk_yaw_avg,
+                                        disk_yaw_comp,
+                                        disks_noyaw
+                                    );
+                                    // From the average yaw of the disks, compute the real rpy
+                                    // it can be 180<|yaw|<360 or |yaw|>360
+                                    if (disk_yaw_avg.abs() - std::f64::consts::PI).abs()
+                                        < (disk_yaw_avg.abs() - std::f64::consts::TAU).abs()
+                                    {
+                                        // We are in 180<|yaw|<360
+                                        rpy[2] += disk_yaw_avg.signum() * std::f64::consts::TAU;
+                                        log::debug!("180<|yaw|<360: {}", rpy[2]);
+                                    } else {
+                                        // We are in |yaw|>360 => how many turns?
+                                        let nb_turns =
+                                            (disk_yaw_avg / std::f64::consts::TAU).trunc(); //number of full turn
+                                        rpy[2] += nb_turns * std::f64::consts::TAU;
+                                        log::debug!("|yaw|>360: nb_turns {nb_turns} {}", rpy[2]);
+                                    }
+                                    return Ok(rpy);
+                                }
+                                Err(e) => log::error!("IK error? {e}"),
+                            }
+                        }
+                        ik_disks = disks; //??
+                    }
+                    Err(e) => log::error!("IK error? {e}"),
+                }
+
+                log::debug!("No extra yaw FB: {:?} thetas: {:?}", fb, ik_disks);
+                let rpy = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+
+                // If we did not detect any extra yaw
+                Ok(rpy)
+            }
+            Err(e) => Err(e),
+        }
+    }
+
     /// Get the velocity limit of each raw motor (in rad/s)
-    /// caution: this is the raw value used by the motors used inside the actuator, not a limit orbita3d orientation!
+    /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn get_raw_motors_velocity_limit(&mut self) -> Result<[f64; 3]> {
         self.inner.get_velocity_limit()
     }
     /// Set the velocity limit of each raw motor (in rad/s)
-    /// caution: this is the raw value used by the motors used inside the actuator, not a limit orbita3d orientation!
+    /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn set_raw_motors_velocity_limit(&mut self, limit: [f64; 3]) -> Result<()> {
         self.inner.set_velocity_limit(limit)
     }
     /// Get the torque limit of each raw motor (in N.m)
-    /// caution: this is the raw value used by the motors used inside the actuator, not a limit orbita3d orientation!
+    /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn get_raw_motors_torque_limit(&mut self) -> Result<[f64; 3]> {
         self.inner.get_torque_limit()
     }
     /// Set the torque limit of each raw motor (in N.m)
-    /// caution: this is the raw value used by the motors used inside the actuator, not a limit orbita3d orientation!
+    /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn set_raw_motors_torque_limit(&mut self, limit: [f64; 3]) -> Result<()> {
         self.inner.set_torque_limit(limit)
     }
