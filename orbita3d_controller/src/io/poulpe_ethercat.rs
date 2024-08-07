@@ -33,7 +33,7 @@ pub struct EthercatPoulpeController {
 impl EthercatPoulpeController {
     /// Creates a new EthercatPoulpeController
     pub fn new(url: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
-        let io = match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], Duration::from_millis(5)){
+        let io = match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], Duration::from_secs_f32(0.001)){
             Ok(io) => io,
             Err(e) => {
                 error!("Error while connecting to EthercatPoulpeController: {:?}", e);
