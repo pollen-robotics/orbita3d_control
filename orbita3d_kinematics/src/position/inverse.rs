@@ -177,17 +177,17 @@ impl Orbita3dKinematicsModel {
 fn compute_gammas(thetas: Vector3<f64>) -> Vector3<f64> {
     let mut th = thetas;
 
-    // for t in th.iter_mut() {
-    //     *t = t.rem_euclid(2.0 * PI);
-    // }
+    for t in th.iter_mut() {
+        *t = t.rem_euclid(2.0 * PI);
+    }
 
-    // Vector3::from_row_slice(&[
-    //     (th[1] - th[0]).rem_euclid(2.0 * PI),
-    //     (th[2] - th[1]).rem_euclid(2.0 * PI),
-    //     (th[0] - th[2]).rem_euclid(2.0 * PI),
-    // ])
+    Vector3::from_row_slice(&[
+        (th[1] - th[0]).rem_euclid(2.0 * PI),
+        (th[2] - th[1]).rem_euclid(2.0 * PI),
+        (th[0] - th[2]).rem_euclid(2.0 * PI),
+    ])
 
-    Vector3::from_row_slice(&[(th[1] - th[0]), (th[2] - th[1]), (th[0] - th[2])])
+    // Vector3::from_row_slice(&[(th[1] - th[0]), (th[2] - th[1]), (th[0] - th[2])])
 }
 
 #[cfg(test)]

@@ -387,6 +387,7 @@ impl Orbita3dController {
                     log::debug!("No offset");
                 }
             });
+
             log::debug!("thetas in the [0, 2pi] range {:?}", thetas);
             // log::debug!("Put thetas in the correct sign {:?}", thetas);
 
