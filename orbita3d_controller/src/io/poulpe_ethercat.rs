@@ -33,13 +33,20 @@ pub struct EthercatPoulpeController {
 impl EthercatPoulpeController {
     /// Creates a new EthercatPoulpeController
     pub fn new(url: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
-        let io = match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], Duration::from_secs_f32(0.002)){
+        let mut io = match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], Duration::from_secs_f32(0.002)){
             Ok(io) => io,
             Err(e) => {
                 error!("Error while connecting to EthercatPoulpeController: {:?}", e);
                 return Err("Error while connecting to EthercatPoulpeController".into());
             }
         };
+
+
+        // set the initial velocity and torque limit to 100%
+        io.set_velocity_limit(id as u16, [1.0; 3].to_vec());
+        io.set_torque_limit(id as u16, [1.0; 3].to_vec());
+
+
         let mut poulpe_controller = EthercatPoulpeController {
             io,
             id: id as u16,
@@ -196,8 +203,12 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         }
     }
 
+
     fn get_velocity_limit(&mut self) -> Result<[f64; 3]> {
-        Ok([1.0, 1.0, 1.0])
+        match self.io.get_velocity_limit(self.id) {
+            Ok(limit) => Ok([limit[0] as f64, limit[1] as f64, limit[2] as f64]),
+            Err(_) => Err("Error while getting velocity limit".into()),
+        }
     }
 
     fn set_velocity_limit(&mut self, velocity: [f64; 3]) -> Result<()> {
@@ -210,7 +221,10 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
     }
 
     fn get_torque_limit(&mut self) -> Result<[f64; 3]> {
-        Ok([1.0, 1.0, 1.0])
+        match self.io.get_torque_limit(self.id) {
+            Ok(limit) => Ok([limit[0] as f64, limit[1] as f64, limit[2] as f64]),
+            Err(_) => Err("Error while getting torque limit".into()),
+        }
     }
 
     fn set_torque_limit(&mut self, torque: [f64; 3]) -> Result<()> {
