@@ -11,7 +11,7 @@ impl Orbita3dKinematicsModel {
     /// Compute the output 3d orientation given the 3 angles of the motors (in radians)
     ///
     /// # Arguments
-    /// * thetas - the angles of the motors (in radians)
+    /// * thetas - the angles of the motors (in radians) without the 120° offsets
     /// # Returns
     /// * the 3d orientation of the platform
     pub fn compute_forward_kinematics(&self, thetas: [f64; 3]) -> Rotation3<f64> {

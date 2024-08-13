@@ -418,8 +418,11 @@ impl Orbita3dController {
         }
 
         // Last check of gammas before sending command. FIXME!! check_gamma is not ready to work outside [-pi,pi]
-        // self.kinematics
-        //     .check_gammas(Vector3::from_row_slice(&[thetas[0], thetas[1], thetas[2]]))?;
+        self.kinematics.check_gammas(Vector3::from_row_slice(&[
+            thetas[0],
+            thetas[1] + 120.0_f64.to_radians(),
+            thetas[2] - 120.0_f64.to_radians(),
+        ]))?;
 
         let fb: Result<[f64; 3]> = self.inner.set_target_position_fb(thetas);
 
