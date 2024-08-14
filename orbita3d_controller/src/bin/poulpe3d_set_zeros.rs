@@ -7,7 +7,8 @@ use clap::Parser;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// tty
-    #[arg(short, long, default_value = "config/dxl_poulpe.yaml")]
+    // #[arg(short, long, default_value = "config/dxl_poulpe.yaml")]
+    #[arg(short, long, default_value = "config/ethercat_poulpe.yaml")]
     configfile: String,
 }
 
