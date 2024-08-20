@@ -327,6 +327,8 @@ impl Orbita3dController {
         // if target[2] > std::f64::consts::PI || target[2] <= -std::f64::consts::PI {
         let mut multiturn_offset: f64 = 0.0;
         let mut thetas: [f64; 3] = [0.0, 0.0, 0.0];
+
+        // if yaw is more than Pi, we may have to deal with some edge cases
         if target[2].abs() >= std::f64::consts::PI {
             // remove the yaw component:
             // let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(target[0], target[1], 0.0);
@@ -337,8 +339,12 @@ impl Orbita3dController {
             // let rpy_extrinsic = rot.euler_angles();
             // log::debug!("rpy extrinsic {:?}", rpy_extrinsic);
 
-            thetas = self.kinematics.compute_inverse_kinematics(rot)?;
-            // log::debug!("theta no yaw: {:?}", thetas);
+            // Procedure
+            // 1. Compute the inverse kinematics
+            // 2. Check geometric validity of the solution (gammas) => modulo 2pi
+            // 3. Find the correct "real world solution": the 2pi modulo to add to the thetas in order to account for the rotation orientation
+
+            thetas = self.kinematics.compute_inverse_kinematics(rot)?; // The ik returns a geometric solution with thetas in [-pi; pi] without the "natural" 120° offset (zero position is :[0, 0, 0])
 
             // debug
             // let rot_check = self
@@ -347,18 +353,26 @@ impl Orbita3dController {
             // let rpy_check = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot_check);
             // log::debug!("rpy (check) {:?}", rpy_check);
 
+            // Compute the k*2*Pi offset if the yaw target is more than 1 full rotation
             let nb_turns = (target[2] / std::f64::consts::TAU).trunc(); //number of full turn
-
             if nb_turns.abs() >= 1.0 {
                 multiturn_offset = std::f64::consts::TAU * (nb_turns);
             }
 
             log::debug!("Yaw more than Pi, nb full turns: {nb_turns}, offset: {multiturn_offset} theta before: {:?}",thetas);
 
+            // Select the "real world" solution from the geometric one: => disks should not cross each over
+            // For each theta, there is 2 solutions (only one valid):
+            // - The return angle in [-pi, pi]
+            // - The 2pi complement
+            // We should select the one that avoid crossing the other disks and that rotates in the correct yaw direction
+
+            //
             // If the yaw is > Pi, then all the thetas should be of same sign?
 
             //First, put everything in the [0;2Pi] range than apply 2pi to give it a proper sign
 
+            // FIXME this block is bullshit
             thetas.iter_mut().for_each(|x| {
                 // *x = x.rem_euclid(std::f64::consts::TAU);
                 log::warn!(
@@ -387,6 +401,7 @@ impl Orbita3dController {
                     log::debug!("No offset");
                 }
             });
+            // --
 
             log::debug!("thetas in the [0, 2pi] range {:?}", thetas);
             // log::debug!("Put thetas in the correct sign {:?}", thetas);
@@ -403,8 +418,7 @@ impl Orbita3dController {
 
             thetas.iter_mut().for_each(|x| {
                 if nb_turns.abs() >= 1.0 || (x.signum() != multiturn_offset.signum())
-                // || ((x.signum() == multiturn_offset.signum())
-                //     && x.abs() < std::f64::consts::TAU)
+                //not sure about the sign comparison
                 {
                     *x += multiturn_offset
                 }
@@ -412,17 +426,20 @@ impl Orbita3dController {
 
             log::debug!("Thetas after offset: {:?}", thetas);
         } else {
+            // Yaw is less than Pi so we should have no problem
             let rot =
                 conversion::intrinsic_roll_pitch_yaw_to_matrix(target[0], target[1], target[2]);
             thetas = self.kinematics.compute_inverse_kinematics(rot)?;
         }
 
         // Last check of gammas before sending command. FIXME!! check_gamma is not ready to work outside [-pi,pi]
-        self.kinematics.check_gammas(Vector3::from_row_slice(&[
-            thetas[0],
-            thetas[1] + 120.0_f64.to_radians(),
-            thetas[2] - 120.0_f64.to_radians(),
-        ]))?;
+        // self.kinematics.check_gammas(Vector3::from_row_slice(&[
+        //     thetas[0],
+        //     thetas[1] + 120.0_f64.to_radians(),
+        //     thetas[2] - 120.0_f64.to_radians(),
+        // ]))?;
+        self.kinematics
+            .check_gammas2(Vector3::from_row_slice(&[thetas[0], thetas[1], thetas[2]]))?;
 
         let fb: Result<[f64; 3]> = self.inner.set_target_position_fb(thetas);
 

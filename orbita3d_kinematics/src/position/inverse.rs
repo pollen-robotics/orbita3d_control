@@ -65,21 +65,35 @@ impl Orbita3dKinematicsModel {
         //     thetas[2].sin().atan2(thetas[2].cos()),
         // ]);
 
-        let _ = match self.check_gammas(thetas) {
+        // let _ = match self.check_gammas(thetas) {
+        //     Ok(()) => Ok(thetas),
+        //     Err(e) => {
+        //         println!("{e}");
+        //         Err(InverseSolutionErrorKind::InvalidSolution(
+        //             rot,
+        //             compute_gammas(thetas),
+        //         ))
+        //     }
+        // };
+
+        // remove the 120° offsets and put in [-pi ; pi]
+        let mut d1 = thetas[0];
+        let mut d2 = thetas[1] - 120.0_f64.to_radians();
+        let mut d3 = thetas[2] + 120.0_f64.to_radians();
+        d1 = d1.sin().atan2(d1.cos());
+        d2 = d2.sin().atan2(d2.cos());
+        d3 = d3.sin().atan2(d3.cos());
+        let _ = match self.check_gammas2(thetas) {
             Ok(()) => Ok(thetas),
             Err(e) => {
-                println!("{e}");
+                println!("GAMMA2 {e}");
                 Err(InverseSolutionErrorKind::InvalidSolution(
                     rot,
-                    compute_gammas(thetas),
+                    compute_gammas2(thetas),
                 ))
             }
         };
 
-        // remove the 120° offsets
-        let d1 = thetas[0];
-        let d2 = thetas[1] - 120.0_f64.to_radians();
-        let d3 = thetas[2] + 120.0_f64.to_radians();
         // println!(
         //     "BEFORE ATAN2 d1: {}, d2: {}, d3: {} AFTER ATAN2 d1: {}, d2: {}, d3: {}",
         //     d1,
@@ -93,10 +107,10 @@ impl Orbita3dKinematicsModel {
         //TODO, check gammas after the atan2?
 
         Ok([
-            d1.sin().atan2(d1.cos()),
-            d2.sin().atan2(d2.cos()),
-            d3.sin().atan2(d3.cos()),
-            // d1, d2, d3,
+            // d1.sin().atan2(d1.cos()),
+            // d2.sin().atan2(d2.cos()),
+            // d3.sin().atan2(d3.cos()),
+            d1, d2, d3,
         ])
 
         // Ok([d1, d2, d3])
@@ -109,6 +123,21 @@ impl Orbita3dKinematicsModel {
             if !((*g > self.gamma_min) && (*g < self.gamma_max)) {
                 let msg = format!(
                     "Gammas out of range: ! {:?} < {:?} < {:?} (thetas {:?})",
+                    self.gamma_min, gammas, self.gamma_max, thetas
+                );
+                return Err((msg).into());
+            }
+        }
+        Ok(())
+    }
+
+    pub fn check_gammas2(&self, thetas: Vector3<f64>) -> Result<(), Box<dyn std::error::Error>> {
+        let gammas = compute_gammas2(thetas);
+        // println!("CHECK GAMMAS: {:?}", gammas);
+        for g in gammas.iter() {
+            if !((*g > self.gamma_min) && (*g < self.gamma_max)) {
+                let msg = format!(
+                    "Gammas2 out of range: ! {:?} < {:?} < {:?} (thetas {:?})",
                     self.gamma_min, gammas, self.gamma_max, thetas
                 );
                 return Err((msg).into());
@@ -200,7 +229,21 @@ fn compute_gammas(thetas: Vector3<f64>) -> Vector3<f64> {
     //     (th[0] - th[2]).rem_euclid(2.0 * PI),
     // ])
 
-    Vector3::from_row_slice(&[(th[1] - th[0]), (th[2] - th[1]), (th[0] - th[2])])
+    Vector3::from_row_slice(&[
+        (th[1] - th[0]),
+        ((th[2] + std::f64::consts::TAU) - th[1]),
+        (th[0] - th[2]),
+    ])
+}
+
+fn compute_gammas2(thetas: Vector3<f64>) -> Vector3<f64> {
+    // Compute the angle difference between each 2 disks (disks without the 120° offset).
+
+    Vector3::from_row_slice(&[
+        120.0_f64.to_radians() - (thetas[1] - thetas[0]),
+        120.0_f64.to_radians() - (thetas[2] - thetas[1]),
+        120.0_f64.to_radians() - (thetas[0] - thetas[2]),
+    ])
 }
 
 #[cfg(test)]
