@@ -19,6 +19,7 @@ serde_yaml = "0.9.25"
 serialport = "4.2.2"
 timeit = "0.1.2"
 clap = { version = "4.0.32", features = ["derive"] }
+lerp = "0.4"
 
 [dev-dependencies]
 rand = "0.8.5"

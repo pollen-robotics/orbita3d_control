@@ -83,6 +83,8 @@ impl Orbita3dKinematicsModel {
         d1 = d1.sin().atan2(d1.cos());
         d2 = d2.sin().atan2(d2.cos());
         d3 = d3.sin().atan2(d3.cos());
+
+        //TODO move the volid solution here
         let _ = match self.check_gammas2(thetas) {
             Ok(()) => Ok(thetas),
             Err(e) => {
