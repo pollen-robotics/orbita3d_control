@@ -1,7 +1,7 @@
 use nalgebra::{Matrix2, Matrix3, Rotation3, Vector2, Vector3};
 use std::f64::consts::PI;
 
-use crate::Orbita3dKinematicsModel;
+use crate::{conversion, Orbita3dKinematicsModel};
 
 #[derive(Debug)]
 /// Error that can occur when computing the inverse kinematics of the Orbita3d platform.
@@ -85,37 +85,21 @@ impl Orbita3dKinematicsModel {
         d3 = d3.sin().atan2(d3.cos());
 
         //TODO move the volid solution here
-        let _ = match self.check_gammas2(thetas) {
-            Ok(()) => Ok(thetas),
-            Err(e) => {
-                println!("GAMMA2 {e}");
-                Err(InverseSolutionErrorKind::InvalidSolution(
-                    rot,
-                    compute_gammas2(thetas),
-                ))
-            }
-        };
 
-        // println!(
-        //     "BEFORE ATAN2 d1: {}, d2: {}, d3: {} AFTER ATAN2 d1: {}, d2: {}, d3: {}",
-        //     d1,
-        //     d2,
-        //     d3,
-        //     d1.sin().atan2(d1.cos()),
-        //     d2.sin().atan2(d2.cos()),
-        //     d3.sin().atan2(d3.cos())
-        // );
+        // return self.compute_valid_solution(rot, [d1, d2, d3]);
 
-        //TODO, check gammas after the atan2?
+        // let _ = match self.check_gammas2(thetas) {
+        //     Ok(()) => Ok(thetas),
+        //     Err(e) => {
+        //         println!("GAMMA2 {e}");
+        //         Err(InverseSolutionErrorKind::InvalidSolution(
+        //             rot,
+        //             compute_gammas2(thetas),
+        //         ))
+        //     }
+        // };
 
-        Ok([
-            // d1.sin().atan2(d1.cos()),
-            // d2.sin().atan2(d2.cos()),
-            // d3.sin().atan2(d3.cos()),
-            d1, d2, d3,
-        ])
-
-        // Ok([d1, d2, d3])
+        Ok([d1, d2, d3])
     }
 
     pub fn check_gammas(&self, thetas: Vector3<f64>) -> Result<(), Box<dyn std::error::Error>> {
@@ -146,6 +130,82 @@ impl Orbita3dKinematicsModel {
             }
         }
         Ok(())
+    }
+
+    pub fn compute_valid_solution(
+        &self,
+        target_rpy: [f64; 3],
+        mut thetas: [f64; 3],
+    ) -> Result<[f64; 3], InverseSolutionErrorKind> {
+        // Select the "real world" solution from the geometric one: => disks should not cross each over
+        // For each theta, there is 2 solutions (only one valid):
+        // - The return angle in [-pi, pi]
+        // - The 2pi complement
+        // We should select the one that avoid crossing the other disks and that rotates in the correct yaw direction
+        //
+        // algo:
+        // - generate all possible solutions
+        // - check the validity of the solution (gammas)
+        // - there should be maximum 2 valid set of solutions?
+        // - select the right one (physically feasible) and if there are 2 solutions, select the one with the same yaw sign
+
+        // generate solutions 2^3
+
+        const NBSOLS: i32 = 8;
+        let mut all_solutions = [[0.0_f64; 3]; NBSOLS as usize];
+        // TODO: remove extra conversion?
+        // let target = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+
+        for i in 0..NBSOLS {
+            for j in 0..3 {
+                let val = NBSOLS * j + i;
+                let ret = 1 & (val >> j);
+                if ret != 0 {
+                    all_solutions[i as usize][j as usize] = thetas[j as usize];
+                } else {
+                    all_solutions[i as usize][j as usize] =
+                        thetas[j as usize] - thetas[j as usize].signum() * std::f64::consts::TAU;
+                }
+            }
+        }
+        let mut validvec = Vec::new();
+        for sol in all_solutions {
+            match self.check_gammas2(sol.into()) {
+                Ok(()) => validvec.push(sol),
+                Err(_) => continue,
+            }
+        }
+        log::debug!("DEBUG: valid solutions: {:?}", validvec);
+        // There is either one solution or 2 valid solutions
+        if validvec.len() == 1 {
+            thetas = validvec[0];
+        } else {
+            if validvec.is_empty() {
+                log::error!(
+                    "NO VALID SOLUTION! target: {:?}\n thetas: {:?}\nall_solutions: {:?}",
+                    target_rpy,
+                    thetas,
+                    all_solutions
+                );
+                let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(
+                    target_rpy[0],
+                    target_rpy[1],
+                    target_rpy[2],
+                );
+                return Err(InverseSolutionErrorKind::InvalidSolution(
+                    rot,
+                    compute_gammas2(thetas.into()),
+                ));
+            }
+            //here we have the 2 solutions (both 2pi complement) we chose the one with the same yaw sign
+            if validvec[0][0].signum() == target_rpy[2].signum() {
+                thetas = validvec[0];
+            } else {
+                thetas = validvec[1];
+            }
+        }
+        log::debug!("valid Thetas {:?}", thetas);
+        Ok(thetas)
     }
 
     fn find_thetas_from_v(&self, v: Matrix3<f64>) -> Vector3<f64> {

@@ -321,7 +321,7 @@ impl Orbita3dController {
         }
     }
 
-    /// Set the target orientation from roll pitch yaw intrinsic angles with feedback => returns feedback rpy
+    /// Set the target orientation from roll pitch yaw (accepts yaw>180°) intrinsic angles with feedback => returns feedback rpy
     pub fn set_target_rpy_orientation_fb(&mut self, target: [f64; 3]) -> Result<[f64; 3]> {
         // Check if |yaw|>Pi => means that we have to deal with the [-Pi, Pi[ range of the rotation matrix
         // if target[2] > std::f64::consts::PI || target[2] <= -std::f64::consts::PI {
@@ -331,77 +331,62 @@ impl Orbita3dController {
         let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(target[0], target[1], target[2]);
 
         thetas = self.kinematics.compute_inverse_kinematics(rot)?; // The ik returns a geometric solution with thetas in [-pi; pi] without the "natural" 120° offset (zero position is :[0, 0, 0])
-        const nbsols: i32 = 8;
-        let mut all_solutions = [[0.0_f64; 3]; nbsols as usize];
+                                                                   /*
+                                                                       const NBSOLS: i32 = 8;
+                                                                       let mut all_solutions = [[0.0_f64; 3]; NBSOLS as usize];
 
-        for i in 0..nbsols {
-            for j in 0..3 {
-                let val = nbsols * j + i;
-                let ret = (1 & (val >> j));
-                // booleans[i as usize][j as usize] = ret != 0;
-                if ret != 0 {
-                    all_solutions[i as usize][j as usize] = thetas[j as usize];
-                } else {
-                    all_solutions[i as usize][j as usize] =
-                        thetas[j as usize] - thetas[j as usize].signum() * std::f64::consts::TAU;
-                }
-            }
-        }
-        let mut validvec = Vec::new();
-        for sol in all_solutions {
-            match self.kinematics.check_gammas2(sol.into()) {
-                Ok(()) => validvec.push(sol),
-                Err(_) => continue,
-            }
-        }
-        log::debug!("DEBUG: valid solutions: {:?}", validvec);
-        // There is either one solution or 2 valid solutions
-        if validvec.len() == 1 {
-            thetas = validvec[0];
-        } else {
-            if validvec.is_empty() {
-                log::error!(
-                    "NO VALID SOLUTION! target: {:?}\n thetas: {:?}\nall_solutions: {:?}",
-                    target,
-                    thetas,
-                    all_solutions
-                );
-                return Err("No solution".into());
-            }
-            //here we have the 2 solutions (both 2pi complement) we chose the one with the same yaw sign
+                                                                       for i in 0..NBSOLS {
+                                                                           for j in 0..3 {
+                                                                               let val = NBSOLS * j + i;
+                                                                               let ret = 1 & (val >> j);
+                                                                               if ret != 0 {
+                                                                                   all_solutions[i as usize][j as usize] = thetas[j as usize];
+                                                                               } else {
+                                                                                   all_solutions[i as usize][j as usize] =
+                                                                                       thetas[j as usize] - thetas[j as usize].signum() * std::f64::consts::TAU;
+                                                                               }
+                                                                           }
+                                                                       }
+                                                                       let mut validvec = Vec::new();
+                                                                       for sol in all_solutions {
+                                                                           match self.kinematics.check_gammas2(sol.into()) {
+                                                                               Ok(()) => validvec.push(sol),
+                                                                               Err(_) => continue,
+                                                                           }
+                                                                       }
+                                                                       log::debug!("DEBUG: valid solutions: {:?}", validvec);
+                                                                       // There is either one solution or 2 valid solutions
+                                                                       if validvec.len() == 1 {
+                                                                           thetas = validvec[0];
+                                                                       } else {
+                                                                           if validvec.is_empty() {
+                                                                               log::error!(
+                                                                                   "NO VALID SOLUTION! target: {:?}\n thetas: {:?}\nall_solutions: {:?}",
+                                                                                   target,
+                                                                                   thetas,
+                                                                                   all_solutions
+                                                                               );
+                                                                               return Err("No solution".into());
+                                                                           }
+                                                                           //here we have the 2 solutions (both 2pi complement) we chose the one with the same yaw sign
+                                                                           if validvec[0][0].signum() == target[2].signum() {
+                                                                               thetas = validvec[0];
+                                                                           } else {
+                                                                               thetas = validvec[1];
+                                                                           }
+                                                                       }
+                                                                   */
+        // Procedure
+        // 1. Compute the inverse kinematics
+        // 2. Check geometric validity of the solution (gammas) => modulo 2pi
+        // 3. Find the correct "real world solution": the 2pi modulo to add to the thetas in order to account for the rotation orientation
 
-            if validvec[0][0].signum() == target[2].signum() {
-                thetas = validvec[0];
-            } else {
-                thetas = validvec[1];
-            }
-        }
+        let mut thetas: [f64; 3] = self.kinematics.compute_valid_solution(target, thetas)?;
+
         log::debug!("valid Thetas {:?}", thetas);
+
         // if yaw is more than Pi, we may have to deal with some edge cases
         if target[2].abs() >= std::f64::consts::PI {
-            // remove the yaw component:
-            // let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(target[0], target[1], 0.0);
-
-            // let rot =
-            //     conversion::intrinsic_roll_pitch_yaw_to_matrix(target[0], target[1], target[2]);
-
-            // let rpy_extrinsic = rot.euler_angles();
-            // log::debug!("rpy extrinsic {:?}", rpy_extrinsic);
-
-            // Procedure
-            // 1. Compute the inverse kinematics
-            // 2. Check geometric validity of the solution (gammas) => modulo 2pi
-            // 3. Find the correct "real world solution": the 2pi modulo to add to the thetas in order to account for the rotation orientation
-
-            // thetas = self.kinematics.compute_inverse_kinematics(rot)?; // The ik returns a geometric solution with thetas in [-pi; pi] without the "natural" 120° offset (zero position is :[0, 0, 0])
-
-            // debug
-            // let rot_check = self
-            //     .kinematics
-            //     .compute_forward_kinematics([thetas[0], thetas[1], thetas[2]]); //Why the f*ck can't I use slice here?
-            // let rpy_check = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot_check);
-            // log::debug!("rpy (check) {:?}", rpy_check);
-
             // Compute the k*2*Pi offset if the yaw target is more than 1 full rotation
 
             let nb_turns = (target[2] / std::f64::consts::TAU).trunc(); //number of full turn
@@ -418,153 +403,12 @@ impl Orbita3dController {
 
             log::debug!("Yaw more than Pi, nb full turns: {nb_turns}, yaw%2pi: {:?} offset: {multiturn_offset} theta before: {:?}",target[2].abs().rem_euclid(std::f64::consts::TAU),thetas);
 
-            // Select the "real world" solution from the geometric one: => disks should not cross each over
-            // For each theta, there is 2 solutions (only one valid):
-            // - The return angle in [-pi, pi]
-            // - The 2pi complement
-            // We should select the one that avoid crossing the other disks and that rotates in the correct yaw direction
-            //
-            // algo:
-            // - generate all possible solutions
-            // - check the validity of the solution (gammas)
-            // - there should be maximum 2 valid set of solutions?
-            // - select the right one TODO
-
-            // generate solutions 2^3
-
-            // const nbsols: i32 = 8;
-            // let mut all_solutions = [[0.0_f64; 3]; nbsols as usize];
-
-            // for i in 0..nbsols {
-            //     for j in 0..3 {
-            //         let val = nbsols * j + i;
-            //         let ret = (1 & (val >> j));
-            //         // booleans[i as usize][j as usize] = ret != 0;
-            //         if ret != 0 {
-            //             all_solutions[i as usize][j as usize] = thetas[j as usize];
-            //         } else {
-            //             all_solutions[i as usize][j as usize] = thetas[j as usize]
-            //                 - thetas[j as usize].signum() * std::f64::consts::TAU;
-            //         }
-            //     }
-            // }
-
-            /*
-                const nbsols: i32 = 27;
-                let mut all_solutions = [[0.0_f64; 3]; nbsols as usize];
-
-                for i in 0..nbsols / 3 {
-                    for j in 0..3 {
-                        all_solutions[(i * 3) as usize][j as usize] = thetas[j as usize];
-                        all_solutions[(i * 3 + 1) as usize][j as usize] =
-                            thetas[j as usize] + std::f64::consts::TAU;
-                        all_solutions[(i * 3 + 2) as usize][j as usize] =
-                            thetas[j as usize] - std::f64::consts::TAU;
-                    }
-                }
-            */
-            // log::error!("DEBUG: all solutions: {:?}", all_solutions);
-            // Find the valid solutions.
-            // let mut validvec = Vec::new();
-            // for sol in all_solutions {
-            //     match self.kinematics.check_gammas2(sol.into()) {
-            //         Ok(()) => validvec.push(sol),
-            //         Err(_) => continue,
-            //     }
-            // }
-            // log::debug!("DEBUG: valid solutions: {:?}", validvec);
-            // // There is either one solution or 2 valid solutions
-            // if validvec.len() == 1 {
-            //     thetas = validvec[0];
-            // } else {
-            //     if validvec.is_empty() {
-            //         log::error!(
-            //             "NO VALID SOLUTION! target: {:?}\n thetas: {:?}\nall_solutions: {:?}",
-            //             target,
-            //             thetas,
-            //             all_solutions
-            //         );
-            //         return Err("No solution".into());
-            //     }
-            //     //here we have the 2 solutions (both 2pi complement) we chose the one with the same yaw sign
-
-            //     if validvec[0][0].signum() == target[2].signum() {
-            //         thetas = validvec[0];
-            //     } else {
-            //         thetas = validvec[1];
-            //     }
-            // }
-            // ---------
-            // If the yaw is > Pi, then all the thetas should be of same sign?
-
-            //First, put everything in the [0;2Pi] range than apply 2pi to give it a proper sign
-
-            // FIXME this block is bullshit
-            /*
-                thetas.iter_mut().for_each(|x| {
-                    // *x = x.rem_euclid(std::f64::consts::TAU);
-                    log::warn!(
-                        "TOTO {:?}",
-                        *x - target[2].rem_euclid(std::f64::consts::TAU).abs()
-                    );
-                    // if (*x - target[2].rem_euclid(std::f64::consts::TAU)).abs() > std::f64::consts::PI {
-                    //     log::warn!("YO {}", x);
-                    //     // *x -= std::f64::consts::TAU;
-                    //     *x -= target[2].signum() * std::f64::consts::TAU;
-                    //     log::warn!("=> YO {}", x);
-                    // }
-                    if (x.signum() != target[2].signum())
-                    // && (*x - target[2].rem_euclid(std::f64::consts::TAU)).abs()
-                    //     > std::f64::consts::PI
-                    {
-                        log::debug!(
-                            "DEBUG {} {} {:?}",
-                            x,
-                            target[2],
-                            *x - target[2].rem_euclid(std::f64::consts::TAU).abs()
-                        );
-
-                        *x += target[2].signum() * std::f64::consts::TAU;
-                    } else {
-                        log::debug!("No offset");
-                    }
-                });
-            */
-            // --
-
             log::debug!("thetas {:?}", thetas);
-            // log::debug!("Put thetas in the correct sign {:?}", thetas);
 
-            // if thetas[0].signum() != target[2].signum()
-            //     || thetas[1].signum() != target[2].signum()
-            //     || thetas[2].signum() != target[2].signum()
-            // {
-            //     thetas[0] += target[2].signum() * std::f64::consts::TAU;
-            //     thetas[1] += target[2].signum() * std::f64::consts::TAU;
-            //     thetas[2] += target[2].signum() * std::f64::consts::TAU;
-            //     log::debug!("Put thetas in the correct sign {:?}", thetas);
-            // }
-
-            thetas.iter_mut().for_each(|x| {
-                // if nb_turns.abs() >= 1.0
-                //|| (x.signum() != multiturn_offset.signum())
-                //not sure about the sign comparison
-                // {
-                // log::debug!("??? theta: {:?} offset: {:?}", x, multiturn_offset);
-                *x += multiturn_offset
-                // }
-            });
+            thetas.iter_mut().for_each(|x| *x += multiturn_offset);
 
             log::debug!("Thetas after offset: {:?}", thetas);
         }
-        /*
-        else {
-                // Yaw is less than Pi so we should have no problem
-                let rot =
-                    conversion::intrinsic_roll_pitch_yaw_to_matrix(target[0], target[1], target[2]);
-                thetas = self.kinematics.compute_inverse_kinematics(rot)?;
-            }
-        */
 
         // Last check of gammas before sending command. FIXME!! check_gamma is not ready to work outside [-pi,pi]
         // self.kinematics.check_gammas(Vector3::from_row_slice(&[
