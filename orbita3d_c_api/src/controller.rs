@@ -141,6 +141,25 @@ pub extern "C" fn orbita3d_get_target_orientation(uid: u32, orientation: &mut [f
 }
 
 #[no_mangle]
+pub extern "C" fn orbita3d_get_target_rpy_orientation(uid: u32, rpy: &mut [f64; 3]) -> i32 {
+    // thread::sleep(Duration::from_millis(1));
+    match CONTROLLER
+        .get_mut(&uid)
+        .unwrap()
+        .get_target_rpy_orientation()
+    {
+        Ok(ori) => {
+            *rpy = ori;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 4]) -> i32 {
     // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
@@ -180,6 +199,32 @@ pub extern "C" fn orbita3d_set_target_orientation_fb(
             // feedback[7] = fb.torque[0];
             // feedback[8] = fb.torque[1];
             // feedback[9] = fb.torque[2];
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_set_target_rpy_orientation_fb(
+    uid: u32,
+    rpy: &[f64; 3],
+    // feedback: &mut [f64; 10],
+    feedback: &mut [f64; 3],
+) -> i32 {
+    // thread::sleep(Duration::from_millis(1));
+    match CONTROLLER
+        .get_mut(&uid)
+        .unwrap()
+        .set_target_rpy_orientation_fb(*rpy)
+    {
+        Ok(fb) => {
+            feedback[0] = fb[0];
+            feedback[1] = fb[1];
+            feedback[2] = fb[2];
             0
         }
         Err(e) => {

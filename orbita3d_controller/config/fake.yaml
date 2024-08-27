@@ -6,6 +6,8 @@ kinematics_model:
   alpha: 0.9424777960769379 # 54 degrees
   gamma_min: 0.6981317007977318 # 40 degrees
   offset: 0.0
+  # offset: 1.0471975511965976 # 60 degrees
   beta: 1.5707963267948966 # 90 degrees
   gamma_max: 3.0543261909900767 # 175 degrees
+  # gamma_max: 3.141592653589793 # 180 degrees
   passiv_arms_direct: true

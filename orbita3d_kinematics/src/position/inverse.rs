@@ -49,33 +49,6 @@ impl Orbita3dKinematicsModel {
             }
         }
 
-        // TODO: for now everything is working un modulo 2pi, but it prevents multiturn. A better way would be to work in the multiturn range and check gamma for all solutions +/- 2pi to find a feasible one?
-        // // TODO: extract as a usable fonction
-        // let gammas = compute_gammas(thetas);
-        // for g in gammas.iter() {
-        //     if !((*g > self.gamma_min) && (*g < self.gamma_max)) {
-        //         return Err(InverseSolutionErrorKind::InvalidSolution(rot, gammas));
-        //     }
-        // }
-
-        // force in [-pi; pi]
-        // let thetas = Vector3::from_row_slice(&[
-        //     thetas[0].sin().atan2(thetas[0].cos()),
-        //     thetas[1].sin().atan2(thetas[1].cos()),
-        //     thetas[2].sin().atan2(thetas[2].cos()),
-        // ]);
-
-        // let _ = match self.check_gammas(thetas) {
-        //     Ok(()) => Ok(thetas),
-        //     Err(e) => {
-        //         println!("{e}");
-        //         Err(InverseSolutionErrorKind::InvalidSolution(
-        //             rot,
-        //             compute_gammas(thetas),
-        //         ))
-        //     }
-        // };
-
         // remove the 120° offsets and put in [-pi ; pi]
         let mut d1 = thetas[0];
         let mut d2 = thetas[1] - 120.0_f64.to_radians();
@@ -84,22 +57,55 @@ impl Orbita3dKinematicsModel {
         d2 = d2.sin().atan2(d2.cos());
         d3 = d3.sin().atan2(d3.cos());
 
-        //TODO move the volid solution here
-
-        // return self.compute_valid_solution(rot, [d1, d2, d3]);
-
-        // let _ = match self.check_gammas2(thetas) {
-        //     Ok(()) => Ok(thetas),
-        //     Err(e) => {
-        //         println!("GAMMA2 {e}");
-        //         Err(InverseSolutionErrorKind::InvalidSolution(
-        //             rot,
-        //             compute_gammas2(thetas),
-        //         ))
-        //     }
-        // };
-
         Ok([d1, d2, d3])
+    }
+
+    pub fn compute_inverse_kinematics_rpy_multiturn(
+        &self,
+        target_rpy: [f64; 3],
+    ) -> Result<[f64; 3], InverseSolutionErrorKind> {
+        let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(
+            target_rpy[0],
+            target_rpy[1],
+            target_rpy[2],
+        );
+        let mut multiturn_offset: f64 = 0.0;
+
+        let thetas = self.compute_inverse_kinematics(rot)?; // The ik returns a geometric solution with thetas in [-pi; pi] without the "natural" 120° offset (zero position is :[0, 0, 0])
+
+        // let target_rpy_no_offet = [target_rpy[0], target_rpy[1], target_rpy[2] + self.offset]; //FIXME????
+        let mut thetas: [f64; 3] = self.compute_valid_solution(target_rpy, thetas)?; //this does not seems to work correctly with offsets
+
+        log::debug!("valid Thetas {:?}", thetas);
+        // if yaw is more than Pi, we may have to deal with some edge cases
+        let true_yaw = target_rpy[2] + self.offset; //FIXME????
+        if true_yaw.abs() >= std::f64::consts::PI {
+            // Compute the k*2*Pi offset if the yaw target is more than 1 full rotation
+
+            // let nb_turns = (target_rpy[2] / std::f64::consts::TAU).trunc(); //number of full turn
+            let nb_turns = (true_yaw / std::f64::consts::TAU).trunc(); //number of full turn
+            if nb_turns.abs() >= 1.0 {
+                multiturn_offset = std::f64::consts::TAU * (nb_turns);
+            }
+            // also, if yaw.abs().rem_euclid(2.0 * PI) > pi, we might want to consider the 2pi complement
+            // if target_rpy[2].abs().rem_euclid(std::f64::consts::TAU) >= std::f64::consts::PI
+            if true_yaw.abs().rem_euclid(std::f64::consts::TAU) >= std::f64::consts::PI
+                && !(thetas[0].signum() == thetas[1].signum()
+                    && thetas[1].signum() == thetas[2].signum())
+            {
+                multiturn_offset += target_rpy[2].signum() * std::f64::consts::TAU
+            }
+
+            log::debug!("Yaw more than Pi, nb full turns: {nb_turns}, yaw%2pi: {:?} offset: {multiturn_offset} theta before: {:?}",true_yaw.abs().rem_euclid(std::f64::consts::TAU),thetas);
+
+            log::debug!("thetas {:?}", thetas);
+
+            thetas.iter_mut().for_each(|x| *x += multiturn_offset);
+
+            log::debug!("Thetas after offset: {:?}", thetas);
+        }
+
+        Ok(thetas)
     }
 
     pub fn check_gammas(&self, thetas: Vector3<f64>) -> Result<(), Box<dyn std::error::Error>> {
@@ -109,21 +115,6 @@ impl Orbita3dKinematicsModel {
             if !((*g > self.gamma_min) && (*g < self.gamma_max)) {
                 let msg = format!(
                     "Gammas out of range: ! {:?} < {:?} < {:?} (thetas {:?})",
-                    self.gamma_min, gammas, self.gamma_max, thetas
-                );
-                return Err((msg).into());
-            }
-        }
-        Ok(())
-    }
-
-    pub fn check_gammas2(&self, thetas: Vector3<f64>) -> Result<(), Box<dyn std::error::Error>> {
-        let gammas = compute_gammas2(thetas);
-        // println!("CHECK GAMMAS: {:?}", gammas);
-        for g in gammas.iter() {
-            if !((*g > self.gamma_min) && (*g < self.gamma_max)) {
-                let msg = format!(
-                    "Gammas2 out of range: ! {:?} < {:?} < {:?} (thetas {:?})",
                     self.gamma_min, gammas, self.gamma_max, thetas
                 );
                 return Err((msg).into());
@@ -170,12 +161,16 @@ impl Orbita3dKinematicsModel {
         }
         let mut validvec = Vec::new();
         for sol in all_solutions {
-            match self.check_gammas2(sol.into()) {
+            match self.check_gammas(sol.into()) {
                 Ok(()) => validvec.push(sol),
                 Err(_) => continue,
             }
         }
-        log::debug!("DEBUG: valid solutions: {:?}", validvec);
+        log::debug!(
+            "all solutions: {:?}\nvalid solutions: {:?}",
+            all_solutions,
+            validvec
+        );
         // There is either one solution or 2 valid solutions
         if validvec.len() == 1 {
             thetas = validvec[0];
@@ -194,17 +189,17 @@ impl Orbita3dKinematicsModel {
                 );
                 return Err(InverseSolutionErrorKind::InvalidSolution(
                     rot,
-                    compute_gammas2(thetas.into()),
+                    compute_gammas(thetas.into()),
                 ));
             }
             //here we have the 2 solutions (both 2pi complement) we chose the one with the same yaw sign
-            if validvec[0][0].signum() == target_rpy[2].signum() {
+            if validvec[0][0].signum() == (target_rpy[2] + self.offset).signum() {
                 thetas = validvec[0];
             } else {
                 thetas = validvec[1];
             }
         }
-        log::debug!("valid Thetas {:?}", thetas);
+        // log::debug!("valid Thetas {:?}", thetas);
         Ok(thetas)
     }
 
@@ -277,34 +272,12 @@ impl Orbita3dKinematicsModel {
 }
 
 fn compute_gammas(thetas: Vector3<f64>) -> Vector3<f64> {
-    // Compute the angle difference between each 2 disks.
-    let mut th = thetas;
-
-    for t in th.iter_mut() {
-        *t = (*t * 1000000.0).round() / 1000000.0; //well, round to a good enough precision
-                                                   // *t = t.rem_euclid(2.0 * PI);
-    }
-
-    // Vector3::from_row_slice(&[
-    //     (th[1] - th[0]).rem_euclid(2.0 * PI),
-    //     (th[2] - th[1]).rem_euclid(2.0 * PI),
-    //     (th[0] - th[2]).rem_euclid(2.0 * PI),
-    // ])
-
-    Vector3::from_row_slice(&[
-        (th[1] - th[0]),
-        ((th[2] + std::f64::consts::TAU) - th[1]),
-        (th[0] - th[2]),
-    ])
-}
-
-fn compute_gammas2(thetas: Vector3<f64>) -> Vector3<f64> {
     // Compute the angle difference between each 2 disks (disks without the 120° offset).
 
     Vector3::from_row_slice(&[
-        120.0_f64.to_radians() - (thetas[1] - thetas[0]),
-        120.0_f64.to_radians() - (thetas[2] - thetas[1]),
-        120.0_f64.to_radians() - (thetas[0] - thetas[2]),
+        120.0_f64.to_radians() + (thetas[1] - thetas[0]),
+        120.0_f64.to_radians() + (thetas[2] - thetas[1]),
+        120.0_f64.to_radians() + (thetas[0] - thetas[2]),
     ])
 }
 
@@ -345,11 +318,7 @@ mod tests {
         let rot = intrinsic_roll_pitch_yaw_to_matrix(0.0, 0.0, 0.0);
         let thetas = orb.compute_inverse_kinematics(rot).unwrap(); // thetas are without the 120° offset
 
-        let gammas = compute_gammas(Vector3::from_row_slice(&[
-            thetas[0],
-            thetas[1] + 120.0_f64.to_radians(),
-            thetas[2] - 120.0_f64.to_radians(),
-        ]));
+        let gammas = compute_gammas(Vector3::from_row_slice(&[thetas[0], thetas[1], thetas[2]]));
 
         assert!((gammas[0] - 120.0_f64.to_radians()).abs() < 1e-4);
         assert!((gammas[1] - 120.0_f64.to_radians()).abs() < 1e-4);
@@ -377,11 +346,7 @@ mod tests {
         // );
 
         // Thetas are at the extreme values, check should fail
-        match orb.check_gammas(Vector3::from_row_slice(&[
-            thetas[0],
-            thetas[1] + 120.0_f64.to_radians(),
-            thetas[2] - 120.0_f64.to_radians(),
-        ])) {
+        match orb.check_gammas(Vector3::from_row_slice(&[thetas[0], thetas[1], thetas[2]])) {
             Ok(()) => assert!(false),
             Err(_) => assert!(true),
         }

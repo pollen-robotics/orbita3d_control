@@ -3,7 +3,7 @@ use nalgebra::{Matrix3, Owned, Rotation3, SMatrix, SVector, Vector3, U12, U6};
 use ndarray_einsum_beta::einsum;
 use nshare::{RefNdarray2, ToNalgebra};
 
-use crate::Orbita3dKinematicsModel;
+use crate::{conversion, InverseSolutionErrorKind, Orbita3dKinematicsModel};
 
 impl Orbita3dKinematicsModel {
     /// Compute the position forward kinematics
@@ -79,6 +79,121 @@ impl Orbita3dKinematicsModel {
 
         let b_mat = Matrix3::from_columns(&[b1, b2, b3]);
         align_vectors(v_mat.transpose(), b_mat.transpose())
+    }
+
+    pub fn compute_forward_kinematics_rpy_multiturn(
+        &self,
+        thetas: [f64; 3],
+    ) -> Result<[f64; 3], InverseSolutionErrorKind> {
+        let rot = self.compute_forward_kinematics([thetas[0], thetas[1], thetas[2]]); //Why the f*ck can't I use slice here?
+                                                                                      // let vel = self
+                                                                                      //     .kinematics
+                                                                                      //     .compute_output_velocity(thetas, [fb[3], fb[4], fb[5]]);
+                                                                                      // let torque = self
+                                                                                      //     .kinematics
+                                                                                      //     .compute_output_torque(thetas, [fb[6], fb[7], fb[8]]);
+                                                                                      // let rpy_test = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+
+        // When do we know that the |yaw|>=180°? is min(disks)>=180°? check if forward/inverse is the same?
+        let rpy = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+        let ik = self.compute_inverse_kinematics_rpy_multiturn(rpy);
+
+        // let ik = self.compute_inverse_kinematics(rot);
+        // let mut ik_disks: [f64; 3] = [0.0, 0.0, 0.0];
+        match ik {
+            Ok(disks) => {
+                if (thetas[0] - disks[0]).abs() >= 0.01_f64.to_radians()
+                    || (thetas[1] - disks[1]).abs() >= 0.01_f64.to_radians()
+                    || (thetas[2] - disks[2]).abs() >= 0.01_f64.to_radians()
+                {
+                    log::debug!("IK/FK mismatch. Probable >180° rotation of disks");
+
+                    //Extract the "yaw" component of the disks
+                    let mut rpy = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+                    log::debug!("=> rpy: {:?}", rpy);
+                    let rot_noyaw =
+                        conversion::intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], 0.0);
+                    // let rot_yawonly =
+                    //     conversion::intrinsic_roll_pitch_yaw_to_matrix(0.0, 0.0, rpy[2]);
+                    let ik_noyaw = self.compute_inverse_kinematics(rot_noyaw);
+                    match ik_noyaw {
+                        Ok(disks_noyaw) => {
+                            let disk_yaw_comp: [f64; 3] = [
+                                thetas[0] - disks_noyaw[0],
+                                thetas[1] - disks_noyaw[1],
+                                thetas[2] - disks_noyaw[2],
+                            ];
+
+                            // let disk_yaw_comp =
+                            //     self.kinematics.compute_inverse_kinematics(rot_yawonly)?;
+
+                            // What is the sign of the disk angles? if the yaw >180° the sum is positive, if yaw<-180° the sum is negative
+                            let mut disk_yaw_avg: f64 = disk_yaw_comp.iter().sum::<f64>();
+                            disk_yaw_avg /= 3.0;
+                            log::debug!(
+                                "AVERAGE YAW: {} YAW COMPONENT: {:?} NO_YAW: {:?}",
+                                disk_yaw_avg,
+                                disk_yaw_comp,
+                                disks_noyaw
+                            );
+
+                            if rpy[2].signum() != disk_yaw_avg.signum() {
+                                log::debug!("bad yaw sign");
+                                if rpy[2] < 0.0 {
+                                    log::debug!("\t+TAU");
+                                    rpy[2] += std::f64::consts::TAU;
+                                } else {
+                                    log::debug!("\t-TAU");
+                                    rpy[2] -= std::f64::consts::TAU;
+                                }
+                            }
+                            log::debug!("=> RPY with yaw sign {:?}", rpy);
+
+                            // From the average yaw of the disks, compute the real rpy
+                            // it can be 180<|yaw|<360 or |yaw|>360
+                            let nb_turns = (disk_yaw_avg / std::f64::consts::TAU).trunc(); //number of full turn
+                                                                                           // let nb_turns: f64 =
+                                                                                           //     (disk_yaw_avg / std::f64::consts::TAU).round();
+
+                            log::debug!("=> nb_turns {:?}", nb_turns);
+
+                            if (disk_yaw_avg.abs() >= std::f64::consts::PI)
+                                && (disk_yaw_avg.abs() < std::f64::consts::TAU)
+                            {
+                                // We are in 180<|yaw|<360
+                                if nb_turns.abs() > 0.0 || nb_turns == -1.0
+                                // && (disk_yaw_avg - rpy[2]).abs() > 0.1
+                                {
+                                    log::debug!(
+                                        "Adding offset {}",
+                                        disk_yaw_avg.signum() * std::f64::consts::TAU
+                                    );
+                                    rpy[2] += disk_yaw_avg.signum() * std::f64::consts::TAU;
+                                }
+
+                                log::debug!("180<|yaw|<360: {}", rpy[2]);
+                            } else {
+                                // We are in |yaw|>360 => how many turns?
+
+                                rpy[2] += nb_turns * std::f64::consts::TAU;
+                                log::debug!("|yaw|>360: nb_turns {nb_turns} {}", rpy[2]);
+                            }
+                            log::debug!("=> Out RPY {:?}", rpy);
+                            return Ok(rpy);
+                        }
+                        Err(e) => log::error!("IK error? {e}"),
+                    }
+                }
+                log::debug!("IK/FK match");
+                // ik_disks = disks; //??
+                log::debug!("No extra yaw THETAS: {:?} thetas: {:?}", thetas, disks);
+                // let rpy = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+                log::debug!("=> rpy: {:?}", rpy);
+
+                Ok(rpy)
+            }
+            Err(e) => Err(e),
+        }
     }
 
     fn v_i(&self, cpi: f64, spi: f64, cti: f64, sti: f64) -> Vector3<f64> {
