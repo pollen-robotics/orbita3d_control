@@ -96,6 +96,25 @@ pub extern "C" fn orbita3d_get_current_orientation(uid: u32, orientation: &mut [
 }
 
 #[no_mangle]
+pub extern "C" fn orbita3d_get_current_rpy_orientation(uid: u32, rpy: &mut [f64; 3]) -> i32 {
+    // thread::sleep(Duration::from_millis(1));
+    match CONTROLLER
+        .get_mut(&uid)
+        .unwrap()
+        .get_current_rpy_orientation()
+    {
+        Ok(ori) => {
+            *rpy = ori;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn orbita3d_get_current_velocity(uid: u32, velocity: &mut [f64; 3]) -> i32 {
     // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().get_current_velocity() {
