@@ -617,8 +617,8 @@ namespace orbita3d_system_hwi
     }
     else{
       hw_states_position_[0] = fb[0];
-      hw_states_position_[0] = fb[1];
-      hw_states_position_[0] = fb[2];
+      hw_states_position_[1] = fb[1];
+      hw_states_position_[2] = fb[2];
 
     }
 
