@@ -46,7 +46,7 @@ use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
 use std::{thread, time::Duration};
 
-use crate::io::{CachedDynamixelPoulpeController, DynamixelPoulpeController};
+use crate::io::{CachedDynamixelPoulpeController, DynamixelPoulpeController, EthercatPoulpeController};
 
 #[derive(Debug, Deserialize, Serialize)]
 /// Orbita3d Config
@@ -197,6 +197,17 @@ impl Orbita3dController {
                     .with_reduction([Some(config.disks.reduction); 3]);
 
                 log::info!("Using fake motors controller {:?}", controller);
+
+                Box::new(controller)
+            },
+            Orbita3dIOConfig::PoulpeEthercat(ethercat_config) => {
+                let controller = EthercatPoulpeController::new(
+                    &ethercat_config.url,
+                    ethercat_config.id as u8,
+                    config.disks.zeros,
+                    config.disks.reduction,
+                )?;
+                log::info!("Using poulpe ethercat controller {:?}", controller);
 
                 Box::new(controller)
             }
