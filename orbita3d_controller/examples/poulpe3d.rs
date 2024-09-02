@@ -37,7 +37,7 @@ use clap::Parser;
 struct Args {
     /// tty
     // #[arg(default_value = "config/dxl_poulpe.yaml")]
-    #[arg( default_value = "config/ethercat_poulpe.yaml")]
+    #[arg(short,long, default_value = "config/ethercat_poulpe.yaml")]
     configfile: String,
 }
 
