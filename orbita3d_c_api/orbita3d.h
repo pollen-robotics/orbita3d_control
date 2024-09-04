@@ -26,17 +26,25 @@ int32_t orbita3d_disable_torque(uint32_t uid);
 
 int32_t orbita3d_get_current_orientation(uint32_t uid, double (*orientation)[4]);
 
+int32_t orbita3d_get_current_rpy_orientation(uint32_t uid, double (*rpy)[3]);
+
 int32_t orbita3d_get_current_velocity(uint32_t uid, double (*velocity)[3]);
 
 int32_t orbita3d_get_current_torque(uint32_t uid, double (*torque)[3]);
 
 int32_t orbita3d_get_target_orientation(uint32_t uid, double (*orientation)[4]);
 
+int32_t orbita3d_get_target_rpy_orientation(uint32_t uid, double (*rpy)[3]);
+
 int32_t orbita3d_set_target_orientation(uint32_t uid, const double (*orientation)[4]);
 
 int32_t orbita3d_set_target_orientation_fb(uint32_t uid,
                                            const double (*orientation)[4],
                                            double (*feedback)[4]);
+
+int32_t orbita3d_set_target_rpy_orientation_fb(uint32_t uid,
+                                               const double (*rpy)[3],
+                                               double (*feedback)[3]);
 
 int32_t orbita3d_get_raw_motors_velocity_limit(uint32_t uid, double (*limit)[3]);
 

@@ -46,6 +46,7 @@ impl Default for Orbita3dKinematicsModel {
 
 impl Orbita3dKinematicsModel {
     fn platform_unit_vectors_from_mat(&self, rot: Rotation3<f64>) -> Matrix3<f64> {
+        // Compute the unit vectors of the platform in the base frame, from an input rotation matrix
         let delta_v = 120.0_f64.to_radians();
         let mut beta = self.beta;
 

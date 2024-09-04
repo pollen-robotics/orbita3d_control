@@ -26,10 +26,10 @@ mod tests {
             }
             assert_eq!(config.disks.reduction, 1.0);
 
-            assert_eq!(config.kinematics_model.gamma_min, 0.0);
+            assert_eq!(config.kinematics_model.gamma_min, 40.0_f64.to_radians());
             assert_eq!(config.kinematics_model.offset, 0.0);
             assert_eq!(config.kinematics_model.beta, PI / 2.0);
-            assert_eq!(config.kinematics_model.gamma_max, PI);
+            assert_eq!(config.kinematics_model.gamma_max, 175.0_f64.to_radians());
             assert!(config.kinematics_model.passiv_arms_direct);
         } else {
             panic!("Wrong config type");

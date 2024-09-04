@@ -31,10 +31,22 @@ pub fn matrix_to_intrinsic_roll_pitch_yaw(rot: Rotation3<f64>) -> [f64; 3] {
     [roll, pitch, yaw]
 }
 
+// pub fn quaternion_to_roll_pitch_yaw(quat: [f64; 4]) -> [f64; 3] {
+//     let q = UnitQuaternion::from_quaternion(Quaternion::new(quat[3], quat[0], quat[1], quat[2]));
+//     let rpy = q.euler_angles();
+//     [rpy.0, rpy.1, rpy.2]
+// }
+
 pub fn quaternion_to_roll_pitch_yaw(quat: [f64; 4]) -> [f64; 3] {
     let q = UnitQuaternion::from_quaternion(Quaternion::new(quat[3], quat[0], quat[1], quat[2]));
-    let rpy = q.euler_angles();
-    [rpy.0, rpy.1, rpy.2]
+    let mat = q.to_rotation_matrix();
+    matrix_to_intrinsic_roll_pitch_yaw(mat)
+}
+
+pub fn quaternion_to_intrinsic_roll_pitch_yaw(quat: [f64; 4]) -> [f64; 3] {
+    let q = UnitQuaternion::from_quaternion(Quaternion::new(quat[3], quat[0], quat[1], quat[2]));
+    let mat = q.to_rotation_matrix();
+    matrix_to_intrinsic_roll_pitch_yaw(mat)
 }
 
 /// Convert from `Vector3<f64>` to `\[`f64;3`\]`
@@ -59,9 +71,17 @@ mod tests {
     fn rpy() {
         let mut rng = rand::thread_rng();
 
-        let roll = rng.gen_range(-PI..PI).to_radians();
-        let pitch = rng.gen_range(-PI..PI).to_radians();
-        let yaw = rng.gen_range(-PI..PI).to_radians();
+        let roll = rng.gen_range(-2.0 * PI..2.0 * PI).to_radians();
+        let pitch = rng.gen_range(-2.0 * PI..2.0 * PI).to_radians();
+        let yaw = rng.gen_range(-2.0 * PI..2.0 * PI).to_radians();
+
+        // [0.5058586154908705, 0.05003352447822581, 4.771802600632974]
+        // let roll=0.5058586154908705;
+        // let pitch=0.05003352447822581;
+
+        // let roll = 0.0;
+        // let pitch = 0.0;
+        // let yaw = 4.771802600632974;
 
         let rot = intrinsic_roll_pitch_yaw_to_matrix(roll, pitch, yaw);
         let rpy = matrix_to_intrinsic_roll_pitch_yaw(rot);
@@ -76,9 +96,9 @@ mod tests {
         let mut rng = rand::thread_rng();
 
         // Use euler angles to generate a roation matrix
-        let roll = rng.gen_range(-PI..PI).to_radians();
-        let pitch = rng.gen_range(-PI..PI).to_radians();
-        let yaw = rng.gen_range(-PI..PI).to_radians();
+        let roll = rng.gen_range(-2.0 * PI..2.0 * PI).to_radians();
+        let pitch = rng.gen_range(-2.0 * PI..2.0 * PI).to_radians();
+        let yaw = rng.gen_range(-2.0 * PI..2.0 * PI).to_radians();
         let rot = intrinsic_roll_pitch_yaw_to_matrix(roll, pitch, yaw);
 
         // Convert the rotation matrix to a quaternion
