@@ -41,6 +41,7 @@
 pub mod io;
 use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOConfig};
 use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
+
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
 use std::{thread, time::Duration};
@@ -251,6 +252,14 @@ impl Orbita3dController {
         Ok(conversion::rotation_matrix_to_quaternion(rot))
     }
 
+    /// Get the current orientation (as intrinsic rpy with multiturn)
+    pub fn get_current_rpy_orientation(&mut self) -> Result<[f64; 3]> {
+        let thetas = self.inner.get_current_position()?;
+        Ok(self
+            .kinematics
+            .compute_forward_kinematics_rpy_multiturn(thetas)?)
+    }
+
     /// Get the current velocity $\omega$ (as a velocity pseudo vector (wx, wy, wz) which defines the instantaneous axis of rotation and with the norm represents the velocity)
     pub fn get_current_velocity(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
@@ -278,11 +287,28 @@ impl Orbita3dController {
         let rot = self.kinematics.compute_forward_kinematics(thetas);
         Ok(conversion::rotation_matrix_to_quaternion(rot))
     }
+
+    /// Get the target orientation (as intrinsic rpy with multiturn)
+    pub fn get_target_rpy_orientation(&mut self) -> Result<[f64; 3]> {
+        let thetas = self.inner.get_target_position()?;
+        Ok(self
+            .kinematics
+            .compute_forward_kinematics_rpy_multiturn(thetas)?)
+    }
+
     /// Set the target orientation (as quaternion (qx, qy, qz, qw))
     pub fn set_target_orientation(&mut self, target: [f64; 4]) -> Result<()> {
         let rot =
             conversion::quaternion_to_rotation_matrix(target[0], target[1], target[2], target[3]);
         let thetas = self.kinematics.compute_inverse_kinematics(rot)?;
+        self.inner.set_target_position(thetas)
+    }
+
+    /// Set the target orientation fro the roll pitch yaw intrinsic angles (taking multi turn into account)
+    pub fn set_target_rpy_orientation(&mut self, target: [f64; 3]) -> Result<()> {
+        let thetas = self
+            .kinematics
+            .compute_inverse_kinematics_rpy_multiturn(target)?;
         self.inner.set_target_position(thetas)
     }
 
@@ -316,23 +342,38 @@ impl Orbita3dController {
         }
     }
 
+    /// Set the target orientation from roll pitch yaw (accepts yaw>180°) intrinsic angles with feedback => returns feedback rpy
+    pub fn set_target_rpy_orientation_fb(&mut self, target: [f64; 3]) -> Result<[f64; 3]> {
+        let thetas = self
+            .kinematics
+            .compute_inverse_kinematics_rpy_multiturn(target)?;
+        let fb: Result<[f64; 3]> = self.inner.set_target_position_fb(thetas);
+
+        match fb {
+            Ok(fb) => Ok(self
+                .kinematics
+                .compute_forward_kinematics_rpy_multiturn([fb[0], fb[1], fb[2]])?),
+            Err(e) => Err(e),
+        }
+    }
+
     /// Get the velocity limit of each raw motor (in rad/s)
-    /// caution: this is the raw value used by the motors used inside the actuator, not a limit orbita3d orientation!
+    /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn get_raw_motors_velocity_limit(&mut self) -> Result<[f64; 3]> {
         self.inner.get_velocity_limit()
     }
     /// Set the velocity limit of each raw motor (in rad/s)
-    /// caution: this is the raw value used by the motors used inside the actuator, not a limit orbita3d orientation!
+    /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn set_raw_motors_velocity_limit(&mut self, limit: [f64; 3]) -> Result<()> {
         self.inner.set_velocity_limit(limit)
     }
     /// Get the torque limit of each raw motor (in N.m)
-    /// caution: this is the raw value used by the motors used inside the actuator, not a limit orbita3d orientation!
+    /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn get_raw_motors_torque_limit(&mut self) -> Result<[f64; 3]> {
         self.inner.get_torque_limit()
     }
     /// Set the torque limit of each raw motor (in N.m)
-    /// caution: this is the raw value used by the motors used inside the actuator, not a limit orbita3d orientation!
+    /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn set_raw_motors_torque_limit(&mut self, limit: [f64; 3]) -> Result<()> {
         self.inner.set_torque_limit(limit)
     }

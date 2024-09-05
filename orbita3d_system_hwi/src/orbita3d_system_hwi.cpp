@@ -125,8 +125,9 @@ namespace orbita3d_system_hwi
       hw_states_d_gain_[i] = std::numeric_limits<double>::quiet_NaN();
     }
 
-    double q[4];
-    if (orbita3d_get_target_orientation(this->uid, &q) != 0)
+    double rpy[3];
+
+    if (orbita3d_get_target_rpy_orientation(this->uid, &rpy) != 0)
     {
       RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),
@@ -135,7 +136,11 @@ namespace orbita3d_system_hwi
     }
     else
     {
-      quaternion_to_intrinsic_roll_pitch_yaw(&q, &hw_states_position_);
+      // quaternion_to_intrinsic_roll_pitch_yaw(&q, &hw_states_position_);
+      hw_states_position_[0] = rpy[0];
+      hw_states_position_[1] = rpy[1];
+      hw_states_position_[2] = rpy[2];
+
     }
 
     rclcpp::sleep_for(std::chrono::milliseconds(10));
@@ -196,25 +201,6 @@ namespace orbita3d_system_hwi
       // ret= CallbackReturn::ERROR;
     }
 
-    // Torque limit
-    if (orbita3d_set_raw_motors_torque_limit(this->uid, &hw_states_torque_limit_) != 0)
-    {
-      RCLCPP_ERROR(
-          rclcpp::get_logger("Orbita3dSystem"),
-          "(%s) WRITE TORQUE LIMIT ERROR!", info_.name.c_str());
-      // ret= CallbackReturn::ERROR;
-    }
-    rclcpp::sleep_for(std::chrono::milliseconds(10));
-
-    // velocity limit
-    if (orbita3d_set_raw_motors_velocity_limit(this->uid, &hw_states_speed_limit_) != 0)
-    {
-      RCLCPP_ERROR(
-          rclcpp::get_logger("Orbita3dSystem"),
-          "(%s) WRITE SPEED LIMIT ERROR!", info_.name.c_str());
-      // ret= CallbackReturn::ERROR;
-    }
-    rclcpp::sleep_for(std::chrono::milliseconds(10));
 
     // PID gains
     double pids[3][3];
@@ -486,7 +472,7 @@ namespace orbita3d_system_hwi
 
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
 
-    /*
+
     // //Velocity
     if (orbita3d_get_current_velocity(this->uid, &hw_states_velocity_) != 0) {
 
@@ -509,13 +495,13 @@ namespace orbita3d_system_hwi
         "(%s) READ CURRENT TORQUE ERROR!", info_.name.c_str()
         );
     }
-    */
+
 
     // Torque limit
 
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
 
-    /*if (orbita3d_get_raw_motors_torque_limit(this->uid, &hw_states_torque_limit_) != 0) {
+    if (orbita3d_get_raw_motors_torque_limit(this->uid, &hw_states_torque_limit_) != 0) {
 
       // ret=hardware_interface::return_type::ERROR;
 
@@ -535,10 +521,10 @@ namespace orbita3d_system_hwi
         rclcpp::get_logger("Orbita3dSystem"),
         "(%s) READ SPEED LIMIT ERROR!", info_.name.c_str()
         );
-  }*/
+  }
 
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
-    /*
+
     //PID gains
     double pids[3][3];
     if (orbita3d_get_raw_motors_pid_gains(this->uid, &pids) != 0) {
@@ -557,7 +543,7 @@ namespace orbita3d_system_hwi
           hw_states_d_gain_[i] = pids[i][2];
       }
     }
-    */
+
     return ret;
   }
 
@@ -566,6 +552,8 @@ namespace orbita3d_system_hwi
   {
     auto ret = hardware_interface::return_type::OK;
 
+    //Quaternion mode
+    /*
     double q[4];
     intrinsic_roll_pitch_yaw_to_quaternion(&hw_commands_position_, &q);
 
@@ -611,6 +599,47 @@ namespace orbita3d_system_hwi
     // hw_states_effort_[0] = fb[7];
     // hw_states_effort_[1] = fb[8];
     // hw_states_effort_[2] = fb[9];
+
+    */
+    // RPY multiturn mode
+
+    double fb[3];
+    if (orbita3d_set_target_rpy_orientation_fb(this->uid, &hw_commands_position_, &fb) != 0)
+    {
+      // ret=hardware_interface::return_type::ERROR; //do not return error here, this will block the controller... cf: https://design.ros2.org/articles/node_lifecycle.html
+
+      RCLCPP_ERROR_THROTTLE(
+          rclcpp::get_logger("Orbita3dSystem"),
+          clock_,
+          LOG_THROTTLE_DURATION,
+          "(%s) WRITE TARGET ORIENTATION ERROR!", info_.name.c_str());
+
+
+      //Still try to read the position
+      double rpy[3];
+      if (orbita3d_get_current_rpy_orientation(this->uid, &rpy) != 0) {
+
+        // ret=hardware_interface::return_type::ERROR;
+
+        RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+        "(%s) READ ORIENTATION ERROR!", info_.name.c_str()
+          );
+      } else {
+        hw_states_position_[0] = rpy[0];
+        hw_states_position_[1] = rpy[1];
+        hw_states_position_[2] = rpy[2];
+
+      }
+
+    }
+    else{
+      hw_states_position_[0] = fb[0];
+      hw_states_position_[1] = fb[1];
+      hw_states_position_[2] = fb[2];
+
+    }
+
 
     // rclcpp::sleep_for(std::chrono::milliseconds(1)); // This one should not be necessary in cached mode but otherwise I have some error (drawback: it reduces the frequency)
     // We only change torque for all axes
@@ -718,7 +747,7 @@ namespace orbita3d_system_hwi
           rclcpp::get_logger("Orbita3dSystem"),
           "(%s) WRITE TORQUE LIMIT ERROR!", info_.name.c_str());
     }
-    /*
+
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
     // pid gains
     double pids[3][3];
@@ -736,7 +765,7 @@ namespace orbita3d_system_hwi
         "(%s) WRITE PID GAINS ERROR!", info_.name.c_str()
         );
     }
-    */
+
     return ret;
   }
 
