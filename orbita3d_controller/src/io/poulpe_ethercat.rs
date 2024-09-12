@@ -33,19 +33,24 @@ pub struct EthercatPoulpeController {
 impl EthercatPoulpeController {
     /// Creates a new EthercatPoulpeController
     pub fn new(url: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
-        let mut io = match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], Duration::from_secs_f32(0.002)){
+        let mut io = match PoulpeRemoteClient::connect(
+            url.parse()?,
+            vec![id as u16],
+            Duration::from_secs_f32(0.002),
+        ) {
             Ok(io) => io,
             Err(e) => {
-                error!("Error while connecting to EthercatPoulpeController: {:?}", e);
+                error!(
+                    "Error while connecting to EthercatPoulpeController: {:?}",
+                    e
+                );
                 return Err("Error while connecting to EthercatPoulpeController".into());
             }
         };
 
-
         // set the initial velocity and torque limit to 100%
         io.set_velocity_limit(id as u16, [1.0; 3].to_vec());
         io.set_torque_limit(id as u16, [1.0; 3].to_vec());
-
 
         let mut poulpe_controller = EthercatPoulpeController {
             io,
@@ -61,7 +66,7 @@ impl EthercatPoulpeController {
         );
 
         log::info!("Creacting controller");
-        
+
         match zero {
             ZeroType::ApproximateHardwareZero(zero) => {
                 log::info!("ApproximateHardwarezero");
@@ -103,7 +108,7 @@ impl EthercatPoulpeController {
             ZeroType::HallZero(zero) => {
                 log::error!("HallZero Not supported with Ethercat!");
             }
-        } 
+        }
 
         Ok(poulpe_controller)
     }
@@ -182,19 +187,13 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
     }
 
     fn set_target_position(&mut self, position: [f64; 3]) -> Result<()> {
-        let target_position = position
-            .iter()
-            .map(|&x| x as f32)
-            .collect::<Vec<f32>>();
+        let target_position = position.iter().map(|&x| x as f32).collect::<Vec<f32>>();
         self.io.set_target_position(self.id, target_position);
         Ok(())
     }
 
     fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 3]> {
-        let target_position = position
-            .iter()
-            .map(|&x| x as f32)
-            .collect::<Vec<f32>>();
+        let target_position = position.iter().map(|&x| x as f32).collect::<Vec<f32>>();
         self.io.set_target_position(self.id, target_position);
 
         match self.io.get_position_actual_value(self.id) {
@@ -202,7 +201,6 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
             Err(_) => Err("Error while getting position".into()),
         }
     }
-
 
     fn get_velocity_limit(&mut self) -> Result<[f64; 3]> {
         match self.io.get_velocity_limit(self.id) {
@@ -212,10 +210,7 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
     }
 
     fn set_velocity_limit(&mut self, velocity: [f64; 3]) -> Result<()> {
-        let velocity_limit = velocity
-            .iter()
-            .map(|&x| x as f32)
-            .collect::<Vec<f32>>();
+        let velocity_limit = velocity.iter().map(|&x| x as f32).collect::<Vec<f32>>();
         self.io.set_velocity_limit(self.id, velocity_limit);
         Ok(())
     }

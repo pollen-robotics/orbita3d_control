@@ -46,7 +46,9 @@ use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
 use std::{thread, time::Duration};
 
-use crate::io::{CachedDynamixelPoulpeController, DynamixelPoulpeController, EthercatPoulpeController};
+use crate::io::{
+    CachedDynamixelPoulpeController, DynamixelPoulpeController, EthercatPoulpeController,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 /// Orbita3d Config
@@ -126,7 +128,13 @@ impl Orbita3dController {
     pub fn with_config(configfile: &str) -> Result<Self> {
         log::info!("Loading config file: {}", configfile);
 
-        let f = std::fs::File::open(configfile)?;
+        let f = match std::fs::File::open(configfile) {
+            Ok(f) => f,
+            Err(e) => {
+                log::error!("Error opening config file: {}", e);
+                return Err(e.into());
+            }
+        };
         let config: Orbita3dConfig = serde_yaml::from_reader(f)?;
 
         let controller: Box<dyn MotorsController<3> + Send> = match config.io {
@@ -199,7 +207,7 @@ impl Orbita3dController {
                 log::info!("Using fake motors controller {:?}", controller);
 
                 Box::new(controller)
-            },
+            }
             Orbita3dIOConfig::PoulpeEthercat(ethercat_config) => {
                 let controller = EthercatPoulpeController::new(
                     &ethercat_config.url,
