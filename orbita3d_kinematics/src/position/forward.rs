@@ -192,7 +192,10 @@ impl Orbita3dKinematicsModel {
 
                 Ok(rpy)
             }
-            Err(e) => Err(e),
+            Err(e) => {
+                log::error!("IK error for rpy: {:?}", rpy);
+                return Err(e);
+            }
         }
     }
 

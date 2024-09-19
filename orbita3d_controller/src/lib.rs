@@ -46,7 +46,9 @@ use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
 use std::{thread, time::Duration};
 
-use crate::io::{CachedDynamixelPoulpeController, DynamixelPoulpeController, EthercatPoulpeController};
+use crate::io::{
+    CachedDynamixelPoulpeController, DynamixelPoulpeController, EthercatPoulpeController,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 /// Orbita3d Config
@@ -199,7 +201,7 @@ impl Orbita3dController {
                 log::info!("Using fake motors controller {:?}", controller);
 
                 Box::new(controller)
-            },
+            }
             Orbita3dIOConfig::PoulpeEthercat(ethercat_config) => {
                 let controller = EthercatPoulpeController::new(
                     &ethercat_config.url,
@@ -291,9 +293,10 @@ impl Orbita3dController {
     /// Get the target orientation (as intrinsic rpy with multiturn)
     pub fn get_target_rpy_orientation(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_target_position()?;
-        Ok(self
+        let rpy = self
             .kinematics
-            .compute_forward_kinematics_rpy_multiturn(thetas)?)
+            .compute_forward_kinematics_rpy_multiturn(thetas)?;
+        Ok(rpy)
     }
 
     /// Set the target orientation (as quaternion (qx, qy, qz, qw))
