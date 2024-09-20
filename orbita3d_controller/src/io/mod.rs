@@ -10,6 +10,8 @@ mod cached_poulpe;
 pub use cached_poulpe::CachedDynamixelPoulpeController;
 mod poulpe;
 pub use poulpe::DynamixelPoulpeController;
+mod poulpe_ethercat;
+pub use poulpe_ethercat::EthercatPoulpeController;
 
 #[derive(Debug, Deserialize, Serialize)]
 /// IOConfig
@@ -20,4 +22,6 @@ pub enum Orbita3dIOConfig {
     DynamixelPoulpe(poulpe::DynamixelPoulpeConfig),
     /// FakeMotors Config
     FakeMotors(fake::FakeConfig),
+    /// Ethercat DynamixelPoule Config
+    PoulpeEthercat(poulpe_ethercat::PoulpeEthercatConfig),
 }
