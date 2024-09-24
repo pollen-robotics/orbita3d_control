@@ -125,6 +125,15 @@ namespace orbita3d_system_hwi
       hw_states_d_gain_[i] = std::numeric_limits<double>::quiet_NaN();
     }
 
+
+
+    bool initOk=false;
+    int nb_tries=1;
+
+    while(!initOk && nb_tries<5)
+    {
+      initOk=true;
+
     double rpy[3];
 
     if (orbita3d_get_target_rpy_orientation(this->uid, &rpy) != 0)
@@ -133,6 +142,8 @@ namespace orbita3d_system_hwi
           rclcpp::get_logger("Orbita3dSystem"),
           "Error getting target orientation");
       // ret= CallbackReturn::ERROR;
+      initOk=false;
+
     }
     else
     {
@@ -152,6 +163,8 @@ namespace orbita3d_system_hwi
           rclcpp::get_logger("Orbita3dSystem"),
           "Error getting torque status");
       // ret= CallbackReturn::ERROR;
+      initOk=false;
+
     }
     hw_commands_torque_ = torque_on ? 1.0 : 0.0;
     hw_states_torque_ = torque_on ? 1.0 : 0.0;
@@ -167,6 +180,8 @@ namespace orbita3d_system_hwi
           rclcpp::get_logger("Orbita3dSystem"),
           "(%s) READ VELOCITY ERROR!", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
+            initOk=false;
+
     }
     rclcpp::sleep_for(std::chrono::milliseconds(10));
 
@@ -178,6 +193,8 @@ namespace orbita3d_system_hwi
           rclcpp::get_logger("Orbita3dSystem"),
           "(%s) READ CURRENT TORQUE ERROR!", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
+            initOk=false;
+
     }
 
     rclcpp::sleep_for(std::chrono::milliseconds(10));
@@ -189,6 +206,8 @@ namespace orbita3d_system_hwi
           rclcpp::get_logger("Orbita3dSystem"),
           "(%s) READ TORQUE LIMIT ERROR!", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
+            initOk=false;
+
     }
     rclcpp::sleep_for(std::chrono::milliseconds(10));
 
@@ -199,6 +218,8 @@ namespace orbita3d_system_hwi
           rclcpp::get_logger("Orbita3dSystem"),
           "(%s) READ SPEED LIMIT ERROR!", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
+            initOk=false;
+
     }
 
 
@@ -210,6 +231,8 @@ namespace orbita3d_system_hwi
           rclcpp::get_logger("Orbita3dSystem"),
           "(%s) READ PID GAINS ERROR!", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
+            initOk=false;
+
     }
     else
     {
@@ -243,8 +266,33 @@ namespace orbita3d_system_hwi
           rclcpp::get_logger("Orbita3dSystem"),
           "(%s) READ BOARD STATE ERROR!", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
+            initOk=false;
+
     }
     hw_states_error_ = errors;
+
+    //wait
+    rclcpp::sleep_for(std::chrono::milliseconds(10));
+    if(!initOk && nb_tries<5)
+      RCLCPP_INFO_THROTTLE(
+          rclcpp::get_logger("Orbita3dSystem"),
+          clock_,
+          LOG_THROTTLE_DURATION,
+          "(%s) INIT FAILED! RETRY (nb_tries: %d)", info_.name.c_str(),nb_tries);
+
+
+
+    if(nb_tries==5)
+    {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) INIT FAILED! ABANDON!", info_.name.c_str());
+      return CallbackReturn::ERROR;
+    }
+    nb_tries++;
+    }
+
+
 
     this->last_timestamp_ = clock_.now();
 
