@@ -51,6 +51,7 @@
       </xacro:inertial_cuboid>
     </link>
 
+
     <link name="${name}_ball_link">
       <!-- <visual> -->
       <!-- 	<origin xyz="0 0 0" rpy="0 0 0"/> -->
