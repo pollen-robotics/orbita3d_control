@@ -11,7 +11,7 @@ log = "0.4.20"
 env_logger = "0.8.4"
 motor_toolbox_rs = { git = "https://github.com/pollen-robotics/motor_toolbox_rs", branch = "support-poulpe" }
 orbita3d_kinematics = { version = "0.1.0", path = "../orbita3d_kinematics" }
-rustypot = { git = "https://github.com/pollen-robotics/rustypot", branch = "support-poulpe" }
+rustypot = { git = "https://github.com/pollen-robotics/rustypot" }
 serde = { version = "1.0.183", features = ["derive"] }
 serde_yaml = "0.9.25"
 serialport = "4.2.2"
