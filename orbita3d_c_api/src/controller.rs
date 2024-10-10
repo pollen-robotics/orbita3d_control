@@ -195,6 +195,22 @@ pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 
 }
 
 #[no_mangle]
+pub extern "C" fn orbita3d_set_target_rpy_orientation(uid: u32, rpy: &[f64; 3]) -> i32 {
+    // thread::sleep(Duration::from_millis(1));
+    match CONTROLLER
+        .get_mut(&uid)
+        .unwrap()
+        .set_target_rpy_orientation(*rpy)
+    {
+        Ok(_) => 0,
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn orbita3d_set_target_orientation_fb(
     uid: u32,
     orientation: &[f64; 4],
