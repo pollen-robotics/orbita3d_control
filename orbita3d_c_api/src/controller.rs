@@ -6,12 +6,13 @@ use orbita3d_controller::Orbita3dController;
 
 use crate::sync_map::SyncMap;
 use env_logger;
-
+use log::debug;
 static UID: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
 static CONTROLLER: Lazy<SyncMap<u32, Orbita3dController>> = Lazy::new(SyncMap::new);
 
 fn print_error(e: Box<dyn std::error::Error>) {
-    eprintln!("[ORBITA_3D] {:?}", e);
+    // eprintln!("[ORBITA_3D] {:?}", e);
+    log::debug!("[ORBITA_3D] Error: {:?}", e);
 }
 
 #[no_mangle]

@@ -176,7 +176,7 @@ impl Orbita3dKinematicsModel {
             thetas = validvec[0];
         } else {
             if validvec.is_empty() {
-                log::error!(
+                log::debug!(
                     "NO VALID SOLUTION! target: {:?}\n thetas: {:?}\nall_solutions: {:?}",
                     target_rpy,
                     thetas,

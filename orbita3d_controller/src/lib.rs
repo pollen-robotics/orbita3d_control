@@ -40,7 +40,7 @@
 
 pub mod io;
 use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOConfig};
-use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
+use motor_toolbox_rs::{FakeMotorsController, Limit, MotorsController, Result, PID};
 
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
