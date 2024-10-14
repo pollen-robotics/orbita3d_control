@@ -138,6 +138,63 @@ mod tests {
     }
 
     #[test]
+    fn test_inverse_forward_multiturn_zero() {
+        let orb = Orbita3dKinematicsModel {
+            offset: 0.0_f64.to_radians(),
+            ..Default::default()
+        };
+
+        let rpy = [0.0, 0.0, 0.0];
+        let disks = orb.compute_inverse_kinematics_rpy_multiturn(rpy).unwrap();
+        let reconstructed = orb.compute_forward_kinematics_rpy_multiturn(disks).unwrap();
+
+        assert!(disks[0] < 1e-6, "Fail for {:?} (disks {:?})", rpy, disks);
+        assert!(disks[1] < 1e-6, "Fail for {:?} (disks {:?})", rpy, disks);
+        assert!(disks[2] < 1e-6, "Fail for {:?} (disks {:?})", rpy, disks);
+
+        assert!(
+            reconstructed[0] < 1e-6,
+            "Fail for {:?} (reconstructed {:?})",
+            rpy,
+            reconstructed
+        );
+
+        assert!(
+            reconstructed[1] < 1e-6,
+            "Fail for {:?} (reconstructed {:?})",
+            rpy,
+            reconstructed
+        );
+
+        assert!(
+            reconstructed[1] < 1e-6,
+            "Fail for {:?} (reconstructed {:?})",
+            rpy,
+            reconstructed
+        );
+
+        assert!(
+            (rpy[0] - reconstructed[0]).abs() < 1e-2,
+            "Fail for {:?} (out {:?})",
+            rpy,
+            reconstructed
+        );
+        assert!(
+            (rpy[1] - reconstructed[1]).abs() < 1e-2,
+            "Fail for {:?} (out {:?})",
+            rpy,
+            reconstructed
+        );
+        assert!(
+            (rpy[2] - reconstructed[2]).abs() < 1e-2,
+            "Fail for {:?} (out {:?}) disks: {:?}",
+            rpy,
+            reconstructed,
+            disks
+        );
+    }
+
+    #[test]
     fn test_inverse_forward_multiturn() {
         let orb = Orbita3dKinematicsModel {
             offset: 60.0_f64.to_radians(),
