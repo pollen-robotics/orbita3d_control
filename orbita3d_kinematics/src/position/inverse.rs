@@ -196,7 +196,7 @@ impl Orbita3dKinematicsModel {
                     compute_gammas(thetas.into()),
                 ));
             }
-
+            
             // here we have the 2 solutions (both 2pi complement), we chose the one with the same yaw sign
             let mut yaw_sign = (target_rpy[2] + self.offset).signum();
             let mut theta_sign = validvec[0][0].signum();
@@ -367,5 +367,20 @@ mod tests {
             Ok(()) => assert!(false),
             Err(_) => assert!(true),
         }
+    }
+
+    #[test]
+    fn valid_close_to_zero() {
+        let orb = Orbita3dKinematicsModel::default();
+
+        let rpy = [-1.6380393168279918e-08, -6.7411586505787807e-09, -1.2207476544837933e-09];
+        let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
+        let thetas = orb.compute_inverse_kinematics(rot).unwrap();
+
+        let valid_thetas = orb.compute_valid_solution(rpy, thetas).unwrap();
+
+        assert!(valid_thetas[0].abs() < 1e-4);
+        assert!(valid_thetas[1].abs() < 1e-4);
+        assert!(valid_thetas[2].abs() < 1e-4);
     }
 }
