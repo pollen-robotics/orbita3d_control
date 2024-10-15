@@ -1,9 +1,7 @@
 use nalgebra::{Matrix2, Matrix3, Rotation3, Vector2, Vector3};
 use std::f64::consts::PI;
 
-
 const TOLERANCE_ZERO_YAW: f64 = 1e-6; // Define a small tolerance for near-zero values
-
 
 use crate::{conversion, Orbita3dKinematicsModel};
 
@@ -196,7 +194,7 @@ impl Orbita3dKinematicsModel {
                     compute_gammas(thetas.into()),
                 ));
             }
-            
+
             // here we have the 2 solutions (both 2pi complement), we chose the one with the same yaw sign
             let mut yaw_sign = (target_rpy[2] + self.offset).signum();
             let mut theta_sign = validvec[0][0].signum();
@@ -373,7 +371,11 @@ mod tests {
     fn valid_close_to_zero() {
         let orb = Orbita3dKinematicsModel::default();
 
-        let rpy = [-1.6380393168279918e-08, -6.7411586505787807e-09, -1.2207476544837933e-09];
+        let rpy = [
+            -1.6380393168279918e-08,
+            -6.7411586505787807e-09,
+            -1.2207476544837933e-09,
+        ];
         let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
         let thetas = orb.compute_inverse_kinematics(rot).unwrap();
 
