@@ -649,6 +649,17 @@ namespace orbita3d_system_hwi
     // hw_states_effort_[2] = fb[9];
 
     */
+
+
+      // check if turn on and if yes make sure to reset the target to the current position
+      if ( (hw_commands_torque_ != 0)  && (hw_commands_torque_ != hw_states_torque_))
+      {
+        hw_commands_position_[0] = hw_states_position_[0];
+        hw_commands_position_[1] = hw_states_position_[1];
+        hw_commands_position_[2] = hw_states_position_[2];
+      }
+
+
     // RPY multiturn mode
 
     double fb[3];
