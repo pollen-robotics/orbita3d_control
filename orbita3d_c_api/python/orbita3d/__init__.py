@@ -1,7 +1,6 @@
 from typing import Tuple
 
-from ._orbita3d import ffi
-from ._orbita3d import lib
+from ._orbita3d import ffi, lib
 
 
 class KinematicsModel:
@@ -258,16 +257,55 @@ class Orbita3dController:
         q = ffi.new("double(*)[4]", tuple(q))
         check(lib.orbita3d_set_target_orientation(self.uid, q))
 
+
+    def get_target_rpy_orientation(self) -> Tuple[float, float, float]:
+        """Get the target orientation of the end-effector.
+
+        Returns:
+            The intrinsic Euler representing the end-effector orientation (roll, pitch, yaw).
+        """
+        rpy = ffi.new("double(*)[3]")
+        check(lib.orbita3d_get_target_rpy_orientation(self.uid, rpy))
+        return tuple(rpy[0])
+
+    def set_target_rpy_orientation(self, rpy: Tuple[float, float, float]) -> None:
+        """Set the target orientation of the end-effector. Yaw can be multi-turn.
+
+        Args:
+            rpy: The intrinsic Euler representing the end-effector orientation (roll, pitch, yaw).
+        """
+        rpy = ffi.new("double(*)[3]", tuple(rpy))
+        check(lib.orbita3d_set_target_rpy_orientation(self.uid, rpy))
+
+    def set_target_rpy_orientation_fb(
+        self, rpy: Tuple[float, float, float]
+    ) -> Tuple[float, float, float]:
+        """Set the target orientation of the end-effector. Yaw can be multiturn.
+
+        Args:
+            rpy: The intrinsic Euler representing the end-effector orientation (roll, pitch, yaw).
+        Returns:
+            The current intrinsic Euler orientation  (roll, pitch, yaw)
+        """
+        rpy = ffi.new("double(*)[3]", tuple(rpy))
+        fb = ffi.new("double(*)[3]")
+        check(lib.orbita3d_set_target_rpy_orientation_fb(self.uid, rpy, fb))
+        return tuple(fb[0])
+
+
+
     def set_target_orientation_fb(
         self, q: Tuple[float, float, float, float]
-    ) -> Tuple[float, float, float, float, float, float, float, float, float, float]:
+    ) -> Tuple[float, float, float, float]:
         """Set the target orientation of the end-effector.
 
         Args:
             q: The quaternion representing the end-effector orientation (qx, qy, qz, qw).
+        Returns:
+            The current orientation quaternion (qx, qy, qz, qw)
         """
         q = ffi.new("double(*)[4]", tuple(q))
-        fb = ffi.new("double(*)[10]")
+        fb = ffi.new("double(*)[4]")
         check(lib.orbita3d_set_target_orientation_fb(self.uid, q, fb))
         return tuple(fb[0])
 
