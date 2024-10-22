@@ -1,29 +1,21 @@
-from launch import LaunchDescription, LaunchContext
-from launch.actions import (
-    DeclareLaunchArgument,
-    RegisterEventHandler,
-    IncludeLaunchDescription,
-    TimerAction,
-    OpaqueFunction,
-    LogInfo,
-    SetEnvironmentVariable,
-)
-from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessExit, OnProcessStart, OnExecutionComplete
-from launch.substitutions import (
-    Command,
-    FindExecutable,
-    LaunchConfiguration,
-    PathJoinSubstitution,
-    PythonExpression,
-)
+import os
+
+import yaml
+from launch_ros.actions import LifecycleNode, Node, SetUseSimTime
 from launch_ros.descriptions import ParameterValue
-from launch_ros.actions import Node, SetUseSimTime, LifecycleNode
 from launch_ros.event_handlers import OnStateTransition
 from launch_ros.substitutions import FindPackageShare
+
+from launch import LaunchContext, LaunchDescription
+from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
+                            LogInfo, OpaqueFunction, RegisterEventHandler,
+                            SetEnvironmentVariable, TimerAction)
+from launch.conditions import IfCondition
+from launch.event_handlers import (OnExecutionComplete, OnProcessExit,
+                                   OnProcessStart)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-import yaml
-import os
+from launch.substitutions import (Command, FindExecutable, LaunchConfiguration,
+                                  PathJoinSubstitution, PythonExpression)
 
 
 def launch_setup(context, *args, **kwargs):
@@ -40,6 +32,7 @@ def launch_setup(context, *args, **kwargs):
     # config
     config_file_rl = LaunchConfiguration("config_file")
     config_file_py = config_file_rl.perform(context)
+    has_config=config_file_py != ""
 
     robot_description_content = Command(
         [
@@ -59,9 +52,12 @@ def launch_setup(context, *args, **kwargs):
                 if gazebo_py
                 else (" ",)
             ),
-            " ",
-            'config_file:="{}"'.format(config_file_py),
-            " ",
+            *(
+                (" ", 'config_file:="{}"'.format(config_file_py)," ")
+                if has_config
+                else (" ",)
+            ),
+
         ]
     )  # To be cleaned on issue #92
     # print(robot_description_content.perform(context=context))
@@ -201,7 +197,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "config_file",
-                default_value="fake.yaml",
+                default_value="",
                 description="Orbita3d yaml config file",
             ),
             OpaqueFunction(function=launch_setup),

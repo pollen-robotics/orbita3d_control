@@ -1,6 +1,8 @@
 use nalgebra::{Matrix2, Matrix3, Rotation3, Vector2, Vector3};
 use std::f64::consts::PI;
 
+const TOLERANCE_ZERO_YAW: f64 = 1e-6; // Define a small tolerance for near-zero values
+
 use crate::{conversion, Orbita3dKinematicsModel};
 
 #[derive(Debug)]
@@ -176,7 +178,7 @@ impl Orbita3dKinematicsModel {
             thetas = validvec[0];
         } else {
             if validvec.is_empty() {
-                log::error!(
+                log::debug!(
                     "NO VALID SOLUTION! target: {:?}\n thetas: {:?}\nall_solutions: {:?}",
                     target_rpy,
                     thetas,
@@ -192,8 +194,21 @@ impl Orbita3dKinematicsModel {
                     compute_gammas(thetas.into()),
                 ));
             }
-            //here we have the 2 solutions (both 2pi complement) we chose the one with the same yaw sign
-            if validvec[0][0].signum() == (target_rpy[2] + self.offset).signum() {
+
+            // here we have the 2 solutions (both 2pi complement), we chose the one with the same yaw sign
+            let mut yaw_sign = (target_rpy[2] + self.offset).signum();
+            let mut theta_sign = validvec[0][0].signum();
+
+            // If the yaw or thetas are very close to zero, treat them as effectively zero
+            if (target_rpy[2] + self.offset).abs() < TOLERANCE_ZERO_YAW {
+                yaw_sign = 0.0;
+            }
+            if validvec[0][0].abs() < TOLERANCE_ZERO_YAW {
+                theta_sign = 0.0;
+            }
+            // Compare the yaw sign and theta sign
+            // but now accounting for near-zero values
+            if theta_sign == yaw_sign {
                 thetas = validvec[0];
             } else {
                 thetas = validvec[1];
@@ -350,5 +365,24 @@ mod tests {
             Ok(()) => assert!(false),
             Err(_) => assert!(true),
         }
+    }
+
+    #[test]
+    fn valid_close_to_zero() {
+        let orb = Orbita3dKinematicsModel::default();
+
+        let rpy = [
+            -1.6380393168279918e-08,
+            -6.7411586505787807e-09,
+            -1.2207476544837933e-09,
+        ];
+        let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
+        let thetas = orb.compute_inverse_kinematics(rot).unwrap();
+
+        let valid_thetas = orb.compute_valid_solution(rpy, thetas).unwrap();
+
+        assert!(valid_thetas[0].abs() < 1e-4);
+        assert!(valid_thetas[1].abs() < 1e-4);
+        assert!(valid_thetas[2].abs() < 1e-4);
     }
 }

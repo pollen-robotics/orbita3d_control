@@ -36,27 +36,25 @@ forward_position_controller:
 forward_torque_controller:
   ros__parameters:
     joints:
-      - neck_roll
-      - neck_pitch
-      - neck_yaw
+      - neck
     interface_name: torque
     use_sim_time: false
 
 forward_torque_limit_controller:
   ros__parameters:
     joints:
-      - neck_roll
-      - neck_pitch
-      - neck_yaw
+      - neck_raw_motor_1
+      - neck_raw_motor_2
+      - neck_raw_motor_3
     interface_name: torque_limit
     use_sim_time: false
 
 forward_speed_limit_controller:
   ros__parameters:
     joints:
-      - neck_roll
-      - neck_pitch
-      - neck_yaw
+      - neck_raw_motor_1
+      - neck_raw_motor_2
+      - neck_raw_motor_3
     interface_name: speed_limit
     use_sim_time: false
 
@@ -64,7 +62,7 @@ forward_speed_limit_controller:
 forward_pid_controller:
   ros__parameters:
     joints:
-      - neck_roll
-      - neck_pitch
-      - neck_yaw
+      - neck_raw_motor_1
+      - neck_raw_motor_2
+      - neck_raw_motor_3
     use_sim_time: false

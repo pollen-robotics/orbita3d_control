@@ -649,6 +649,17 @@ namespace orbita3d_system_hwi
     // hw_states_effort_[2] = fb[9];
 
     */
+
+
+      // check if turn on and if yes make sure to reset the target to the current position
+      if ( (hw_commands_torque_ != 0)  && (hw_commands_torque_ != hw_states_torque_))
+      {
+        hw_commands_position_[0] = hw_states_position_[0];
+        hw_commands_position_[1] = hw_states_position_[1];
+        hw_commands_position_[2] = hw_states_position_[2];
+      }
+
+
     // RPY multiturn mode
 
     double fb[3];
@@ -669,8 +680,10 @@ namespace orbita3d_system_hwi
 
         // ret=hardware_interface::return_type::ERROR;
 
-        RCLCPP_ERROR(
+        RCLCPP_ERROR_THROTTLE(
           rclcpp::get_logger("Orbita3dSystem"),
+          clock_,
+          LOG_THROTTLE_DURATION,
         "(%s) READ ORIENTATION ERROR!", info_.name.c_str()
           );
       } else {
@@ -734,8 +747,10 @@ namespace orbita3d_system_hwi
     {
       if (orbita3d_set_board_state(this->uid, &errors) != 0)
       {
-        RCLCPP_ERROR(
+        RCLCPP_ERROR_THROTTLE(
             rclcpp::get_logger("Orbita3dSystem"),
+            clock_,
+            LOG_THROTTLE_DURATION,
             "(%s) WRITE BOARD STATE ERROR!", info_.name.c_str());
         // ret= CallbackReturn::ERROR;
       }
@@ -780,8 +795,10 @@ namespace orbita3d_system_hwi
     {
       // ret=hardware_interface::return_type::ERROR;
 
-      RCLCPP_ERROR(
+      RCLCPP_ERROR_THROTTLE(
           rclcpp::get_logger("Orbita3dSystem"),
+          clock_,
+          LOG_THROTTLE_DURATION,
           "(%s) WRITE SPEED LIMIT ERROR!", info_.name.c_str());
     }
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
@@ -791,8 +808,10 @@ namespace orbita3d_system_hwi
     {
       // ret=hardware_interface::return_type::ERROR;
 
-      RCLCPP_ERROR(
+      RCLCPP_ERROR_THROTTLE(
           rclcpp::get_logger("Orbita3dSystem"),
+          clock_,
+          LOG_THROTTLE_DURATION,
           "(%s) WRITE TORQUE LIMIT ERROR!", info_.name.c_str());
     }
 
@@ -808,8 +827,10 @@ namespace orbita3d_system_hwi
     {
       // ret=hardware_interface::return_type::ERROR;
 
-      RCLCPP_ERROR(
+      RCLCPP_ERROR_THROTTLE(
         rclcpp::get_logger("Orbita3dSystem"),
+        clock_,
+        LOG_THROTTLE_DURATION,
         "(%s) WRITE PID GAINS ERROR!", info_.name.c_str()
         );
     }
