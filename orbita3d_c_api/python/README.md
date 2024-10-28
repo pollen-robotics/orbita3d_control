@@ -4,13 +4,10 @@ This folder contains the Python bindings generated using the [orbita3d C-API lib
 
 ## Installation
 
-* Install maturin in your Python virtual environment. For example, using pip: `pip install maturin`
+- From the `orbita3d_c_api` directory, build the C-API library by running `cargo build --release`
 - Create a virtual environment and activate it `python -m venv venv && source venv/bin/activate`
-
-From the orbita3d_c_api folder, run:
-
-```maturin develop```
-
+- Install maturin in your Python virtual environment. For example, using pip: `pip install maturin`
+- then `maturin develop` to build and install the Python bindings in the virtual environment.
 
 Then you should be able to directly import the orbita3d module in your Python code:
 

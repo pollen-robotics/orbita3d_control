@@ -20,6 +20,7 @@ clap = { version = "4.0.32", features = ["derive"] }
 #poulpe_ethercat_grpc = { path = "../../poulpe_ethercat_controller/poulpe_ethercat_grpc" }
 poulpe_ethercat_grpc = { path = "../../../../dev/poulpe_ethercat_controller/poulpe_ethercat_grpc" }
 
+
 [dev-dependencies]
 rand = "0.8.5"
 lerp = "0.5.0"
