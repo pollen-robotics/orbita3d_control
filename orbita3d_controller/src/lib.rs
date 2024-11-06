@@ -277,10 +277,11 @@ impl Orbita3dController {
         let thetas = self.inner.get_current_position()?;
         let input_torque = self.inner.get_current_torque()?;
 
-        Ok(self
-            .kinematics
-            .compute_output_torque(thetas, input_torque)
-            .into())
+        // Ok(self
+        //     .kinematics
+        //     .compute_output_torque(thetas, input_torque)
+        //     .into())
+        Ok(input_torque)
     }
 
     /// Get the target orientation (as quaternion (qx, qy, qz, qw))
