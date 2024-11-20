@@ -1,0 +1,8 @@
+Timestamp,TorqueOn,TargetRoll,TargetPitch,TargetYaw,VelocityLimitTop,VelocityLimitMiddle,VelocityLimitBottom,TorqueLimitTop,TorqueLimitMiddle,TorqueLimitBottom
+0.0,true,0.0,0.0,0.0,1.0,1.0,1.0,0.5,0.5,0.5
+0.5,true,0.1,0.0,0.0,1.0,1.0,1.0,0.5,0.5,0.5
+1.0,true,0.0,0.1,0.0,1.0,1.0,1.0,0.5,0.5,0.5
+1.5,true,0.0,0.0,0.1,1.0,1.0,1.0,0.5,0.5,0.
+2.0,true,0.0,0.0,0.1,1.0,1.0,1.0,0.5,0.5,0.5
+2.5,true,0.0,0.0,0.1,1.0,1.0,1.0,0.5,0.5,0.5
+3.0,true,0.0,0.0,0.1,1.0,1.0,1.0,0.5,0.5,0.5
