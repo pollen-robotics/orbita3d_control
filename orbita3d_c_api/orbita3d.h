@@ -38,6 +38,8 @@ int32_t orbita3d_get_target_rpy_orientation(uint32_t uid, double (*rpy)[3]);
 
 int32_t orbita3d_set_target_orientation(uint32_t uid, const double (*orientation)[4]);
 
+int32_t orbita3d_set_target_rpy_orientation(uint32_t uid, const double (*rpy)[3]);
+
 int32_t orbita3d_set_target_orientation_fb(uint32_t uid,
                                            const double (*orientation)[4],
                                            double (*feedback)[4]);

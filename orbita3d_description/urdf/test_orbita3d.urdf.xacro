@@ -10,7 +10,7 @@
 
 
   <!-- Orbita3d config -->
-  <xacro:arg name="config_file" default="$(find orbita3d_controller)/config/fake.yaml"/>
+  <xacro:arg name="config_file" default="$(find orbita3d_description)/config/fake_neck.yaml"/>
 
 
   <!-- MODEL PARAMETERS -->

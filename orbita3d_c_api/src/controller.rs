@@ -6,12 +6,13 @@ use orbita3d_controller::Orbita3dController;
 
 use crate::sync_map::SyncMap;
 use env_logger;
-
+use log::debug;
 static UID: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
 static CONTROLLER: Lazy<SyncMap<u32, Orbita3dController>> = Lazy::new(SyncMap::new);
 
 fn print_error(e: Box<dyn std::error::Error>) {
-    eprintln!("[ORBITA_3D] {:?}", e);
+    // eprintln!("[ORBITA_3D] {:?}", e);
+    log::debug!("[ORBITA_3D] Error: {:?}", e);
 }
 
 #[no_mangle]
@@ -185,6 +186,22 @@ pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 
         .get_mut(&uid)
         .unwrap()
         .set_target_orientation(*orientation)
+    {
+        Ok(_) => 0,
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_set_target_rpy_orientation(uid: u32, rpy: &[f64; 3]) -> i32 {
+    // thread::sleep(Duration::from_millis(1));
+    match CONTROLLER
+        .get_mut(&uid)
+        .unwrap()
+        .set_target_rpy_orientation(*rpy)
     {
         Ok(_) => 0,
         Err(e) => {

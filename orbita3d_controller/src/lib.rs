@@ -40,7 +40,7 @@
 
 pub mod io;
 use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOConfig};
-use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
+use motor_toolbox_rs::{FakeMotorsController, Limit, MotorsController, Result, PID};
 
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
@@ -299,9 +299,10 @@ impl Orbita3dController {
     /// Get the target orientation (as intrinsic rpy with multiturn)
     pub fn get_target_rpy_orientation(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_target_position()?;
-        Ok(self
+        let rpy = self
             .kinematics
-            .compute_forward_kinematics_rpy_multiturn(thetas)?)
+            .compute_forward_kinematics_rpy_multiturn(thetas)?;
+        Ok(rpy)
     }
 
     /// Set the target orientation (as quaternion (qx, qy, qz, qw))
