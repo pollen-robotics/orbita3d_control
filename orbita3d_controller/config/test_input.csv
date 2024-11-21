@@ -1,4 +1,4 @@
-Timestamp,TorqueOn,TargetRoll,TargetPitch,TargetYaw,VelocityLimitTop,VelocityLimitMiddle,VelocityLimitBottom,TorqueLimitTop,TorqueLimitMiddle,TorqueLimitBottom
+timestamp,torque_on,target_roll,target_pitch,target_yaw,velocity_limit_top,velocity_limit_middle,velocity_limit_bottom,torque_limit_top,torque_limit_middle,torque_limit_bottom
 0.0,true,0.0,0.0,0.0,1.0,1.0,1.0,0.5,0.5,0.5
 0.5,true,0.1,0.0,0.0,1.0,1.0,1.0,0.5,0.5,0.5
 1.0,true,0.0,0.1,0.0,1.0,1.0,1.0,0.5,0.5,0.5

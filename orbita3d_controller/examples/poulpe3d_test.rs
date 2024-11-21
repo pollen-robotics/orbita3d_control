@@ -30,7 +30,7 @@ struct Args {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
+// #[serde(rename_all = "PascalCase")]
 struct Input {
     timestamp: f64,
     torque_on: bool,
