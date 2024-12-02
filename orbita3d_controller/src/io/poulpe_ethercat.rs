@@ -1,11 +1,9 @@
-use motor_toolbox_rs::{Limit, MissingResisterErrror, MotorsController, RawMotorsIO, Result, PID};
+use motor_toolbox_rs::{Limit, MotorsController, RawMotorsIO, Result, PID};
 use poulpe_ethercat_grpc::client::PoulpeRemoteClient;
 use serde::{Deserialize, Serialize};
-use serialport::TTYPort;
-use std::thread;
 use std::{f64::consts::PI, f64::consts::TAU, time::Duration};
 
-use log::{debug, error, info, warn};
+use log::{error, info};
 
 use crate::ZeroType;
 
@@ -105,7 +103,7 @@ impl EthercatPoulpeController {
                         poulpe_controller.offsets[i] = Some(current_pos);
                     });
             }
-            ZeroType::HallZero(zero) => {
+            ZeroType::HallZero(_zero) => {
                 log::error!("HallZero Not supported with Ethercat!");
             }
         }
@@ -141,6 +139,10 @@ impl MotorsController<3> for EthercatPoulpeController {
 }
 
 impl RawMotorsIO<3> for EthercatPoulpeController {
+    fn name(&self) -> String {
+        "EthercatPoulpeController".to_string()
+    }
+
     fn is_torque_on(&mut self) -> Result<[bool; 3]> {
         match self.io.get_torque_state(self.id) {
             Ok(state) => Ok([state, state, state]),
@@ -253,7 +255,7 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         }
     }
 
-    fn set_board_state(&mut self, state: u8) -> Result<()> {
+    fn set_board_state(&mut self, _state: u8) -> Result<()> {
         Ok(())
     }
 }
@@ -294,6 +296,7 @@ fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduct
     best
 }
 
+#[allow(dead_code)]
 fn find_position_with_hall(
     current_position: f64,
     hardware_zero: f64,
@@ -398,6 +401,7 @@ fn find_position_with_hall(
     (best, best_idx as i16 - (offset.len() / 2) as i16)
 }
 
+#[allow(dead_code)]
 pub fn angle_diff(angle_a: f64, angle_b: f64) -> f64 {
     let mut angle = angle_a - angle_b;
     angle = (angle + PI) % TAU - PI;
@@ -408,6 +412,7 @@ pub fn angle_diff(angle_a: f64, angle_b: f64) -> f64 {
     }
 }
 
+#[allow(dead_code)]
 pub fn hall_diff(hall_a: u8, hall_b: u8) -> f64 {
     // shortest hall difference (16 discrete Hall)
     let d: f64 = hall_a as f64 - hall_b as f64;

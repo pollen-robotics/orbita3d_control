@@ -62,6 +62,10 @@ impl MotorsController<3> for CachedDynamixelPoulpeController {
 }
 
 impl RawMotorsIO<3> for CachedDynamixelPoulpeController {
+    fn name(&self) -> String {
+        "CachedDynamixelPoulpeController".to_string()
+    }
+
     fn is_torque_on(&mut self) -> Result<[bool; 3]> {
         self.torque_on
             .entry(self.inner.id())

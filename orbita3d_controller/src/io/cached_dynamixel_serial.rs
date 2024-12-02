@@ -50,6 +50,10 @@ impl MotorsController<3> for CachedDynamixelSerialController {
 }
 
 impl RawMotorsIO<3> for CachedDynamixelSerialController {
+    fn name(&self) -> String {
+        "CachedDynamixelSerialController".to_string()
+    }
+
     fn is_torque_on(&mut self) -> Result<[bool; 3]> {
         self.torque_on
             .entry(self.inner.id())
