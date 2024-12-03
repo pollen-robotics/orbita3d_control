@@ -26,11 +26,18 @@ pub struct EthercatPoulpeController {
     reduction: [Option<f64>; 3],
     // motor_reduction: [Option<f64>; 3],
     limits: [Option<Limit>; 3],
+    inverted_axes: [Option<bool>; 3],
 }
 
 impl EthercatPoulpeController {
     /// Creates a new EthercatPoulpeController
-    pub fn new(url: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
+    pub fn new(
+        url: &str,
+        id: u8,
+        zero: ZeroType,
+        reductions: f64,
+        inverted_axes: [Option<bool>; 3],
+    ) -> Result<Self> {
         let mut io = match PoulpeRemoteClient::connect(
             url.parse()?,
             vec![id as u16],
@@ -56,6 +63,7 @@ impl EthercatPoulpeController {
             offsets: [None; 3],
             reduction: [Some(reductions); 3],
             limits: [None; 3],
+            inverted_axes,
         };
 
         info!(
@@ -135,6 +143,10 @@ impl MotorsController<3> for EthercatPoulpeController {
 
     fn limits(&self) -> [Option<motor_toolbox_rs::Limit>; 3] {
         self.limits
+    }
+
+    fn inverted_axes(&self) -> [Option<bool>; 3] {
+        self.inverted_axes
     }
 }
 
@@ -230,6 +242,7 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         Ok(())
     }
 
+    //TODO
     fn get_pid_gains(&mut self) -> Result<[PID; 3]> {
         Ok([PID {
             p: 0.0,
@@ -248,6 +261,13 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         }
     }
 
+    fn get_axis_sensor_zeros(&mut self) -> Result<[f64; 3]> {
+        match self.io.get_axis_sensor_zeros(self.id) {
+            Ok(sensor) => Ok([sensor[0] as f64, sensor[1] as f64, sensor[2] as f64]),
+            Err(_) => Err("Error while getting axis sensor zeros".into()),
+        }
+    }
+
     fn get_board_state(&mut self) -> Result<u8> {
         match self.io.get_state(self.id) {
             Ok(state) => Ok(state as u8),
@@ -255,8 +275,49 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         }
     }
 
+    fn get_error_codes(&mut self) -> Result<[i32; 3]> {
+        match self.io.get_error_codes(self.id) {
+            Ok(codes) => Ok([codes[0], codes[1], codes[2]]),
+            Err(_) => Err("Error while getting error codes".into()),
+        }
+    }
+
+    fn get_motor_temperatures(&mut self) -> Result<[f64; 3]> {
+        match self.io.get_motor_temperatures(self.id) {
+            Ok(temp) => Ok([temp[0] as f64, temp[1] as f64, temp[2] as f64]),
+            Err(_) => Err("Error while getting motor temperatures".into()),
+        }
+    }
+
+    fn get_board_temperatures(&mut self) -> Result<[f64; 3]> {
+        match self.io.get_board_temperatures(self.id) {
+            Ok(temp) => Ok([temp[0] as f64, temp[1] as f64, temp[2] as f64]),
+            Err(_) => Err("Error while getting board temperatures".into()),
+        }
+    }
+
     fn set_board_state(&mut self, _state: u8) -> Result<()> {
         Ok(())
+    }
+
+    fn get_control_mode(&mut self) -> Result<[u8; 3]> {
+        match self.io.get_mode_of_operation(self.id) {
+            Ok(mode) => Ok([mode as u8, mode as u8, mode as u8]), //It is in fact the same for each axis (TODO make it board level?)
+            Err(_) => Err("Error while getting mode of operation".into()),
+        }
+    }
+
+    fn set_control_mode(&mut self, _mode: [u8; 3]) -> Result<()> {
+        if !(_mode[0] == _mode[1] && _mode[1] == _mode[2]) {
+            return Err("Error, invalid control mode".into());
+        }
+        self.io.set_mode_of_operation(self.id, _mode[0] as u32);
+        Ok(())
+    }
+
+    fn emergency_stop(&mut self) {
+        self.io.emergency_stop(self.id);
+        error!("EMERCENCY STOP!");
     }
 }
 
