@@ -206,6 +206,32 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         Ok(())
     }
 
+    // fn get_target_velocity(&mut self) -> Result<[f64; 3]> {
+    //     match self.io.get_target_velocity(self.id) {
+    //         Ok(vel) => Ok([vel[0] as f64, vel[1] as f64, vel[2] as f64]),
+    //         Err(_) => Err("Error while getting target velocity".into()),
+    //     }
+    // }
+
+    fn set_target_velocity(&mut self, vel: [f64; 3]) -> Result<()> {
+        let target_velocity = vel.iter().map(|&x| x as f32).collect::<Vec<f32>>();
+        self.io.set_target_velocity(self.id, target_velocity);
+        Ok(())
+    }
+
+    // fn get_target_torque(&mut self) -> Result<[f64; 3]> {
+    //     match self.io.get_target_torque(self.id) {
+    //         Ok(vel) => Ok([vel[0] as f64, vel[1] as f64, vel[2] as f64]),
+    //         Err(_) => Err("Error while getting target torque".into()),
+    //     }
+    // }
+
+    fn set_target_torque(&mut self, vel: [f64; 3]) -> Result<()> {
+        let target_torque = vel.iter().map(|&x| x as f32).collect::<Vec<f32>>();
+        self.io.set_target_torque(self.id, target_torque);
+        Ok(())
+    }
+
     fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 3]> {
         let target_position = position.iter().map(|&x| x as f32).collect::<Vec<f32>>();
         self.io.set_target_position(self.id, target_position);
