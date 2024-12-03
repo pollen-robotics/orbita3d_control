@@ -117,12 +117,18 @@ namespace orbita3d_system_hwi
       hw_states_position_[i] = std::numeric_limits<double>::quiet_NaN();
       hw_states_velocity_[i] = std::numeric_limits<double>::quiet_NaN();
       hw_states_effort_[i] = std::numeric_limits<double>::quiet_NaN();
-      hw_states_temperature_[i] = std::numeric_limits<double>::quiet_NaN();
+
       hw_states_torque_limit_[i] = std::numeric_limits<double>::quiet_NaN();
       hw_states_speed_limit_[i] = std::numeric_limits<double>::quiet_NaN();
       hw_states_p_gain_[i] = std::numeric_limits<double>::quiet_NaN();
       hw_states_i_gain_[i] = std::numeric_limits<double>::quiet_NaN();
       hw_states_d_gain_[i] = std::numeric_limits<double>::quiet_NaN();
+
+      hw_states_motor_velocities_[i]=std::numeric_limits<double>::quiet_NaN();
+      hw_states_motor_currents_[i]=std::numeric_limits<double>::quiet_NaN();
+      hw_states_motor_temperatures_[i]=std::numeric_limits<double>::quiet_NaN();
+      hw_states_board_temperatures_[i]=std::numeric_limits<double>::quiet_NaN();
+
     }
 
 
@@ -221,6 +227,62 @@ namespace orbita3d_system_hwi
             initOk=false;
 
     }
+
+
+    rclcpp::sleep_for(std::chrono::milliseconds(10));
+
+    // raw motors current
+    if (orbita3d_get_raw_motors_current(this->uid, &hw_states_motor_currents_) != 0)
+    {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ RAW MOTOR CURRENTS!", info_.name.c_str());
+      // ret= CallbackReturn::ERROR;
+            initOk=false;
+
+    }
+
+    rclcpp::sleep_for(std::chrono::milliseconds(10));
+
+    // raw motors velocity
+    if (orbita3d_get_raw_motors_velocity(this->uid, &hw_states_motor_velocities_) != 0)
+    {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ RAW MOTOR VELOCITIES!", info_.name.c_str());
+      // ret= CallbackReturn::ERROR;
+            initOk=false;
+
+    }
+
+
+    rclcpp::sleep_for(std::chrono::milliseconds(10));
+
+    // raw motors temperature
+    if (orbita3d_get_motor_temperatures(this->uid, &hw_states_motor_temperatures_) != 0)
+    {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ MOTOR TEPMERATURES !", info_.name.c_str());
+      // ret= CallbackReturn::ERROR;
+            initOk=false;
+
+    }
+
+
+    rclcpp::sleep_for(std::chrono::milliseconds(10));
+
+    // boards temperature
+    if (orbita3d_get_board_temperatures(this->uid, &hw_states_board_temperatures_) != 0)
+    {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ BOARD TEPMERATURES !", info_.name.c_str());
+      // ret= CallbackReturn::ERROR;
+            initOk=false;
+
+    }
+
 
 
     // PID gains
@@ -357,18 +419,24 @@ namespace orbita3d_system_hwi
       }
       else if (gpio.name.find("raw_motor") != std::string::npos)
       {
-        // state_interfaces.emplace_back(hardware_interface::StateInterface(
-        //   gpio.name, "temperature", &hw_states_temperature_[i]));
         state_interfaces.emplace_back(hardware_interface::StateInterface(
-            gpio.name, "torque_limit", &hw_states_torque_limit_[motor_index]));
+                                        gpio.name, "motor_temperature", &hw_states_motor_temperatures_[motor_index]));
         state_interfaces.emplace_back(hardware_interface::StateInterface(
-            gpio.name, "speed_limit", &hw_states_speed_limit_[motor_index]));
+                                        gpio.name, "board_temperature", &hw_states_board_temperatures_[motor_index]));
         state_interfaces.emplace_back(hardware_interface::StateInterface(
-            gpio.name, "p_gain", &hw_states_p_gain_[motor_index]));
+                                        gpio.name, "motor_velocities", &hw_states_motor_velocities_[motor_index]));
         state_interfaces.emplace_back(hardware_interface::StateInterface(
-            gpio.name, "i_gain", &hw_states_i_gain_[motor_index]));
+                                        gpio.name, "motor_currents", &hw_states_motor_currents_[motor_index]));
         state_interfaces.emplace_back(hardware_interface::StateInterface(
-            gpio.name, "d_gain", &hw_states_d_gain_[motor_index]));
+                                        gpio.name, "torque_limit", &hw_states_torque_limit_[motor_index]));
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+                                        gpio.name, "speed_limit", &hw_states_speed_limit_[motor_index]));
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+                                        gpio.name, "p_gain", &hw_states_p_gain_[motor_index]));
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+                                        gpio.name, "i_gain", &hw_states_i_gain_[motor_index]));
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+                                        gpio.name, "d_gain", &hw_states_d_gain_[motor_index]));
 
         // next motor
         motor_index++;
@@ -510,6 +578,26 @@ namespace orbita3d_system_hwi
             "(%s) READ BOARD STATE ERROR!", info_.name.c_str());
         // ret= CallbackReturn::ERROR;
       }
+
+      if (orbita3d_get_motor_temperatures(this->uid, &hw_states_motor_temperatures_) != 0)
+      {
+        RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ MOTOR TEPMERATURES !", info_.name.c_str());
+        // ret= CallbackReturn::ERROR;
+      }
+
+      // boards temperature
+      if (orbita3d_get_board_temperatures(this->uid, &hw_states_board_temperatures_) != 0)
+      {
+        RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ BOARD TEPMERATURES !", info_.name.c_str());
+        // ret= CallbackReturn::ERROR;
+
+      }
+
+
       loop_counter_read = 0;
     }
     else
@@ -570,6 +658,26 @@ namespace orbita3d_system_hwi
         "(%s) READ SPEED LIMIT ERROR!", info_.name.c_str()
         );
   }
+
+
+    if (orbita3d_get_raw_motors_velocity(this->uid, &hw_states_motor_velocities_) != 0) {
+
+      RCLCPP_ERROR(
+        rclcpp::get_logger("Orbita3dSystem"),
+        "(%s) READ MOTOR VELOCITIES ERROR!", info_.name.c_str()
+        );
+    }
+
+
+    if (orbita3d_get_raw_motors_current(this->uid, &hw_states_motor_currents_) != 0) {
+
+      RCLCPP_ERROR(
+        rclcpp::get_logger("Orbita3dSystem"),
+        "(%s) READ MOTOR CURRENTS ERROR!", info_.name.c_str()
+        );
+    }
+
+
 
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
 
