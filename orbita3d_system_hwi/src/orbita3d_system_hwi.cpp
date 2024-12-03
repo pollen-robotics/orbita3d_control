@@ -453,6 +453,14 @@ namespace orbita3d_system_hwi
       }
     }
 
+    if (motor_index != 3)
+    {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "Orbita3d HWI: Number of motors not correct: expected 3 found %ld! Stopping operation!", motor_index);
+      std::abort();
+    }
+
     return state_interfaces;
   }
 
@@ -538,6 +546,7 @@ namespace orbita3d_system_hwi
     auto ret = hardware_interface::return_type::OK;
 
     /*
+      // The position is returned in the write feedback
     //Position
     double q[4];
     if (orbita3d_get_current_orientation(this->uid, &q) != 0) {
