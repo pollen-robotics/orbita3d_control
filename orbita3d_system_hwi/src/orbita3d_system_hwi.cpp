@@ -263,7 +263,7 @@ namespace orbita3d_system_hwi
     {
       RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),
-          "(%s) READ MOTOR TEPMERATURES !", info_.name.c_str());
+          "(%s) READ MOTOR TEMPERATURES !", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
             initOk=false;
 
@@ -277,7 +277,7 @@ namespace orbita3d_system_hwi
     {
       RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),
-          "(%s) READ BOARD TEPMERATURES !", info_.name.c_str());
+          "(%s) READ BOARD TEMPERATURES !", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
             initOk=false;
 
@@ -592,7 +592,7 @@ namespace orbita3d_system_hwi
       {
         RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),
-          "(%s) READ MOTOR TEPMERATURES !", info_.name.c_str());
+          "(%s) READ MOTOR TEMPERATURES !", info_.name.c_str());
         // ret= CallbackReturn::ERROR;
       }
 
@@ -601,7 +601,7 @@ namespace orbita3d_system_hwi
       {
         RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),
-          "(%s) READ BOARD TEPMERATURES !", info_.name.c_str());
+          "(%s) READ BOARD TEMPERATURES !", info_.name.c_str());
         // ret= CallbackReturn::ERROR;
 
       }
