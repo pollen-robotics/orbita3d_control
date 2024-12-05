@@ -124,6 +124,10 @@ impl EthercatPoulpeController {
         Ok(poulpe_controller)
     }
 
+    pub fn get_rpy_inverted_axes(&self) -> [Option<bool>; 3] {
+        self.inverted_axes
+    }
+
     pub fn id(&self) -> u8 {
         self.id as u8
     }
@@ -150,9 +154,12 @@ impl MotorsController<3> for EthercatPoulpeController {
         self.limits
     }
 
-    fn inverted_axes(&self) -> [Option<bool>; 3] {
-        // self.inverted_axes
-        [None, None, None] //For Orbita3d, we need to inverse axes in the roll/pitch/yaw space...
+    // fn inverted_axes(&self) -> [Option<bool>; 3] {
+    //     // self.inverted_axes
+    //     [None, None, None] //For Orbita3d, we need to inverse axes in the roll/pitch/yaw space...
+    // }
+    fn output_inverted_axes(&self) -> [Option<bool>; 3] {
+        self.inverted_axes
     }
 }
 
