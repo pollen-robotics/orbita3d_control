@@ -268,9 +268,20 @@ impl Orbita3dController {
     /// Get the current orientation (as intrinsic rpy with multiturn)
     pub fn get_current_rpy_orientation(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
-        Ok(self
+        let inverted_axes = self.inner.output_inverted_axes();
+        let mut rpy = self
             .kinematics
-            .compute_forward_kinematics_rpy_multiturn(thetas)?)
+            .compute_forward_kinematics_rpy_multiturn(thetas)?;
+
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    rpy[i] = -rpy[i];
+                }
+            }
+        }
+
+        Ok(rpy)
     }
 
     /// Get the current velocity $\omega$ (as a velocity pseudo vector (wx, wy, wz) which defines the instantaneous axis of rotation and with the norm represents the velocity)
@@ -320,9 +331,21 @@ impl Orbita3dController {
 
     /// Set the target orientation fro the roll pitch yaw intrinsic angles (taking multi turn into account)
     pub fn set_target_rpy_orientation(&mut self, target: [f64; 3]) -> Result<()> {
+        let inverted_axes = self.inner.output_inverted_axes();
+        let mut rpy_target = target;
+
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    rpy_target[i] = -rpy_target[i];
+                }
+            }
+        }
+
         let thetas = self
             .kinematics
-            .compute_inverse_kinematics_rpy_multiturn(target)?;
+            .compute_inverse_kinematics_rpy_multiturn(rpy_target)?;
+
         self.inner.set_target_position(thetas)
     }
 
@@ -358,15 +381,37 @@ impl Orbita3dController {
 
     /// Set the target orientation from roll pitch yaw (accepts yaw>180°) intrinsic angles with feedback => returns feedback rpy
     pub fn set_target_rpy_orientation_fb(&mut self, target: [f64; 3]) -> Result<[f64; 3]> {
+        let inverted_axes = self.inner.output_inverted_axes();
+        let mut rpy_target = target;
+
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    rpy_target[i] = -rpy_target[i];
+                }
+            }
+        }
+
         let thetas = self
             .kinematics
             .compute_inverse_kinematics_rpy_multiturn(target)?;
         let fb: Result<[f64; 3]> = self.inner.set_target_position_fb(thetas);
 
         match fb {
-            Ok(fb) => Ok(self
-                .kinematics
-                .compute_forward_kinematics_rpy_multiturn([fb[0], fb[1], fb[2]])?),
+            Ok(fb) => {
+                let mut rpy = self
+                    .kinematics
+                    .compute_forward_kinematics_rpy_multiturn([fb[0], fb[1], fb[2]])?;
+                for i in 0..3 {
+                    if let Some(inverted) = inverted_axes[i] {
+                        if inverted {
+                            rpy[i] = -rpy[i];
+                        }
+                    }
+                }
+                Ok(rpy)
+            }
+
             Err(e) => Err(e),
         }
     }
