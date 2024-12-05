@@ -268,6 +268,11 @@ impl Orbita3dController {
     /// Get the current orientation (as intrinsic rpy with multiturn)
     pub fn get_current_rpy_orientation(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
+        let inverted_axes = self.inner.inverted_axes;
+        let mut rpy = self
+            .kinematics
+            .compute_forward_kinematics_rpy_multiturn(thetas)?;
+
         Ok(self
             .kinematics
             .compute_forward_kinematics_rpy_multiturn(thetas)?)

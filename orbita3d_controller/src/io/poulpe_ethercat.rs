@@ -151,8 +151,8 @@ impl MotorsController<3> for EthercatPoulpeController {
     }
 
     fn inverted_axes(&self) -> [Option<bool>; 3] {
-        log::error!("INVERTED AXES: {:?}", self.inverted_axes);
-        self.inverted_axes
+        // self.inverted_axes
+        [None, None, None] //For Orbita3d, we need to inverse axes in the roll/pitch/yaw space...
     }
 }
 
