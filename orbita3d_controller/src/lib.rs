@@ -394,7 +394,7 @@ impl Orbita3dController {
 
         let thetas = self
             .kinematics
-            .compute_inverse_kinematics_rpy_multiturn(target)?;
+            .compute_inverse_kinematics_rpy_multiturn(rpy_target)?;
         let fb: Result<[f64; 3]> = self.inner.set_target_position_fb(thetas);
 
         match fb {
