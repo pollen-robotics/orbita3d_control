@@ -1,4 +1,4 @@
-use motor_toolbox_rs::{Limit, MissingResisterErrror, MotorsController, RawMotorsIO, Result, PID};
+use motor_toolbox_rs::{Limit, MissingRegisterError, MotorsController, RawMotorsIO, Result, PID};
 use rustypot::{
     device::orbita3d_poulpe::{self, MotorValue},
     DynamixelSerialIO,
@@ -123,7 +123,7 @@ impl DynamixelPoulpeController {
                 //255 is the value when no hall sensor is detected
                 {
                     log::error!("HallZero: Hall sensor offsets not found! Check 'Donut' I2C connection or maybe configure another zeroing method?");
-                    return Err(Box::new(MissingResisterErrror(
+                    return Err(Box::new(MissingRegisterError(
                         "Hall sensor not found".to_string(),
                     )));
                 }
@@ -135,7 +135,7 @@ impl DynamixelPoulpeController {
                 if vidx.len() != 3 {
                     log::error!("HallZero: Duplicate in hall indices! Initialization failed...");
 
-                    return Err(Box::new(MissingResisterErrror(
+                    return Err(Box::new(MissingRegisterError(
                         "Hall sensor not found".to_string(),
                     )));
                 }
@@ -186,7 +186,7 @@ impl DynamixelPoulpeController {
                     controller.offsets[0] = None;
                     controller.offsets[1] = None;
                     controller.offsets[2] = None;
-                    return Err(Box::new(MissingResisterErrror(
+                    return Err(Box::new(MissingRegisterError(
                         "Hall sensor not found".to_string(),
                     )));
                 }
@@ -224,6 +224,10 @@ impl MotorsController<3> for DynamixelPoulpeController {
 }
 
 impl RawMotorsIO<3> for DynamixelPoulpeController {
+    fn name(&self) -> String {
+        "DynamixelPoulpeController".to_string()
+    }
+
     fn is_torque_on(&mut self) -> Result<[bool; 3]> {
         orbita3d_poulpe::read_torque_enable(&self.io, self.serial_port.as_mut(), self.id)
             .map(|val| [val.top, val.middle, val.bottom])

@@ -6,7 +6,7 @@
       <state_interface name="torque">
         <param name="initial_value">0.0</param>
       </state_interface>
-
+      <state_interface name="errors" />
       <command_interface name="torque"/>
 
     </gpio>

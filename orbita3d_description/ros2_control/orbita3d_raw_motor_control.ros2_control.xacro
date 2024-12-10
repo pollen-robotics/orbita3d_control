@@ -8,17 +8,19 @@
         <state_interface name="torque_limit"/>
         <command_interface name="torque_limit"/>
 
-        <state_interface name="p_gain"/>   
+        <state_interface name="p_gain"/>
         <command_interface name="p_gain"/>
-        <state_interface name="i_gain"/>   
+        <state_interface name="i_gain"/>
         <command_interface name="i_gain"/>
-        <state_interface name="d_gain"/>   
+        <state_interface name="d_gain"/>
         <command_interface name="d_gain"/>
+
+        <state_interface name="motor_temperature"/>
+        <state_interface name="board_temperature"/>
+        <state_interface name="motor_currents"/>
+        <state_interface name="motor_velocities"/>
+
       </gpio>
 
   </xacro:macro>
 </robot>
-      
-
-
-    

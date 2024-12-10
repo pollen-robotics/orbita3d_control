@@ -6,7 +6,7 @@ use orbita3d_controller::Orbita3dController;
 
 use crate::sync_map::SyncMap;
 use env_logger;
-use log::debug;
+// use log::debug;
 static UID: Lazy<Mutex<u32>> = Lazy::new(|| Mutex::new(0));
 static CONTROLLER: Lazy<SyncMap<u32, Orbita3dController>> = Lazy::new(SyncMap::new);
 
@@ -40,7 +40,6 @@ pub extern "C" fn orbita3d_controller_from_config(
 
 #[no_mangle]
 pub extern "C" fn orbita3d_is_torque_on(uid: u32, is_on: &mut bool) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().is_torque_on() {
         Ok(torque) => {
             *is_on = torque;
@@ -55,7 +54,6 @@ pub extern "C" fn orbita3d_is_torque_on(uid: u32, is_on: &mut bool) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn orbita3d_enable_torque(uid: u32, reset_target: bool) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -71,7 +69,6 @@ pub extern "C" fn orbita3d_enable_torque(uid: u32, reset_target: bool) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn orbita3d_disable_torque(uid: u32) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().disable_torque() {
         Ok(_) => 0,
         Err(e) => {
@@ -83,7 +80,6 @@ pub extern "C" fn orbita3d_disable_torque(uid: u32) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_current_orientation(uid: u32, orientation: &mut [f64; 4]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().get_current_orientation() {
         Ok(ori) => {
             *orientation = ori;
@@ -98,7 +94,6 @@ pub extern "C" fn orbita3d_get_current_orientation(uid: u32, orientation: &mut [
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_current_rpy_orientation(uid: u32, rpy: &mut [f64; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -117,7 +112,6 @@ pub extern "C" fn orbita3d_get_current_rpy_orientation(uid: u32, rpy: &mut [f64;
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_current_velocity(uid: u32, velocity: &mut [f64; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().get_current_velocity() {
         Ok(vel) => {
             *velocity = vel;
@@ -132,7 +126,6 @@ pub extern "C" fn orbita3d_get_current_velocity(uid: u32, velocity: &mut [f64; 3
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_current_torque(uid: u32, torque: &mut [f64; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().get_current_torque() {
         Ok(tor) => {
             *torque = tor;
@@ -147,7 +140,6 @@ pub extern "C" fn orbita3d_get_current_torque(uid: u32, torque: &mut [f64; 3]) -
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_target_orientation(uid: u32, orientation: &mut [f64; 4]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().get_target_orientation() {
         Ok(ori) => {
             *orientation = ori;
@@ -162,7 +154,6 @@ pub extern "C" fn orbita3d_get_target_orientation(uid: u32, orientation: &mut [f
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_target_rpy_orientation(uid: u32, rpy: &mut [f64; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -181,7 +172,6 @@ pub extern "C" fn orbita3d_get_target_rpy_orientation(uid: u32, rpy: &mut [f64; 
 
 #[no_mangle]
 pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 4]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -197,7 +187,6 @@ pub extern "C" fn orbita3d_set_target_orientation(uid: u32, orientation: &[f64; 
 
 #[no_mangle]
 pub extern "C" fn orbita3d_set_target_rpy_orientation(uid: u32, rpy: &[f64; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -218,7 +207,6 @@ pub extern "C" fn orbita3d_set_target_orientation_fb(
     // feedback: &mut [f64; 10],
     feedback: &mut [f64; 4],
 ) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -251,7 +239,6 @@ pub extern "C" fn orbita3d_set_target_rpy_orientation_fb(
     // feedback: &mut [f64; 10],
     feedback: &mut [f64; 3],
 ) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -272,7 +259,6 @@ pub extern "C" fn orbita3d_set_target_rpy_orientation_fb(
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_raw_motors_velocity_limit(uid: u32, limit: &mut [f64; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -291,7 +277,6 @@ pub extern "C" fn orbita3d_get_raw_motors_velocity_limit(uid: u32, limit: &mut [
 
 #[no_mangle]
 pub extern "C" fn orbita3d_set_raw_motors_velocity_limit(uid: u32, limit: &[f64; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -307,7 +292,6 @@ pub extern "C" fn orbita3d_set_raw_motors_velocity_limit(uid: u32, limit: &[f64;
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_raw_motors_torque_limit(uid: u32, limit: &mut [f64; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -326,7 +310,6 @@ pub extern "C" fn orbita3d_get_raw_motors_torque_limit(uid: u32, limit: &mut [f6
 
 #[no_mangle]
 pub extern "C" fn orbita3d_set_raw_motors_torque_limit(uid: u32, limit: &[f64; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER
         .get_mut(&uid)
         .unwrap()
@@ -342,7 +325,6 @@ pub extern "C" fn orbita3d_set_raw_motors_torque_limit(uid: u32, limit: &[f64; 3
 
 #[no_mangle]
 pub extern "C" fn orbita3d_get_raw_motors_pid_gains(uid: u32, gains: &mut [[f64; 3]; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().get_raw_motors_pid_gains() {
         Ok([pid_top, pid_middle, pid_bottom]) => {
             gains[0][0] = pid_top.p;
@@ -366,7 +348,6 @@ pub extern "C" fn orbita3d_get_raw_motors_pid_gains(uid: u32, gains: &mut [[f64;
 
 #[no_mangle]
 pub extern "C" fn orbita3d_set_raw_motors_pid_gains(uid: u32, gains: &[[f64; 3]; 3]) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().set_raw_motors_pid_gains([
         PID {
             p: gains[0][0],
@@ -393,8 +374,41 @@ pub extern "C" fn orbita3d_set_raw_motors_pid_gains(uid: u32, gains: &[[f64; 3];
 }
 
 #[no_mangle]
+pub extern "C" fn orbita3d_get_raw_motors_current(
+    uid: u32,
+    raw_motors_current: &mut [f64; 3],
+) -> u32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_raw_motors_current() {
+        Ok(c) => {
+            *raw_motors_current = c;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_get_raw_motors_velocity(
+    uid: u32,
+    raw_motors_velocity: &mut [f64; 3],
+) -> u32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_raw_motors_velocity() {
+        Ok(v) => {
+            *raw_motors_velocity = v;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn orbita3d_get_board_state(uid: u32, state: &mut u8) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().get_board_state() {
         Ok(s) => {
             *state = s;
@@ -409,7 +423,6 @@ pub extern "C" fn orbita3d_get_board_state(uid: u32, state: &mut u8) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn orbita3d_set_board_state(uid: u32, state: &u8) -> i32 {
-    // thread::sleep(Duration::from_millis(1));
     match CONTROLLER.get_mut(&uid).unwrap().set_board_state(*state) {
         Ok(_) => 0,
         Err(e) => {
@@ -417,6 +430,111 @@ pub extern "C" fn orbita3d_set_board_state(uid: u32, state: &u8) -> i32 {
             1
         }
     }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_get_axis_sensors(uid: u32, axis: &mut [f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_axis_sensors() {
+        Ok(a) => {
+            *axis = a;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_get_axis_sensor_zeros(uid: u32, axis: &mut [f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_axis_sensor_zeros() {
+        Ok(a) => {
+            *axis = a;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_get_motor_temperatures(uid: u32, temp: &mut [f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_motor_temperatures() {
+        Ok(t) => {
+            *temp = t;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_get_board_temperatures(uid: u32, temp: &mut [f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_board_temperatures() {
+        Ok(t) => {
+            *temp = t;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_get_error_codes(uid: u32, error: &mut [i32; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_error_codes() {
+        Ok(c) => {
+            *error = c;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_get_control_mode(uid: u32, mode: &mut u8) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_control_mode() {
+        Ok(m) => {
+            *mode = m[0];
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_set_control_mode(uid: u32, mode: &u8) -> i32 {
+    match CONTROLLER
+        .get_mut(&uid)
+        .unwrap()
+        .set_control_mode([*mode, *mode, *mode])
+    {
+        Ok(_) => 0,
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn orbita3d_emergency_stop(uid: u32) -> i32 {
+    CONTROLLER.get_mut(&uid).unwrap().emergency_stop();
+    0
 }
 
 fn get_available_uid() -> u32 {

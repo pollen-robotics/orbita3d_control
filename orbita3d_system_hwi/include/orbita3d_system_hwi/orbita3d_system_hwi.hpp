@@ -41,14 +41,21 @@ private:
   double hw_states_effort_[3];
   double hw_commands_position_[3];
 
-  double hw_states_temperature_[3];
+
   double hw_states_torque_limit_[3];
   double hw_states_speed_limit_[3];
+  double hw_states_motor_velocities_[3];
+  double hw_states_motor_currents_[3];
+  double hw_states_motor_temperatures_[3];
+  double hw_states_board_temperatures_[3];
+
   double hw_states_p_gain_[3];
   double hw_states_i_gain_[3];
   double hw_states_d_gain_[3];
+
   double hw_commands_speed_limit_[3];
   double hw_commands_torque_limit_[3];
+
   double hw_commands_p_gain_[3];
   double hw_commands_i_gain_[3];
   double hw_commands_d_gain_[3];

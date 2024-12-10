@@ -1,11 +1,9 @@
-use motor_toolbox_rs::{Limit, MissingResisterErrror, MotorsController, RawMotorsIO, Result, PID};
+use motor_toolbox_rs::{Limit, MotorsController, RawMotorsIO, Result, PID};
 use poulpe_ethercat_grpc::client::PoulpeRemoteClient;
 use serde::{Deserialize, Serialize};
-use serialport::TTYPort;
-use std::thread;
 use std::{f64::consts::PI, f64::consts::TAU, time::Duration};
 
-use log::{debug, error, info, warn};
+use log::{error, info};
 
 use crate::ZeroType;
 
@@ -28,11 +26,18 @@ pub struct EthercatPoulpeController {
     reduction: [Option<f64>; 3],
     // motor_reduction: [Option<f64>; 3],
     limits: [Option<Limit>; 3],
+    inverted_axes: [Option<bool>; 3],
 }
 
 impl EthercatPoulpeController {
     /// Creates a new EthercatPoulpeController
-    pub fn new(url: &str, id: u8, zero: ZeroType, reductions: f64) -> Result<Self> {
+    pub fn new(
+        url: &str,
+        id: u8,
+        zero: ZeroType,
+        reductions: f64,
+        inverted_axes: [Option<bool>; 3],
+    ) -> Result<Self> {
         let mut io = match PoulpeRemoteClient::connect(
             url.parse()?,
             vec![id as u16],
@@ -52,12 +57,16 @@ impl EthercatPoulpeController {
         io.set_velocity_limit(id as u16, [1.0; 3].to_vec());
         io.set_torque_limit(id as u16, [1.0; 3].to_vec());
 
+        //We can only change the mode if torque=off, then we ensure we are ProfilePositionMode
+        io.set_mode_of_operation(id as u16, 1); //0=NoMode, 1=ProfilePositionMode, 3=ProfileVelocityMode, 4=ProfileTorqueMode
+
         let mut poulpe_controller = EthercatPoulpeController {
             io,
             id: id as u16,
             offsets: [None; 3],
             reduction: [Some(reductions); 3],
             limits: [None; 3],
+            inverted_axes,
         };
 
         info!(
@@ -105,12 +114,16 @@ impl EthercatPoulpeController {
                         poulpe_controller.offsets[i] = Some(current_pos);
                     });
             }
-            ZeroType::HallZero(zero) => {
+            ZeroType::HallZero(_zero) => {
                 log::error!("HallZero Not supported with Ethercat!");
             }
         }
 
         Ok(poulpe_controller)
+    }
+
+    pub fn get_rpy_inverted_axes(&self) -> [Option<bool>; 3] {
+        self.inverted_axes
     }
 
     pub fn id(&self) -> u8 {
@@ -138,9 +151,21 @@ impl MotorsController<3> for EthercatPoulpeController {
     fn limits(&self) -> [Option<motor_toolbox_rs::Limit>; 3] {
         self.limits
     }
+
+    // fn inverted_axes(&self) -> [Option<bool>; 3] {
+    //     // self.inverted_axes
+    //     [None, None, None] //For Orbita3d, we need to inverse axes in the roll/pitch/yaw space...
+    // }
+    fn output_inverted_axes(&self) -> [Option<bool>; 3] {
+        self.inverted_axes
+    }
 }
 
 impl RawMotorsIO<3> for EthercatPoulpeController {
+    fn name(&self) -> String {
+        "EthercatPoulpeController".to_string()
+    }
+
     fn is_torque_on(&mut self) -> Result<[bool; 3]> {
         match self.io.get_torque_state(self.id) {
             Ok(state) => Ok([state, state, state]),
@@ -192,6 +217,32 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         Ok(())
     }
 
+    // fn get_target_velocity(&mut self) -> Result<[f64; 3]> {
+    //     match self.io.get_target_velocity(self.id) {
+    //         Ok(vel) => Ok([vel[0] as f64, vel[1] as f64, vel[2] as f64]),
+    //         Err(_) => Err("Error while getting target velocity".into()),
+    //     }
+    // }
+
+    fn set_target_velocity(&mut self, vel: [f64; 3]) -> Result<()> {
+        let target_velocity = vel.iter().map(|&x| x as f32).collect::<Vec<f32>>();
+        self.io.set_target_velocity(self.id, target_velocity);
+        Ok(())
+    }
+
+    // fn get_target_torque(&mut self) -> Result<[f64; 3]> {
+    //     match self.io.get_target_torque(self.id) {
+    //         Ok(vel) => Ok([vel[0] as f64, vel[1] as f64, vel[2] as f64]),
+    //         Err(_) => Err("Error while getting target torque".into()),
+    //     }
+    // }
+
+    fn set_target_torque(&mut self, vel: [f64; 3]) -> Result<()> {
+        let target_torque = vel.iter().map(|&x| x as f32).collect::<Vec<f32>>();
+        self.io.set_target_torque(self.id, target_torque);
+        Ok(())
+    }
+
     fn set_target_position_fb(&mut self, position: [f64; 3]) -> Result<[f64; 3]> {
         let target_position = position.iter().map(|&x| x as f32).collect::<Vec<f32>>();
         self.io.set_target_position(self.id, target_position);
@@ -228,6 +279,7 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         Ok(())
     }
 
+    //TODO
     fn get_pid_gains(&mut self) -> Result<[PID; 3]> {
         Ok([PID {
             p: 0.0,
@@ -246,6 +298,13 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         }
     }
 
+    fn get_axis_sensor_zeros(&mut self) -> Result<[f64; 3]> {
+        match self.io.get_axis_sensor_zeros(self.id) {
+            Ok(sensor) => Ok([sensor[0] as f64, sensor[1] as f64, sensor[2] as f64]),
+            Err(_) => Err("Error while getting axis sensor zeros".into()),
+        }
+    }
+
     fn get_board_state(&mut self) -> Result<u8> {
         match self.io.get_state(self.id) {
             Ok(state) => Ok(state as u8),
@@ -253,8 +312,49 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         }
     }
 
-    fn set_board_state(&mut self, state: u8) -> Result<()> {
+    fn get_error_codes(&mut self) -> Result<[i32; 3]> {
+        match self.io.get_error_codes(self.id) {
+            Ok(codes) => Ok([codes[0], codes[1], codes[2]]),
+            Err(_) => Err("Error while getting error codes".into()),
+        }
+    }
+
+    fn get_motor_temperatures(&mut self) -> Result<[f64; 3]> {
+        match self.io.get_motor_temperatures(self.id) {
+            Ok(temp) => Ok([temp[0] as f64, temp[1] as f64, temp[2] as f64]),
+            Err(_) => Err("Error while getting motor temperatures".into()),
+        }
+    }
+
+    fn get_board_temperatures(&mut self) -> Result<[f64; 3]> {
+        match self.io.get_board_temperatures(self.id) {
+            Ok(temp) => Ok([temp[0] as f64, temp[1] as f64, temp[2] as f64]),
+            Err(_) => Err("Error while getting board temperatures".into()),
+        }
+    }
+
+    fn set_board_state(&mut self, _state: u8) -> Result<()> {
         Ok(())
+    }
+
+    fn get_control_mode(&mut self) -> Result<[u8; 3]> {
+        match self.io.get_mode_of_operation(self.id) {
+            Ok(mode) => Ok([mode as u8, mode as u8, mode as u8]), //It is in fact the same for each axis (TODO make it board level?)
+            Err(_) => Err("Error while getting mode of operation".into()),
+        }
+    }
+
+    fn set_control_mode(&mut self, _mode: [u8; 3]) -> Result<()> {
+        if !(_mode[0] == _mode[1] && _mode[1] == _mode[2]) {
+            return Err("Error, invalid control mode".into());
+        }
+        self.io.set_mode_of_operation(self.id, _mode[0] as u32);
+        Ok(())
+    }
+
+    fn emergency_stop(&mut self) {
+        self.io.emergency_stop(self.id);
+        error!("EMERCENCY STOP!");
     }
 }
 
@@ -294,6 +394,7 @@ fn find_closest_offset_to_zero(current_position: f64, hardware_zero: f64, reduct
     best
 }
 
+#[allow(dead_code)]
 fn find_position_with_hall(
     current_position: f64,
     hardware_zero: f64,
@@ -398,6 +499,7 @@ fn find_position_with_hall(
     (best, best_idx as i16 - (offset.len() / 2) as i16)
 }
 
+#[allow(dead_code)]
 pub fn angle_diff(angle_a: f64, angle_b: f64) -> f64 {
     let mut angle = angle_a - angle_b;
     angle = (angle + PI) % TAU - PI;
@@ -408,6 +510,7 @@ pub fn angle_diff(angle_a: f64, angle_b: f64) -> f64 {
     }
 }
 
+#[allow(dead_code)]
 pub fn hall_diff(hall_a: u8, hall_b: u8) -> f64 {
     // shortest hall difference (16 discrete Hall)
     let d: f64 = hall_a as f64 - hall_b as f64;

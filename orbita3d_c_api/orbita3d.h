@@ -60,9 +60,29 @@ int32_t orbita3d_get_raw_motors_pid_gains(uint32_t uid, double (*gains)[3][3]);
 
 int32_t orbita3d_set_raw_motors_pid_gains(uint32_t uid, const double (*gains)[3][3]);
 
+uint32_t orbita3d_get_raw_motors_current(uint32_t uid, double (*raw_motors_current)[3]);
+
+uint32_t orbita3d_get_raw_motors_velocity(uint32_t uid, double (*raw_motors_velocity)[3]);
+
 int32_t orbita3d_get_board_state(uint32_t uid, uint8_t *state);
 
 int32_t orbita3d_set_board_state(uint32_t uid, const uint8_t *state);
+
+int32_t orbita3d_get_axis_sensors(uint32_t uid, double (*axis)[3]);
+
+int32_t orbita3d_get_axis_sensor_zeros(uint32_t uid, double (*axis)[3]);
+
+int32_t orbita3d_get_motor_temperatures(uint32_t uid, double (*temp)[3]);
+
+int32_t orbita3d_get_board_temperatures(uint32_t uid, double (*temp)[3]);
+
+int32_t orbita3d_get_error_codes(uint32_t uid, int32_t (*error)[3]);
+
+int32_t orbita3d_get_control_mode(uint32_t uid, uint8_t *mode);
+
+int32_t orbita3d_set_control_mode(uint32_t uid, const uint8_t *mode);
+
+int32_t orbita3d_emergency_stop(uint32_t uid);
 
 /// Create a new Orbita3dKinematicsModel.
 Orbita3dKinematicsModel create_orbita3d_kinematics_model(double alpha,

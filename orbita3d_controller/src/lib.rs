@@ -18,7 +18,7 @@
 //! - [x] Fake motors
 //! - [x] Dynamixel like serial
 //! - [x] Poulpe serial dynamixel
-//! - [ ] EtherCAT communication
+//! - [x] EtherCAT communication
 //!
 //! # Examples
 //! ```rust
@@ -40,7 +40,7 @@
 
 pub mod io;
 use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOConfig};
-use motor_toolbox_rs::{FakeMotorsController, Limit, MotorsController, Result, PID};
+use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
 
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
@@ -59,6 +59,7 @@ pub struct Orbita3dConfig {
     pub disks: DisksConfig,
     /// Kinematics model config
     pub kinematics_model: Orbita3dKinematicsModel,
+    pub inverted_axes: [Option<bool>; 3],
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -119,8 +120,6 @@ pub struct Orbita3dController {
 /// Feedback struct
 pub struct Orbita3dFeedback {
     pub orientation: [f64; 4],
-    // pub velocity: [f64; 3],
-    // pub torque: [f64; 3],
 }
 
 impl Orbita3dController {
@@ -138,6 +137,7 @@ impl Orbita3dController {
         let config: Orbita3dConfig = serde_yaml::from_reader(f)?;
 
         let controller: Box<dyn MotorsController<3> + Send> = match config.io {
+            // This is a legacy mode, not maintained anymore
             Orbita3dIOConfig::DynamixelSerial(dxl_config) => match dxl_config.use_cache {
                 true => {
                     let controller = CachedDynamixelSerialController::new(
@@ -164,6 +164,7 @@ impl Orbita3dController {
                     Box::new(controller)
                 }
             },
+            // This is a legacy mode, not maintained anymore
             Orbita3dIOConfig::DynamixelPoulpe(dxl_config) => match dxl_config.use_cache {
                 true => {
                     let controller = CachedDynamixelPoulpeController::new(
@@ -190,6 +191,7 @@ impl Orbita3dController {
                     Box::new(controller)
                 }
             },
+            // The fake mode is heavily used for testing and debugging, it allows to run everything without any hardware
             Orbita3dIOConfig::FakeMotors(_) => {
                 let mut controller = FakeMotorsController::<3>::new();
 
@@ -202,18 +204,21 @@ impl Orbita3dController {
 
                 let controller = controller
                     .with_offsets(offsets.map(Some))
-                    .with_reduction([Some(config.disks.reduction); 3]);
+                    .with_reduction([Some(config.disks.reduction); 3])
+                    .with_inverted_axes(config.inverted_axes);
 
                 log::info!("Using fake motors controller {:?}", controller);
 
                 Box::new(controller)
             }
+            // The ethercat mode with the "Poulpe" electronics
             Orbita3dIOConfig::PoulpeEthercat(ethercat_config) => {
                 let controller = EthercatPoulpeController::new(
                     &ethercat_config.url,
-                    ethercat_config.id as u8,
+                    ethercat_config.id,
                     config.disks.zeros,
                     config.disks.reduction,
+                    config.inverted_axes,
                 )?;
                 log::info!("Using poulpe ethercat controller {:?}", controller);
 
@@ -263,9 +268,20 @@ impl Orbita3dController {
     /// Get the current orientation (as intrinsic rpy with multiturn)
     pub fn get_current_rpy_orientation(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
-        Ok(self
+        let inverted_axes = self.inner.output_inverted_axes();
+        let mut rpy = self
             .kinematics
-            .compute_forward_kinematics_rpy_multiturn(thetas)?)
+            .compute_forward_kinematics_rpy_multiturn(thetas)?;
+
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    rpy[i] = -rpy[i];
+                }
+            }
+        }
+
+        Ok(rpy)
     }
 
     /// Get the current velocity $\omega$ (as a velocity pseudo vector (wx, wy, wz) which defines the instantaneous axis of rotation and with the norm represents the velocity)
@@ -315,9 +331,21 @@ impl Orbita3dController {
 
     /// Set the target orientation fro the roll pitch yaw intrinsic angles (taking multi turn into account)
     pub fn set_target_rpy_orientation(&mut self, target: [f64; 3]) -> Result<()> {
+        let inverted_axes = self.inner.output_inverted_axes();
+        let mut rpy_target = target;
+
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    rpy_target[i] = -rpy_target[i];
+                }
+            }
+        }
+
         let thetas = self
             .kinematics
-            .compute_inverse_kinematics_rpy_multiturn(target)?;
+            .compute_inverse_kinematics_rpy_multiturn(rpy_target)?;
+
         self.inner.set_target_position(thetas)
     }
 
@@ -353,15 +381,37 @@ impl Orbita3dController {
 
     /// Set the target orientation from roll pitch yaw (accepts yaw>180°) intrinsic angles with feedback => returns feedback rpy
     pub fn set_target_rpy_orientation_fb(&mut self, target: [f64; 3]) -> Result<[f64; 3]> {
+        let inverted_axes = self.inner.output_inverted_axes();
+        let mut rpy_target = target;
+
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    rpy_target[i] = -rpy_target[i];
+                }
+            }
+        }
+
         let thetas = self
             .kinematics
-            .compute_inverse_kinematics_rpy_multiturn(target)?;
+            .compute_inverse_kinematics_rpy_multiturn(rpy_target)?;
         let fb: Result<[f64; 3]> = self.inner.set_target_position_fb(thetas);
 
         match fb {
-            Ok(fb) => Ok(self
-                .kinematics
-                .compute_forward_kinematics_rpy_multiturn([fb[0], fb[1], fb[2]])?),
+            Ok(fb) => {
+                let mut rpy = self
+                    .kinematics
+                    .compute_forward_kinematics_rpy_multiturn([fb[0], fb[1], fb[2]])?;
+                for i in 0..3 {
+                    if let Some(inverted) = inverted_axes[i] {
+                        if inverted {
+                            rpy[i] = -rpy[i];
+                        }
+                    }
+                }
+                Ok(rpy)
+            }
+
             Err(e) => Err(e),
         }
     }
@@ -397,9 +447,38 @@ impl Orbita3dController {
         self.inner.set_pid_gains(gains)
     }
 
+    /// Get the raw motors velocity in rad/s (top, middle, bottom)
+    pub fn get_raw_motors_velocity(&mut self) -> Result<[f64; 3]> {
+        self.inner.get_current_velocity()
+    }
+    /// Get the raw motors current in mA (top, middle, bottom)
+    pub fn get_raw_motors_current(&mut self) -> Result<[f64; 3]> {
+        self.inner.get_current_torque()
+    }
+
     /// Get the axis sensors values (gearbox mounted absolute magnetic encoder)
     pub fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
         self.inner.get_axis_sensors()
+    }
+
+    /// Get the axis sensor zeros values (random offset from factory)
+    pub fn get_axis_sensor_zeros(&mut self) -> Result<[f64; 3]> {
+        self.inner.get_axis_sensor_zeros()
+    }
+
+    /// Get the error codes from the motors
+    pub fn get_error_codes(&mut self) -> Result<[i32; 3]> {
+        self.inner.get_error_codes()
+    }
+
+    /// Get the temperature for each motor in °C from a NTC sensor in contact with the motor body (top, middle, bottom)
+    pub fn get_motor_temperatures(&mut self) -> Result<[f64; 3]> {
+        self.inner.get_motor_temperatures()
+    }
+
+    /// Get the temperature for each H-Gate in °C (top, middle, bottom)
+    pub fn get_board_temperatures(&mut self) -> Result<[f64; 3]> {
+        self.inner.get_board_temperatures()
     }
 
     /// Get the board state register
@@ -409,5 +488,20 @@ impl Orbita3dController {
     /// Get the board state register
     pub fn set_board_state(&mut self, state: u8) -> Result<()> {
         self.inner.set_board_state(state)
+    }
+
+    /// Get the current mode of operation (cf. firmware_poulpe documentation)
+    pub fn get_control_mode(&mut self) -> Result<[u8; 3]> {
+        self.inner.get_control_mode()
+    }
+
+    /// Set the current mode of operation (cf. firmware_poulpe documentation). Currently valid: 0=NoMode, 1=ProfilePositionMode, 3=ProfileVelocityMode, 4=ProfileTorqueMode
+    pub fn set_control_mode(&mut self, mode: [u8; 3]) -> Result<()> {
+        self.inner.set_control_mode(mode)
+    }
+
+    /// Triggers and emergency stop
+    pub fn emergency_stop(&mut self) {
+        self.inner.emergency_stop()
     }
 }

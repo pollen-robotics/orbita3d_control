@@ -1,5 +1,5 @@
 use crate::ZeroType;
-use motor_toolbox_rs::{Limit, MissingResisterErrror, MotorsController, RawMotorsIO, Result, PID};
+use motor_toolbox_rs::{Limit, MissingRegisterError, MotorsController, RawMotorsIO, Result, PID};
 use rustypot::{
     device::orbita3d_poulpe::{self, MotorValue},
     DynamixelSerialIO,
@@ -108,6 +108,10 @@ impl MotorsController<3> for DynamixelSerialController {
 }
 
 impl RawMotorsIO<3> for DynamixelSerialController {
+    fn name(&self) -> String {
+        "DynamixelSerialController".to_string()
+    }
+
     fn is_torque_on(&mut self) -> Result<[bool; 3]> {
         let on = orbita3d_poulpe::read_torque_enable(&self.io, self.serial_port.as_mut(), self.id);
         match on {
@@ -142,15 +146,13 @@ impl RawMotorsIO<3> for DynamixelSerialController {
 
     //TODO
     fn get_current_velocity(&mut self) -> Result<[f64; 3]> {
-        Err(Box::new(MissingResisterErrror(
+        Err(Box::new(MissingRegisterError(
             "current_velocity".to_string(),
         )))
     }
     //TODO
     fn get_current_torque(&mut self) -> Result<[f64; 3]> {
-        Err(Box::new(MissingResisterErrror(
-            "current_torque".to_string(),
-        )))
+        Err(Box::new(MissingRegisterError("current_torque".to_string())))
     }
 
     fn get_target_position(&mut self) -> Result<[f64; 3]> {
@@ -210,43 +212,39 @@ impl RawMotorsIO<3> for DynamixelSerialController {
     }
 
     fn get_velocity_limit(&mut self) -> Result<[f64; 3]> {
-        Err(Box::new(MissingResisterErrror(
-            "velocity_limit".to_string(),
-        )))
+        Err(Box::new(MissingRegisterError("velocity_limit".to_string())))
     }
 
     fn set_velocity_limit(&mut self, velocity: [f64; 3]) -> Result<()> {
         assert!(velocity[0] == velocity[1] && velocity[1] == velocity[2]);
 
-        Err(Box::new(MissingResisterErrror(
-            "velocity_limit".to_string(),
-        )))
+        Err(Box::new(MissingRegisterError("velocity_limit".to_string())))
     }
 
     fn get_torque_limit(&mut self) -> Result<[f64; 3]> {
-        Err(Box::new(MissingResisterErrror("torque_limit".to_string())))
+        Err(Box::new(MissingRegisterError("torque_limit".to_string())))
     }
 
     fn set_torque_limit(&mut self, _torque: [f64; 3]) -> Result<()> {
-        Err(Box::new(MissingResisterErrror("torque_limit".to_string())))
+        Err(Box::new(MissingRegisterError("torque_limit".to_string())))
     }
 
     fn get_pid_gains(&mut self) -> Result<[PID; 3]> {
-        Err(Box::new(MissingResisterErrror("pid".to_string())))
+        Err(Box::new(MissingRegisterError("pid".to_string())))
     }
 
     fn set_pid_gains(&mut self, pid: [PID; 3]) -> Result<()> {
         assert!(pid[0] == pid[1] && pid[1] == pid[2]);
-        Err(Box::new(MissingResisterErrror("pid".to_string())))
+        Err(Box::new(MissingRegisterError("pid".to_string())))
     }
     fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
-        Err(Box::new(MissingResisterErrror("axis_sensors".to_string())))
+        Err(Box::new(MissingRegisterError("axis_sensors".to_string())))
     }
     fn get_board_state(&mut self) -> Result<u8> {
-        Err(Box::new(MissingResisterErrror("board_state".to_string())))
+        Err(Box::new(MissingRegisterError("board_state".to_string())))
     }
     fn set_board_state(&mut self, _state: u8) -> Result<()> {
-        Err(Box::new(MissingResisterErrror("board_state".to_string())))
+        Err(Box::new(MissingRegisterError("board_state".to_string())))
     }
 }
 
