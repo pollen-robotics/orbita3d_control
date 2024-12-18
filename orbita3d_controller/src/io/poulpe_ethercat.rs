@@ -13,7 +13,9 @@ pub struct PoulpeEthercatConfig {
     /// url of the ethercat master grpc serverS
     pub url: String,
     /// Actuator id
-    pub id: u8,
+    pub id: Option<u8>,
+    /// Actuator name
+    pub name: Option<String>
 }
 
 #[derive(Debug)]
@@ -33,25 +35,62 @@ impl EthercatPoulpeController {
     /// Creates a new EthercatPoulpeController
     pub fn new(
         url: &str,
-        id: u8,
+        id: Option<u8>,
+        name: Option<String>,
         zero: ZeroType,
         reductions: f64,
         inverted_axes: [Option<bool>; 3],
     ) -> Result<Self> {
-        let mut io = match PoulpeRemoteClient::connect(
-            url.parse()?,
-            vec![id as u16],
-            Duration::from_secs_f32(0.002),
-        ) {
-            Ok(io) => io,
-            Err(e) => {
-                error!(
-                    "Error while connecting to EthercatPoulpeController: {:?}",
-                    e
-                );
-                return Err("Error while connecting to EthercatPoulpeController".into());
+
+        let update_time =  Duration::from_secs_f32(0.002);
+
+        let mut io = match (id, name) {
+            (_, Some(name)) => {
+                log::info!("Connecting to the slave with name: {}", name);
+                let client = match PoulpeRemoteClient::connect_with_name(
+                    url.parse()?,
+                    vec![name],
+                    update_time,
+                ) {
+                    Ok(client) => client,
+                    Err(e) => {
+                        error!(
+                            "Error while connecting to EthercatPoulpeController: {:?}",
+                            e
+                        );
+                        return Err("Error while connecting to EthercatPoulpeController".into());
+                    }
+                };
+                client
+            },
+            (Some(id), None) => {
+                log::info!("Connecting to the slave with id: {}", id);
+                let client = match PoulpeRemoteClient::connect(
+                    url.parse()?,
+                    vec![id as u16],
+                    update_time,
+                ) {
+                    Ok(client) => client,
+                    Err(e) => {
+                        error!(
+                            "Error while connecting to EthercatPoulpeController: {:?}",
+                            e
+                        );
+                        return Err("Error while connecting to EthercatPoulpeController".into());
+                    }
+                };
+                client
+            },
+            _ => {
+                log::error!("Invalid config file, make sure to provide either the id or the name!");
+                return Err("Invalid config file".into());
             }
         };
+
+        let id = io.ids[0];
+        let name = io.names[0].clone();
+        log::info!("Client created for Slave {} (id: {}), sampling time: {:}ms", name, id, update_time.as_millis());
+
 
         // set the initial velocity and torque limit to 100%
         io.set_velocity_limit(id as u16, [1.0; 3].to_vec());
