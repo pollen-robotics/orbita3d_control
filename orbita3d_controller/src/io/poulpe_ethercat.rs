@@ -89,7 +89,7 @@ impl EthercatPoulpeController {
 
         let id = io.ids[0];
         let name = io.names[0].clone();
-        log::info!("Client created for Slave {} (id: {}), sampling time: {:}ms", name, id, update_time.as_millis());
+        log::info!("Orbita3d Client created for Slave {} (id: {}), sampling time: {:}ms", name, id, update_time.as_millis());
 
 
         // set the initial velocity and torque limit to 100%
