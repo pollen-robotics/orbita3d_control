@@ -147,11 +147,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         let target = conversion::rotation_matrix_to_quaternion(target_yaw_mat);
 
         let fb = controller.set_target_orientation_fb(target).unwrap();
-        let axis = controller.get_axis_sensors().unwrap();
         let rpy = conversion::quaternion_to_roll_pitch_yaw(fb.orientation);
-
         let motor_pos = controller.get_raw_motors_positions().unwrap();
 
+        let axis = controller.get_axis_sensors().unwrap();
         let axis_rot = controller.kinematics.compute_forward_kinematics(axis);
         let axis_quat = conversion::rotation_matrix_to_quaternion(axis_rot);
         let axis_rpy = conversion::quaternion_to_roll_pitch_yaw(axis_quat);
