@@ -1,7 +1,7 @@
 use motor_toolbox_rs::{Limit, MotorsController, RawMotorsIO, Result, PID};
 use poulpe_ethercat_grpc::client::PoulpeRemoteClient;
 use serde::{Deserialize, Serialize};
-use std::{f64::consts::PI, f64::consts::TAU, time::Duration};
+use std::{f64::consts::PI, f64::consts::TAU, time::Duration, thread};
 
 use log::{error, info};
 
@@ -53,6 +53,19 @@ impl EthercatPoulpeController {
                 return Err("Error while connecting to EthercatPoulpeController".into());
             }
         };
+
+        // wait for the connection to be established
+        let mut trials = 20; // 2s
+        while io.get_state(id as u16).is_err() {
+            thread::sleep(Duration::from_millis(100));
+            log::warn!("Waiting for connection to Orbita3d PoulpeRemoteClient with id {}", id);
+            if trials == 0 {
+                log::error!("Error: Timeout while connecting to the Orbita3d PoulpeRemoteClient with id {}", id);
+                return Err("Error: Timeout while connecting to the Orbita3d  PoulpeRemoteClient".into());
+            }
+            trials -= 1;
+        }
+        log::info!("Connected to Orbita3d PoulpeRemoteClient with id {}", id);
 
         // set the initial velocity and torque limit to 100%
         io.set_velocity_limit(id as u16, [1.0; 3].to_vec());
@@ -309,15 +322,18 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         match self.io.get_axis_sensors(self.id) {
             Ok(mut sensor) => {
                 // substract the sensor zero and the axis offset
-                // FIXME: RATIO
                 for (i, s) in sensor.iter_mut().enumerate() {
+                    // apply the gearing ratio first
+                    *s *= 1.0/self.reduction[i].unwrap() as f32;
+                    // substract the zero and the offset
                     if !self.axis_sensor_zeros[i].is_none() {
                         *s -= self.axis_sensor_zeros[i].unwrap() as f32;
                     }
+                    // remove any offset
                     if !self.offsets[i].is_none() {
                         *s -= self.offsets[i].unwrap() as f32;
                     }
-                    *s *= self.reduction[i].unwrap() as f32;
+                    // wrap to pi
                     *s = wrap_to_pi(*s as f64) as f32;
                 }
                 Ok([sensor[0] as f64, sensor[1] as f64, sensor[2] as f64])

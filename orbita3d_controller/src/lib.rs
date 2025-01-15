@@ -113,7 +113,7 @@ pub struct ZeroStartup;
 /// Orbita3d Controller
 pub struct Orbita3dController {
     inner: Box<dyn MotorsController<3> + Send>,
-    kinematics: Orbita3dKinematicsModel,
+    pub kinematics: Orbita3dKinematicsModel,
 }
 
 #[derive(Debug, Deserialize, Serialize, Copy, Clone)]
@@ -414,6 +414,12 @@ impl Orbita3dController {
 
             Err(e) => Err(e),
         }
+    }
+
+    /// Get the position of each raw motor (in rad)
+    /// caution: this is the raw value used by the motors used inside the actuator, not the orbita3d orientation!
+    pub fn get_raw_motors_positions(&mut self) -> Result<[f64; 3]> {
+        self.inner.get_current_position()
     }
 
     /// Get the velocity limit of each raw motor (in rad/s)
