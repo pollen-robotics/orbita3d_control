@@ -309,7 +309,7 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         match self.io.get_axis_sensors(self.id) {
             Ok(mut sensor) => {
                 // substract the sensor zero and the axis offset
-                // FIXME: RATIO
+                // FIXME: these are not the "output" angles. We need to compute kinematics and handle multiturn...
                 for (i, s) in sensor.iter_mut().enumerate() {
                     if !self.axis_sensor_zeros[i].is_none() {
                         *s -= self.axis_sensor_zeros[i].unwrap() as f32;
@@ -317,7 +317,7 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
                     if !self.offsets[i].is_none() {
                         *s -= self.offsets[i].unwrap() as f32;
                     }
-                    *s *= self.reduction[i].unwrap() as f32;
+                    // *s *= self.reduction[i].unwrap() as f32;
                     *s = wrap_to_pi(*s as f64) as f32;
                 }
                 Ok([sensor[0] as f64, sensor[1] as f64, sensor[2] as f64])
