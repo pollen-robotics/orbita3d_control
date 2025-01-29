@@ -129,6 +129,8 @@ namespace orbita3d_system_hwi
       hw_states_motor_temperatures_[i]=std::numeric_limits<double>::quiet_NaN();
       hw_states_board_temperatures_[i]=std::numeric_limits<double>::quiet_NaN();
 
+      hw_states_axis_sensors_[i]=std::numeric_limits<double>::quiet_NaN();
+
     }
 
 
@@ -278,6 +280,20 @@ namespace orbita3d_system_hwi
       RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),
           "(%s) READ BOARD TEMPERATURES !", info_.name.c_str());
+      // ret= CallbackReturn::ERROR;
+            initOk=false;
+
+    }
+
+
+    rclcpp::sleep_for(std::chrono::milliseconds(10));
+
+    // absolute sensors
+    if (orbita3d_get_axis_sensors(this->uid, &hw_states_axis_sensors_) != 0)
+    {
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ ABSOLUTE SENSORS !", info_.name.c_str());
       // ret= CallbackReturn::ERROR;
             initOk=false;
 
@@ -437,6 +453,12 @@ namespace orbita3d_system_hwi
                                         gpio.name, "i_gain", &hw_states_i_gain_[motor_index]));
         state_interfaces.emplace_back(hardware_interface::StateInterface(
                                         gpio.name, "d_gain", &hw_states_d_gain_[motor_index]));
+
+
+	// // Temporary location for axis sensors in gpios (it will be used as the standard axis hardware_interface::HW_IF_POSITION)
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+					  gpio.name, "axis_sensor", &hw_states_axis_sensors_[motor_index]));
+
 
         // next motor
         motor_index++;
@@ -683,6 +705,17 @@ namespace orbita3d_system_hwi
       RCLCPP_ERROR(
         rclcpp::get_logger("Orbita3dSystem"),
         "(%s) READ MOTOR CURRENTS ERROR!", info_.name.c_str()
+        );
+    }
+
+
+    // Absolute sensors
+
+    if (orbita3d_get_axis_sensors(this->uid, &hw_states_axis_sensors_) != 0) {
+
+      RCLCPP_ERROR(
+        rclcpp::get_logger("Orbita3dSystem"),
+        "(%s) READ ABSOLUTE SENSORS ERROR!", info_.name.c_str()
         );
     }
 

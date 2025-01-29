@@ -29,6 +29,7 @@ pub struct EthercatPoulpeController {
     // motor_reduction: [Option<f64>; 3],
     limits: [Option<Limit>; 3],
     inverted_axes: [Option<bool>; 3],
+    axis_sensor_zeros: [Option<f64>; 3],
 }
 
 impl EthercatPoulpeController {
@@ -105,7 +106,8 @@ impl EthercatPoulpeController {
             offsets: [None; 3],
             reduction: [Some(reductions); 3],
             limits: [None; 3],
-            inverted_axes,
+            inverted_axes: inverted_axes,
+            axis_sensor_zeros: [None; 3],
         };
 
         info!(
@@ -116,6 +118,7 @@ impl EthercatPoulpeController {
         log::info!("Creacting controller");
 
         match zero {
+            // deprecated
             ZeroType::ApproximateHardwareZero(zero) => {
                 log::info!("ApproximateHardwarezero");
 
@@ -138,7 +141,18 @@ impl EthercatPoulpeController {
                 log::info!(
                     "FirmwareZero => zero has been done in firmware, no need to do it here."
                 );
+                //we only need to get these once, they are stored in the firmware
+                //beware offsets in config file are also used
+                let axis_sensor_zeros =
+                    MotorsController::get_axis_sensor_zeros(&mut poulpe_controller)?;
+                log::info!("Axis sensor zeros: {:?}", axis_sensor_zeros);
+                poulpe_controller.axis_sensor_zeros = [
+                    Some(axis_sensor_zeros[0]),
+                    Some(axis_sensor_zeros[1]),
+                    Some(axis_sensor_zeros[2]),
+                ];
             }
+            //deprecated
             ZeroType::ZeroStartup(_) => {
                 log::info!("ZeroStartup");
 
@@ -332,7 +346,22 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
     }
     fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
         match self.io.get_axis_sensors(self.id) {
-            Ok(sensor) => Ok([sensor[0] as f64, sensor[1] as f64, sensor[2] as f64]),
+            Ok(mut sensor) => {
+                // substract the sensor zero and the axis offset
+                // FIXME: these are not the "output" angles. We need to compute kinematics and handle multiturn...
+                for (i, s) in sensor.iter_mut().enumerate() {
+                    if !self.axis_sensor_zeros[i].is_none() {
+                        *s -= self.axis_sensor_zeros[i].unwrap() as f32;
+                    }
+                    if !self.offsets[i].is_none() {
+                        *s -= self.offsets[i].unwrap() as f32;
+                    }
+                    // *s *= self.reduction[i].unwrap() as f32;
+                    *s = wrap_to_pi(*s as f64) as f32;
+                }
+                Ok([sensor[0] as f64, sensor[1] as f64, sensor[2] as f64])
+            }
+
             Err(_) => Err("Error while getting axis sensors".into()),
         }
     }
@@ -564,6 +593,12 @@ pub fn hall_diff(hall_a: u8, hall_b: u8) -> f64 {
     } else {
         d + 16.0
     }
+}
+
+// function wrapping an angle in radians to
+// the range [-pi, pi]
+fn wrap_to_pi(angle: f64) -> f64 {
+    (((angle + PI) % (2.0 * PI)) + (2.0 * PI)) % (2.0 * PI) - PI
 }
 
 #[cfg(test)]

@@ -37,7 +37,7 @@ use clap::Parser;
 struct Args {
     /// tty
     // #[arg(default_value = "config/dxl_poulpe.yaml")]
-    #[arg(short,long, default_value = "config/ethercat_poulpe.yaml")]
+    #[arg(short, long, default_value = "config/ethercat_poulpe.yaml")]
     configfile: String,
 }
 
@@ -116,7 +116,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Ok(_) => log::info!("Torque limit set"),
         Err(e) => log::error!("Error: {}", e),
     }
-    
+
     //DEBUGGING
     // let r = controller.disable_torque();
     // match r {
@@ -144,12 +144,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         let target = conversion::rotation_matrix_to_quaternion(target_yaw_mat);
 
         let fb = controller.set_target_orientation_fb(target);
-        match fb {
-            Ok(fb) => {
+        let axis = controller.get_axis_sensors();
+        match (fb, axis) {
+            (Ok(fb), Ok(axis)) => {
                 // log::info!("Feedback: {:?}", fb);
                 let rpy = conversion::quaternion_to_roll_pitch_yaw(fb.orientation);
                 log::info!("rpy: {:?}", rpy);
-                println!("{:?} {:?} {:?} {:?} {:?}", t, s, rpy[0], rpy[1], rpy[2]);
+                println!(
+                    "{:?} {:?} {:?} {:?} {:?}",
+                    t, s, rpy[0], rpy[1], rpy[2], axis[0], axis[1], axis[2]
+                );
             }
             Err(e) => log::error!("Error: {}", e),
         }
