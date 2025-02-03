@@ -1,5 +1,5 @@
 use orbita3d_controller::Orbita3dController;
-use orbita3d_kinematics::conversion;
+use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use std::f64::consts::PI;
 use std::time::SystemTime;
 use std::{error::Error, thread, time::Duration};
@@ -125,11 +125,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     // }
     // thread::sleep(Duration::from_millis(10000));
 
-    let now = SystemTime::now();
-    let mut t = now.elapsed().unwrap().as_secs_f32();
     let freq: f64 = 0.25;
     let amplitude: f64 = PI / 8.0;
 
+    log::info!("axis zeros: {:?}", controller.get_axis_sensor_zeros()?);
+    log::info!("axis position: {:?}", controller.get_axis_sensors()?);
+
+    let now = SystemTime::now();
+    let mut t = now.elapsed().unwrap().as_secs_f32();
     loop {
         if t > 10.0 {
             break;
@@ -143,20 +146,28 @@ fn main() -> Result<(), Box<dyn Error>> {
         let target_yaw_mat = conversion::intrinsic_roll_pitch_yaw_to_matrix(0.0, 0.0, s);
         let target = conversion::rotation_matrix_to_quaternion(target_yaw_mat);
 
-        let fb = controller.set_target_orientation_fb(target);
-        let axis = controller.get_axis_sensors();
-        match (fb, axis) {
-            (Ok(fb), Ok(axis)) => {
-                // log::info!("Feedback: {:?}", fb);
-                let rpy = conversion::quaternion_to_roll_pitch_yaw(fb.orientation);
-                log::info!("rpy: {:?}", rpy);
-                println!(
-                    "{:?} {:?} {:?} {:?} {:?}",
-                    t, s, rpy[0], rpy[1], rpy[2], axis[0], axis[1], axis[2]
-                );
-            }
-            Err(e) => log::error!("Error: {}", e),
-        }
+        let fb = controller.set_target_orientation_fb(target).unwrap();
+        let rpy = conversion::quaternion_to_roll_pitch_yaw(fb.orientation);
+        let motor_pos = controller.get_raw_motors_positions().unwrap();
+
+        let axis = controller.get_axis_sensors().unwrap();
+        let axis_rot = controller.kinematics.compute_forward_kinematics(axis);
+        let axis_quat = conversion::rotation_matrix_to_quaternion(axis_rot);
+        let axis_rpy = conversion::quaternion_to_roll_pitch_yaw(axis_quat);
+        log::info!("rpy: {:?}", rpy);
+        // println!(
+        //     "{:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}",
+        //     t, s, 
+        //     rpy[0], rpy[1], rpy[2], 
+        //     axis_rpy[0], axis_rpy[1], axis_rpy[2]
+        // );
+        println!(
+            "{:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}",
+            t, s, 
+            motor_pos[0], motor_pos[1], motor_pos[2],
+            axis[0], axis[1], axis[2]
+        );
+        
 
         thread::sleep(Duration::from_millis(1));
     }
