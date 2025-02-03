@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rprompt = "2.1"
 cache_cache = "0.1.1"
 log = "0.4.20"
 env_logger = "0.8.4"
@@ -19,7 +20,8 @@ timeit = "0.1.2"
 clap = { version = "4.0.32", features = ["derive"] }
 # poulpe_ethercat_grpc = { path = "../../poulpe_ethercat_controller/poulpe_ethercat_grpc" }
 poulpe_ethercat_grpc = { path = "../../../../dev/poulpe_ethercat_controller/poulpe_ethercat_grpc" } #robot
-# poulpe_ethercat_grpc = { git = "ssh://git@github.com/pollen-robotics/poulpe_ethercat_controller.git", branch = "develop" }
+#poulpe_ethercat_grpc = { git = "ssh://git@github.com/pollen-robotics/poulpe_ethercat_controller.git", branch = "develop" }
+
 
 [dev-dependencies]
 rand = "0.8.5"
