@@ -216,6 +216,7 @@ impl Orbita3dController {
                 let controller = EthercatPoulpeController::new(
                     &ethercat_config.url,
                     ethercat_config.id,
+                    ethercat_config.name,
                     config.disks.zeros,
                     config.disks.reduction,
                     config.inverted_axes,
