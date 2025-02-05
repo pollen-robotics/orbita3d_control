@@ -125,7 +125,7 @@ impl EthercatPoulpeController {
             offsets: [None; 3],
             reduction: [Some(reductions); 3],
             limits: [None; 3],
-            inverted_axes: inverted_axes,
+            inverted_axes,
             axis_sensor_zeros: [None; 3],
         };
 
