@@ -14,6 +14,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libudev-dev
 
+      - name: Install protc
+        run: sudo apt install -y protobuf-compiler libprotobuf-dev
+          
+      - name: Install Mercurial
+        run: sudo apt-get install -y mercurial
+          
+      - name: Set up IgH repo
+        run: |
+          cd /tmp
+          hg clone http://hg.code.sf.net/p/etherlabmaster/code ethercat-hg
+          cd ethercat-hg
+          hg update stable-1.5
+          ./bootstrap
+          ./configure --disable-8139too
+          export ETHERCAT_PATH=$(pwd)/ethercat-hg
+          
       - name: Setup Python 3.10
         uses: actions/setup-python@v4
         with:
@@ -33,7 +49,7 @@ jobs:
           pip install maturin
 
           cd orbita3d_c_api
-
+          export ETHERCAT_PATH=/tmp/ethercat-hg
           maturin develop
           python -c "import orbita3d"
 
