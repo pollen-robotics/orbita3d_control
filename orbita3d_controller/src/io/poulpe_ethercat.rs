@@ -47,7 +47,8 @@ impl EthercatPoulpeController {
         let mut io = match (id, name) {
             (_, Some(name)) => {
                 log::info!("Connecting to the slave with name: {}", name);
-                let client = match PoulpeRemoteClient::connect_with_name(
+                
+                match PoulpeRemoteClient::connect_with_name(
                     url.parse()?,
                     vec![name],
                     update_time,
@@ -60,13 +61,12 @@ impl EthercatPoulpeController {
                         );
                         return Err("Error while connecting to EthercatPoulpeController".into());
                     }
-                };
-                client
+                }
             }
             (Some(id), None) => {
                 log::info!("Connecting to the slave with id: {}", id);
-                let client =
-                    match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], update_time) {
+                
+                match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], update_time) {
                         Ok(client) => client,
                         Err(e) => {
                             error!(
@@ -75,8 +75,7 @@ impl EthercatPoulpeController {
                             );
                             return Err("Error while connecting to EthercatPoulpeController".into());
                         }
-                    };
-                client
+                    }
             }
             _ => {
                 log::error!("Invalid config file, make sure to provide either the id or the name!");
@@ -372,11 +371,11 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
                     // apply the gearing ratio first
                     *s *= 1.0 / self.reduction[i].unwrap() as f32;
                     // substract the zero and the offset
-                    if !self.axis_sensor_zeros[i].is_none() {
+                    if self.axis_sensor_zeros[i].is_some() {
                         *s -= self.axis_sensor_zeros[i].unwrap() as f32;
                     }
                     // remove any offset
-                    if !self.offsets[i].is_none() {
+                    if self.offsets[i].is_some() {
                         *s -= self.offsets[i].unwrap() as f32;
                     }
                     // wrap to pi
@@ -655,7 +654,7 @@ mod tests {
             } else {
                 panic!("Wrong config type");
             }
-            assert_eq!(config.disks.reduction, 5.333333333333333333);
+            assert_eq!(config.disks.reduction, 5.333_333_333_333_333);
             // assert_eq!(config.disks.reduction, 4.2666667); //Old Orbita
 
             assert_eq!(dxl_config.url, "http://127.0.0.1:50098");

@@ -373,9 +373,9 @@ mod tests {
         let orb = Orbita3dKinematicsModel::default();
 
         let rpy = [
-            -1.638_039_316_827_991_8e-08,
-            -6.741_158_650_578_780_7e-09,
-            -1.220_747_654_483_793_3e-09,
+            -1.638_039_316_827_991_8e-8,
+            -6.741_158_650_578_781e-9,
+            -1.220_747_654_483_793_3e-9,
         ];
         let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
         let thetas = orb.compute_inverse_kinematics(rot).unwrap();
