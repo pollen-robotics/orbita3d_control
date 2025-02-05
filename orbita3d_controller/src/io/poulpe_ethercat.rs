@@ -47,12 +47,8 @@ impl EthercatPoulpeController {
         let mut io = match (id, name) {
             (_, Some(name)) => {
                 log::info!("Connecting to the slave with name: {}", name);
-                
-                match PoulpeRemoteClient::connect_with_name(
-                    url.parse()?,
-                    vec![name],
-                    update_time,
-                ) {
+
+                match PoulpeRemoteClient::connect_with_name(url.parse()?, vec![name], update_time) {
                     Ok(client) => client,
                     Err(e) => {
                         error!(
@@ -65,17 +61,17 @@ impl EthercatPoulpeController {
             }
             (Some(id), None) => {
                 log::info!("Connecting to the slave with id: {}", id);
-                
+
                 match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], update_time) {
-                        Ok(client) => client,
-                        Err(e) => {
-                            error!(
-                                "Error while connecting to EthercatPoulpeController: {:?}",
-                                e
-                            );
-                            return Err("Error while connecting to EthercatPoulpeController".into());
-                        }
+                    Ok(client) => client,
+                    Err(e) => {
+                        error!(
+                            "Error while connecting to EthercatPoulpeController: {:?}",
+                            e
+                        );
+                        return Err("Error while connecting to EthercatPoulpeController".into());
                     }
+                }
             }
             _ => {
                 log::error!("Invalid config file, make sure to provide either the id or the name!");
