@@ -157,17 +157,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         log::info!("rpy: {:?}", rpy);
         // println!(
         //     "{:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}",
-        //     t, s, 
-        //     rpy[0], rpy[1], rpy[2], 
+        //     t, s,
+        //     rpy[0], rpy[1], rpy[2],
         //     axis_rpy[0], axis_rpy[1], axis_rpy[2]
         // );
         println!(
             "{:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}",
-            t, s, 
-            motor_pos[0], motor_pos[1], motor_pos[2],
-            axis[0], axis[1], axis[2]
+            t, s, motor_pos[0], motor_pos[1], motor_pos[2], axis[0], axis[1], axis[2]
         );
-        
 
         thread::sleep(Duration::from_millis(1));
     }

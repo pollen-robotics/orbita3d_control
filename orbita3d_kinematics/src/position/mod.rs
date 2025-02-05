@@ -241,40 +241,55 @@ mod tests {
                 [
                     -1.6380393168279918e-08,
                     -6.7411586505787807e-09,
-                    pi+-1.2207476544837933e-09,
+                    pi + -1.2207476544837933e-09,
                 ],
                 [
                     -8.7242210721817127e-09,
                     -3.5903508387229123e-09,
-                    pi+-6.5017196483874694e-10,
+                    pi + -6.5017196483874694e-10,
                 ],
                 [
                     -4.0890828050519669e-09,
                     -1.6828140595413765e-09,
-                    pi+-3.0473860986864965e-10,
+                    pi + -3.0473860986864965e-10,
                 ],
                 [
                     -1.3678829496508414e-09,
                     -5.6293618135299251e-10,
-                    pi+-1.0194138108727733e-10,
+                    pi + -1.0194138108727733e-10,
                 ],
                 [
                     -2.4477365943051214e-10,
                     -1.0073372814871622e-10,
-                    pi+-1.8241739831181564e-11,
+                    pi + -1.8241739831181564e-11,
                 ],
                 [
                     -2.7481566284778824e-12,
                     -1.1309716590980276e-12,
-                    pi+-2.0480618171173342e-13,
+                    pi + -2.0480618171173342e-13,
                 ],
             ] {
                 let disks = orb.compute_inverse_kinematics_rpy_multiturn(rpy).unwrap();
                 let reconstructed = orb.compute_forward_kinematics_rpy_multiturn(disks).unwrap();
 
-                assert!(disks[0] - pi < 1e-6, "Fail for {:?} (disks {:?})", rpy, disks);
-                assert!(disks[1] - pi < 1e-6, "Fail for {:?} (disks {:?})", rpy, disks);
-                assert!(disks[2] - pi < 1e-6, "Fail for {:?} (disks {:?})", rpy, disks);
+                assert!(
+                    disks[0] - pi < 1e-6,
+                    "Fail for {:?} (disks {:?})",
+                    rpy,
+                    disks
+                );
+                assert!(
+                    disks[1] - pi < 1e-6,
+                    "Fail for {:?} (disks {:?})",
+                    rpy,
+                    disks
+                );
+                assert!(
+                    disks[2] - pi < 1e-6,
+                    "Fail for {:?} (disks {:?})",
+                    rpy,
+                    disks
+                );
 
                 assert!(
                     reconstructed[0] < 1e-6,
@@ -284,14 +299,14 @@ mod tests {
                 );
 
                 assert!(
-                    reconstructed[1]  < 1e-6,
+                    reconstructed[1] < 1e-6,
                     "Fail for {:?} (reconstructed {:?})",
                     rpy,
                     reconstructed
                 );
 
                 assert!(
-                    reconstructed[2]- pi  < 1e-6,
+                    reconstructed[2] - pi < 1e-6,
                     "Fail for {:?} (reconstructed {:?})",
                     rpy,
                     reconstructed
