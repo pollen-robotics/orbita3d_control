@@ -32,9 +32,23 @@ jobs:
           run: |
             cargo check --all --tests
         
+        - name: Install protc
+          run: sudo apt install -y protobuf-compiler libprotobuf-dev
+          
+        - name: Install Mercurial
+          run: sudo apt-get install -y mercurial
+          
+        - name: Set up IgH repo
+          run: |
+            hg clone http://hg.code.sf.net/p/etherlabmaster/code ethercat-hg
+            cd ethercat-hg
+            hg update stable-1.5
+            ./bootstrap
+            ./configure --disable-8139too
+
         - name: Build
           run: |
-            cargo build
+            ETHERCAT_PATH=$(pwd)/ethercat-hg RUST_BACKTRACE=full cargo build --release
         
         - name: Test
           run: |
