@@ -61,8 +61,11 @@ jobs:
             grep "browser_download_url.*sccache-.*-unknown-linux-musl" | \
             cut -d '"' -f 4 | wget -i - -O sccache
             chmod +x sccache
-            mv sccache /usr/local/bin/
-    
+                mv sccache /usr/local/bin/
+        - name: Set Up sccache
+          run: |
+            export RUSTC_WRAPPER=$(which sccache)
+            echo "RUSTC_WRAPPER=$(which sccache)" >> $GITHUB_ENV
         - name: Check + Build + Test
           run: |
             export RUSTC_WRAPPER=sccache
