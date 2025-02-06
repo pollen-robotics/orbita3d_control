@@ -55,9 +55,16 @@ jobs:
 
         - name: Enable Incremental Compilation
           run: export CARGO_INCREMENTAL=1
-
+        - name: Install sccache
+          run: |
+            curl -fsSL https://github.com/mozilla/sccache/releases/latest/download/sccache-x86_64-unknown-linux-musl -o sccache
+            chmod +x sccache
+            mv sccache /usr/local/bin/
+    
         - name: Check + Build + Test
           run: |
+            export RUSTC_WRAPPER=sccache
+            export CARGO_INCREMENTAL=1
             ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests 
             ETHERCAT_PATH=$(pwd)/ethercat-hg cargo build
             ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test 
