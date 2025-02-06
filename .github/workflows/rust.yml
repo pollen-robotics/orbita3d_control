@@ -42,6 +42,9 @@ jobs:
             ./bootstrap
             ./configure --disable-8139too
 
+        - name: Enable Incremental Compilation
+          run: export CARGO_INCREMENTAL=1
+
         - name: Check + Build + Test
           run: |
             ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests 
