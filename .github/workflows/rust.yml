@@ -44,7 +44,7 @@ jobs:
 
         - name: Check
           run: |
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --release --all --tests 
         
         - name: Build
           run: |
@@ -52,7 +52,7 @@ jobs:
         
         - name: Test
           run: |
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test  --release
         
         - name: Format
           run: |
