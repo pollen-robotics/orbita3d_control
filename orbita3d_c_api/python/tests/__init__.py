@@ -20,6 +20,10 @@ def get_fake_controller():
               beta: 1.5707963267948966 # 90 degrees
               gamma_max: 3.141592653589793 # 180 degrees
               passiv_arms_direct: true
+            inverted_axes:
+              - false
+              - false
+              - false
             """
         )
         f.seek(0)

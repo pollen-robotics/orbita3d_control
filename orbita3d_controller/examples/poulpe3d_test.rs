@@ -10,8 +10,6 @@ use std::{error::Error, thread, time::Duration};
 
 use clap::Parser;
 
-use rerun;
-
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {

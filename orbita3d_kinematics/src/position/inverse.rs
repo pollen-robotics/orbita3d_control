@@ -361,9 +361,10 @@ mod tests {
         // );
 
         // Thetas are at the extreme values, check should fail
-        match orb.check_gammas(Vector3::from_row_slice(&[thetas[0], thetas[1], thetas[2]])) {
-            Ok(()) => assert!(false),
-            Err(_) => assert!(true),
+        if let Ok(()) =
+            orb.check_gammas(Vector3::from_row_slice(&[thetas[0], thetas[1], thetas[2]]))
+        {
+            panic!()
         }
     }
 
@@ -372,9 +373,9 @@ mod tests {
         let orb = Orbita3dKinematicsModel::default();
 
         let rpy = [
-            -1.6380393168279918e-08,
-            -6.7411586505787807e-09,
-            -1.2207476544837933e-09,
+            -1.638_039_316_827_991_8e-8,
+            -6.741_158_650_578_781e-9,
+            -1.220_747_654_483_793_3e-9,
         ];
         let rot = intrinsic_roll_pitch_yaw_to_matrix(rpy[0], rpy[1], rpy[2]);
         let thetas = orb.compute_inverse_kinematics(rot).unwrap();
