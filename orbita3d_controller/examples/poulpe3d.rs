@@ -1,5 +1,5 @@
 use orbita3d_controller::Orbita3dController;
-use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
+use orbita3d_kinematics::conversion;
 use std::f64::consts::PI;
 use std::time::SystemTime;
 use std::{error::Error, thread, time::Duration};
@@ -154,20 +154,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         let axis_rot = controller.kinematics.compute_forward_kinematics(axis);
         let axis_quat = conversion::rotation_matrix_to_quaternion(axis_rot);
         let axis_rpy = conversion::quaternion_to_roll_pitch_yaw(axis_quat);
-        log::info!("rpy: {:?}", rpy);
+        log::info!("rpy: {:?} {:?}", rpy, axis_rpy);
         // println!(
         //     "{:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}",
-        //     t, s, 
-        //     rpy[0], rpy[1], rpy[2], 
+        //     t, s,
+        //     rpy[0], rpy[1], rpy[2],
         //     axis_rpy[0], axis_rpy[1], axis_rpy[2]
         // );
         println!(
             "{:?} {:?} {:?} {:?} {:?} {:?} {:?} {:?}",
-            t, s, 
-            motor_pos[0], motor_pos[1], motor_pos[2],
-            axis[0], axis[1], axis[2]
+            t, s, motor_pos[0], motor_pos[1], motor_pos[2], axis[0], axis[1], axis[2]
         );
-        
 
         thread::sleep(Duration::from_millis(1));
     }

@@ -28,22 +28,36 @@ jobs:
             rustup component add rustfmt --toolchain nightly
             rustup component add clippy --toolchain nightly
 
+        - name: Install protc
+          run: sudo apt install -y protobuf-compiler libprotobuf-dev
+          
+        - name: Install Mercurial
+          run: sudo apt-get install -y mercurial
+          
+        - name: Set up IgH repo
+          run: |
+            hg clone http://hg.code.sf.net/p/etherlabmaster/code ethercat-hg
+            cd ethercat-hg
+            hg update stable-1.5
+            ./bootstrap
+            ./configure --disable-8139too
+
         - name: Check
           run: |
-            cargo check --all --tests
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests
         
         - name: Build
           run: |
-            cargo build
+            ETHERCAT_PATH=$(pwd)/ethercat-hg RUST_BACKTRACE=full cargo build --release
         
         - name: Test
           run: |
-            cargo test
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test
         
         - name: Format
           run: |
-            cargo fmt --all -- --check
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo fmt --all -- --check
                 
         - name: Lint
           run: |
-            cargo clippy --all-targets --all-features -- -D warnings
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo clippy --all-targets --all-features -- -D warnings

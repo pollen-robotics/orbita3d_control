@@ -1,7 +1,7 @@
 use motor_toolbox_rs::{Limit, MotorsController, RawMotorsIO, Result, PID};
 use poulpe_ethercat_grpc::client::PoulpeRemoteClient;
 use serde::{Deserialize, Serialize};
-use std::{f64::consts::PI, f64::consts::TAU, time::Duration, thread};
+use std::{f64::consts::PI, f64::consts::TAU, thread, time::Duration};
 
 use log::{error, info};
 
@@ -15,7 +15,7 @@ pub struct PoulpeEthercatConfig {
     /// Actuator id
     pub id: Option<u8>,
     /// Actuator name
-    pub name: Option<String>
+    pub name: Option<String>,
 }
 
 #[derive(Debug)]
@@ -42,17 +42,13 @@ impl EthercatPoulpeController {
         reductions: f64,
         inverted_axes: [Option<bool>; 3],
     ) -> Result<Self> {
+        let update_time = Duration::from_secs_f32(0.002);
 
-        let update_time =  Duration::from_secs_f32(0.002);
-              
         let mut io = match (id, name) {
             (_, Some(name)) => {
                 log::info!("Connecting to the slave with name: {}", name);
-                let client = match PoulpeRemoteClient::connect_with_name(
-                    url.parse()?,
-                    vec![name],
-                    update_time,
-                ) {
+
+                match PoulpeRemoteClient::connect_with_name(url.parse()?, vec![name], update_time) {
                     Ok(client) => client,
                     Err(e) => {
                         error!(
@@ -61,16 +57,12 @@ impl EthercatPoulpeController {
                         );
                         return Err("Error while connecting to EthercatPoulpeController".into());
                     }
-                };
-                client
-            },
+                }
+            }
             (Some(id), None) => {
                 log::info!("Connecting to the slave with id: {}", id);
-                let client = match PoulpeRemoteClient::connect(
-                    url.parse()?,
-                    vec![id as u16],
-                    update_time,
-                ) {
+
+                match PoulpeRemoteClient::connect(url.parse()?, vec![id as u16], update_time) {
                     Ok(client) => client,
                     Err(e) => {
                         error!(
@@ -79,9 +71,8 @@ impl EthercatPoulpeController {
                         );
                         return Err("Error while connecting to EthercatPoulpeController".into());
                     }
-                };
-                client
-            },
+                }
+            }
             _ => {
                 log::error!("Invalid config file, make sure to provide either the id or the name!");
                 return Err("Invalid config file".into());
@@ -94,14 +85,27 @@ impl EthercatPoulpeController {
         let mut trials = 20; // 2s
         while io.get_state(id as u16).is_err() {
             thread::sleep(Duration::from_millis(100));
-            log::warn!("Waiting for connection to Orbita3d PoulpeRemoteClient with id {}", id);
+            log::warn!(
+                "Waiting for connection to Orbita3d PoulpeRemoteClient with id {}",
+                id
+            );
             if trials == 0 {
-                log::error!("Error: Timeout while connecting to the Orbita3d PoulpeRemoteClient with id {}", id);
-                return Err("Error: Timeout while connecting to the Orbita3d  PoulpeRemoteClient".into());
+                log::error!(
+                    "Error: Timeout while connecting to the Orbita3d PoulpeRemoteClient with id {}",
+                    id
+                );
+                return Err(
+                    "Error: Timeout while connecting to the Orbita3d  PoulpeRemoteClient".into(),
+                );
             }
             trials -= 1;
         }
-        log::info!("Connected Orbita3d Client created for Slave {} (id: {}), sampling time: {:}ms", name, id, update_time.as_millis());
+        log::info!(
+            "Connected Orbita3d Client created for Slave {} (id: {}), sampling time: {:}ms",
+            name,
+            id,
+            update_time.as_millis()
+        );
 
         // set the initial velocity and torque limit to 100%
         io.set_velocity_limit(id as u16, [1.0; 3].to_vec());
@@ -116,7 +120,7 @@ impl EthercatPoulpeController {
             offsets: [None; 3],
             reduction: [Some(reductions); 3],
             limits: [None; 3],
-            inverted_axes: inverted_axes,
+            inverted_axes,
             axis_sensor_zeros: [None; 3],
         };
 
@@ -361,13 +365,13 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
                 // FIXME: these are not the "output" angles. We need to compute kinematics and handle multiturn...
                 for (i, s) in sensor.iter_mut().enumerate() {
                     // apply the gearing ratio first
-                    *s *= 1.0/self.reduction[i].unwrap() as f32;
+                    *s *= 1.0 / self.reduction[i].unwrap() as f32;
                     // substract the zero and the offset
-                    if !self.axis_sensor_zeros[i].is_none() {
+                    if self.axis_sensor_zeros[i].is_some() {
                         *s -= self.axis_sensor_zeros[i].unwrap() as f32;
                     }
                     // remove any offset
-                    if !self.offsets[i].is_none() {
+                    if self.offsets[i].is_some() {
                         *s -= self.offsets[i].unwrap() as f32;
                     }
                     // wrap to pi
@@ -646,11 +650,11 @@ mod tests {
             } else {
                 panic!("Wrong config type");
             }
-            assert_eq!(config.disks.reduction, 5.333333333333333333);
+            assert_eq!(config.disks.reduction, 5.333_333_333_333_333);
             // assert_eq!(config.disks.reduction, 4.2666667); //Old Orbita
 
             assert_eq!(dxl_config.url, "http://127.0.0.1:50098");
-            assert_eq!(dxl_config.id, 0);
+            assert_eq!(dxl_config.id, Some(0));
         } else {
             panic!("Wrong config type");
         }
