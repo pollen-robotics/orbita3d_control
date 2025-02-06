@@ -42,16 +42,10 @@ jobs:
             ./bootstrap
             ./configure --disable-8139too
 
-        - name: Check
+        - name: Check + Build + Test
           run: |
             ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --release --all --tests 
-        
-        - name: Build
-          run: |
             ETHERCAT_PATH=$(pwd)/ethercat-hg RUST_BACKTRACE=full cargo build --release
-        
-        - name: Test
-          run: |
             ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test  --release
         
         - name: Format
