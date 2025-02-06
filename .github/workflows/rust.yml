@@ -57,7 +57,9 @@ jobs:
           run: export CARGO_INCREMENTAL=1
         - name: Install sccache
           run: |
-            curl -fsSL https://github.com/mozilla/sccache/releases/latest/download/sccache-x86_64-unknown-linux-musl -o sccache
+            curl -fsSL https://api.github.com/repos/mozilla/sccache/releases/latest | \
+            grep "browser_download_url.*sccache-.*-unknown-linux-musl" | \
+            cut -d '"' -f 4 | wget -i - -O sccache
             chmod +x sccache
             mv sccache /usr/local/bin/
     
