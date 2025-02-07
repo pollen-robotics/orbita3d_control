@@ -53,11 +53,15 @@ jobs:
             ./bootstrap
             ./configure --disable-8139too
           
-        - name: Check + Build + Test
+        - name: Check 
           run: |
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests  j $(nproc)
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo build j $(nproc)
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test  j $(nproc)
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests
+        - name:  Build
+          run: |
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo build -j $(nproc)
+        - name: Test
+          run: |
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test  -j $(nproc)
         
         - name: Format
           run: |
