@@ -1,6 +1,7 @@
 [project]
 name = "orbita3d"
 dependencies = ["cffi", "numpy", "pyyaml", "scipy"]
+version = "0.1.0"
 
 [build-system]
 requires = ["maturin>=1.0,<2.0"]

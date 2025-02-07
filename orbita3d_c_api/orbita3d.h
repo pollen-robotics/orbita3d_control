@@ -64,6 +64,8 @@ uint32_t orbita3d_get_raw_motors_current(uint32_t uid, double (*raw_motors_curre
 
 uint32_t orbita3d_get_raw_motors_velocity(uint32_t uid, double (*raw_motors_velocity)[3]);
 
+uint32_t orbita3d_get_raw_motors_position(uint32_t uid, double (*raw_motors_position)[3]);
+
 int32_t orbita3d_get_board_state(uint32_t uid, uint8_t *state);
 
 int32_t orbita3d_set_board_state(uint32_t uid, const uint8_t *state);
