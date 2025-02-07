@@ -52,28 +52,12 @@ jobs:
             hg update stable-1.5
             ./bootstrap
             ./configure --disable-8139too
-
-        - name: Enable Incremental Compilation
-          run: export CARGO_INCREMENTAL=1
-        - name: Install sccache
-          run: |
-            curl -fsSL https://api.github.com/repos/mozilla/sccache/releases/latest | \
-            grep "browser_download_url.*sccache-.*-unknown-linux-gnu" | \
-            cut -d '"' -f 4 | wget -i - -O sccache
-            chmod +x sccache
-            sudo mv sccache /usr/local/bin/
-        - name: Set Up sccache
-          run: |
-            export RUSTC_WRAPPER=$(which sccache)
-            echo "RUSTC_WRAPPER=$(which sccache)" >> $GITHUB_ENV
+          
         - name: Check + Build + Test
           run: |
-            export RUSTC_WRAPPER=$(which sccache)
-            echo "RUSTC_WRAPPER=$(which sccache)" >> $GITHUB_ENV
-            export CARGO_INCREMENTAL=1
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests 
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo build
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test 
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests  j $(nproc)
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo build j $(nproc)
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test  j $(nproc)
         
         - name: Format
           run: |
