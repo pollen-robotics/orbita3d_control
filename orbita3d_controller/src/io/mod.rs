@@ -19,7 +19,6 @@ mod poulpe;
 #[cfg(feature = "build_dynamixel")]
 pub use poulpe::DynamixelPoulpeController;
 
-
 #[cfg(feature = "build_ethercat")]
 mod poulpe_ethercat;
 #[cfg(feature = "build_ethercat")]

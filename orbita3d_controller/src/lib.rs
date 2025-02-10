@@ -42,19 +42,19 @@ pub mod io;
 
 use io::Orbita3dIOConfig;
 
-#[cfg(feature = "build_dynamixel")]
-use io::{CachedDynamixelSerialController, DynamixelSerialController, CachedDynamixelPoulpeController, DynamixelPoulpeController};
 #[cfg(feature = "build_ethercat")]
 use crate::io::EthercatPoulpeController;
+#[cfg(feature = "build_dynamixel")]
+use io::{
+    CachedDynamixelPoulpeController, CachedDynamixelSerialController, DynamixelPoulpeController,
+    DynamixelSerialController,
+};
 
 use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
 
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
 use std::{thread, time::Duration};
-
-
-
 
 #[derive(Debug, Deserialize, Serialize)]
 /// Orbita3d Config
