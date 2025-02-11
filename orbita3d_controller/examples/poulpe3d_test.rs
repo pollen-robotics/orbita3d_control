@@ -67,7 +67,6 @@ struct Output {
     board_state: u8,
 }
 
-
 use rprompt::prompt_reply;
 
 fn main() -> Result<(), Box<dyn Error>> {
