@@ -480,7 +480,7 @@ impl Orbita3dController {
         match self.inner.get_current_torque(){
             Ok(t) => {
                 let mut tor = t;
-                for i in 0..3 { tor[i] = tor[i] * red[i].unwrap();} // should be torque_motor = torque_out / reduction but waiting for: https://github.com/pollen-robotics/motor_toolbox_rs/pull/40
+                for i in 0..3 { tor[i] = tor[i] / red[i].unwrap();} 
                 Ok(tor)
             }
             Err(e) => Err(e)
