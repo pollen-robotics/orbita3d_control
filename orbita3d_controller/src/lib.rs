@@ -425,7 +425,7 @@ impl Orbita3dController {
             Ok(p) => {
                 let mut pos = p;
                 for i in 0..3 {
-                    pos[i] = pos[i] * red[i].unwrap();
+                    pos[i] *= red[i].unwrap();
                 }
                 Ok(pos)
             }
@@ -471,7 +471,7 @@ impl Orbita3dController {
             Ok(v) => {
                 let mut vel = v;
                 for i in 0..3 {
-                    vel[i] = vel[i] * red[i].unwrap();
+                    vel[i] *= red[i].unwrap();
                 }
                 Ok(vel)
             }
@@ -485,7 +485,7 @@ impl Orbita3dController {
             Ok(t) => {
                 let mut tor = t;
                 for i in 0..3 {
-                    tor[i] = tor[i] / red[i].unwrap();
+                    tor[i] /= red[i].unwrap();
                 }
                 Ok(tor)
             }
@@ -500,7 +500,7 @@ impl Orbita3dController {
             Ok(a) => {
                 let mut ax = a;
                 for i in 0..3 {
-                    ax[i] = ax[i] * red[i].unwrap();
+                    ax[i] *= red[i].unwrap();
                 }
                 Ok(ax)
             }

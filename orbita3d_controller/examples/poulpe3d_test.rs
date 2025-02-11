@@ -67,8 +67,6 @@ struct Output {
     board_state: u8,
 }
 
-use std::io;
-use std::io::prelude::*;
 
 use rprompt::prompt_reply;
 
