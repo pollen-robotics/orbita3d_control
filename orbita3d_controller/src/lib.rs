@@ -421,13 +421,15 @@ impl Orbita3dController {
     /// caution: this is the raw value used by the motors used inside the actuator, not the orbita3d orientation!
     pub fn get_raw_motors_positions(&mut self) -> Result<[f64; 3]> {
         let red = self.inner.reduction();
-        match self.inner.get_current_position(){
+        match self.inner.get_current_position() {
             Ok(p) => {
                 let mut pos = p;
-                for i in 0..3 { pos[i] = pos[i] * red[i].unwrap();}
+                for i in 0..3 {
+                    pos[i] = pos[i] * red[i].unwrap();
+                }
                 Ok(pos)
             }
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
@@ -465,38 +467,44 @@ impl Orbita3dController {
     /// Get the raw motors velocity in rad/s (top, middle, bottom)
     pub fn get_raw_motors_velocity(&mut self) -> Result<[f64; 3]> {
         let red = self.inner.reduction();
-        match self.inner.get_current_velocity(){
+        match self.inner.get_current_velocity() {
             Ok(v) => {
                 let mut vel = v;
-                for i in 0..3 { vel[i] = vel[i] * red[i].unwrap();}
+                for i in 0..3 {
+                    vel[i] = vel[i] * red[i].unwrap();
+                }
                 Ok(vel)
             }
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
     /// Get the raw motors current in mA (top, middle, bottom)
     pub fn get_raw_motors_current(&mut self) -> Result<[f64; 3]> {
         let red = self.inner.reduction();
-        match self.inner.get_current_torque(){
+        match self.inner.get_current_torque() {
             Ok(t) => {
                 let mut tor = t;
-                for i in 0..3 { tor[i] = tor[i] / red[i].unwrap();} 
+                for i in 0..3 {
+                    tor[i] = tor[i] / red[i].unwrap();
+                }
                 Ok(tor)
             }
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
     /// Get the axis sensors values (gearbox mounted absolute magnetic encoder)
     pub fn get_axis_sensors(&mut self) -> Result<[f64; 3]> {
         let red = self.inner.reduction();
-        match self.inner.get_axis_sensors(){
+        match self.inner.get_axis_sensors() {
             Ok(a) => {
                 let mut ax = a;
-                for i in 0..3 { ax[i] = ax[i] * red[i].unwrap();}
+                for i in 0..3 {
+                    ax[i] = ax[i] * red[i].unwrap();
+                }
                 Ok(ax)
             }
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 

@@ -92,10 +92,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         None => {
             log::warn!("No input csv file provided");
-            let buffer = prompt_reply("Please enter the input csv file path [input.csv]: ").unwrap();
+            let buffer =
+                prompt_reply("Please enter the input csv file path [input.csv]: ").unwrap();
             if buffer.trim().is_empty() {
                 "input.csv".to_string()
-            }else{
+            } else {
                 buffer.trim().to_string()
             }
         }
@@ -108,15 +109,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
     let outfile_path = match args.output_csv {
-        Some(s) => {
-            s
-        }
+        Some(s) => s,
         None => {
             log::warn!("No output csv file provided");
-            let buffer = prompt_reply("Please enter the output csv file path [output.csv]: ").unwrap();
+            let buffer =
+                prompt_reply("Please enter the output csv file path [output.csv]: ").unwrap();
             if buffer.trim().is_empty() {
                 "output.csv".to_string()
-            }else{
+            } else {
                 buffer.trim().to_string()
             }
         }
@@ -128,7 +128,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             log::error!("Error opening output csv file: {}", e);
             return Err(e.into());
         }
-    };    
+    };
 
     let mut input_csv = csv::Reader::from_reader(infile);
 
@@ -140,7 +140,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let t = controller.disable_torque(); //Start with torque_off
     match t {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => log::error!("Error: {}", e),
     }
 
@@ -165,7 +165,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let curr_pos = controller.get_raw_motors_positions()?;
         let curr_axis = controller.get_axis_sensors()?;
         let curr_state = controller.get_board_state()?;
-        all_data.push(Output{
+        all_data.push(Output {
             timestamp: t,
             torque_on: torque,
             present_roll: curr_rpy[0],
