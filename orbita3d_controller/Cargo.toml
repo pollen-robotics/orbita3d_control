@@ -17,6 +17,7 @@ build_dynamixel = ["rustypot", "serialport"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rprompt = "2.1"
 cache_cache = "0.1.1"
 log = "0.4.20"
 env_logger = "0.8.4"
