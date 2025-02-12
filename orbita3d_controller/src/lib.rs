@@ -2,23 +2,7 @@
 //!
 //! This crate provides a controller for the Orbita3d actuator.
 //!
-//! # Overview
-//!
-//! ## Setup
-//! - [x] Load configuration from a file
-//! - [x] Support for different communication layers (Dynamixel like serial, Fake)
-//!
-//! ## Control
-//! - [x] Enable/Disable torque
-//! - [x] Read the current orientation as quaternion (position, velocity, torque)
-//! - [x] Set the target orientation as quaternion (position)
-//! - [x] Extra raw motors parameters (velocity limit, torque limit, pid gains)
-//!
-//! ## Communication
-//! - [x] Fake motors
-//! - [x] Dynamixel like serial
-//! - [x] Poulpe serial dynamixel
-//! - [x] EtherCAT communication
+//! The main Class is `Orbita3dController` which allows to control the Orbita3d actuator.
 //!
 //! # Examples
 //! ```rust

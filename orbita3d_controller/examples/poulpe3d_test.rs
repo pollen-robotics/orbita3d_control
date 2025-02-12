@@ -10,11 +10,17 @@ use std::{error::Error, thread, time::Duration};
 
 use clap::Parser;
 
+use poulpe_ethercat_grpc::server::launch_server;
+use tokio;
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(short, long, default_value = "config/ethercat_poulpe.yaml")]
     configfile: String,
+
+    #[arg(short, long)]
+    start_server: bool,
 
     #[arg(short, long, default_value = "input.csv")]
     input_csv: String,
@@ -71,6 +77,21 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else {
         None
     };
+
+    if args.start_server {
+        log::info!("Starting the server");
+        // run in a thread, do not block main thread
+        thread::spawn(|| {
+            tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(4)
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(launch_server("config/ethercat.yaml"))
+                .unwrap();
+        });
+        thread::sleep(Duration::from_secs(2));
+    }
 
     log::info!("Config file: {}", args.configfile);
     log::info!("Input csv file: {}", args.input_csv);

@@ -1,0 +1,8 @@
+mkdocs
+markdown
+markdown-callouts
+pymdown-extensions
+mkdocs-material
+mkdocs-macros-plugin
+python-markdown-math
+pdocs

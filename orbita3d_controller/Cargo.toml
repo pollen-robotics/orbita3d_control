@@ -27,6 +27,8 @@ serde_yaml = "0.9.25"
 timeit = "0.1.2"
 clap = { version = "4.0.32", features = ["derive"] }
 
+tokio = { version = "1.0.1", features = ["full"] }
+
 # EtherCAT dependencies
 # poulpe_ethercat_grpc = { path = "../../poulpe_ethercat_controller/poulpe_ethercat_grpc" }
 #poulpe_ethercat_grpc = { path = "../../../../dev/poulpe_ethercat_controller/poulpe_ethercat_grpc" } #robot

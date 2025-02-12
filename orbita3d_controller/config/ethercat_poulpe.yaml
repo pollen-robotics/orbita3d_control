@@ -1,6 +1,6 @@
 io: !PoulpeEthercat
   url: http://127.0.0.1:50098
-  name: NeckOrbita3d # it will use the name if available (optional but recomended)
+  #name: NeckOrbita3d # it will use the name if available (optional but recomended)
   id: 0 # otherwise it will use the id (optional)
 disks:
   #zeros: !ZeroStartup

@@ -1,0 +1,6 @@
+ethercat:
+  master_id: 0
+  cycle_time_us: 1000 # us
+  command_drop_time_us: 5000 # us (5ms default)
+  watchdog_timeout_ms: 500 # ms (500ms default)
+  mailbox_wait_time_ms: 10000 #ms  (1s default)

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{%- block site_name %}
+    <a href="{{ nav.homepage.url|url }}" class="icon icon-home"> {{ config.site_name }}</a><br>
+    <a href="https://pollen-robotics.com"><img src="img/favicon.ico">Pollen Robotics</a> <br> 
+    <a href="{{ config.repo_url }}"><i class="fa fa-github fa-lg"></i> GitHub repo</a>
+
+    <!-- <img src="{{ config.theme.logo|url }}" class="logo" style="width:40px" alt="{% trans %}Logo{% endtrans %}"/> -->
+  </a>
+{%- endblock %}
