@@ -10,6 +10,12 @@ Connect the power the one of the pico-2 connectors (any one of the two available
 
 <img src="../../img/power.jpg" alt="Actuator" style="width: 400px;"/>
 
+INFO:
+- The actuator's supported power supply in in range of 12V to 24V. make sure to connect the power supply accordingly. 
+
+WARNING:
+The lower the voltage the lower the maximal achievable velocity of the actuator.
+
 Once the power is connected, the actuator will start its initialisation procedure. Here is the video of it.
 <video width="400" controls>
     <source src="../../img/init.mp4" type="video/mp4">
@@ -24,6 +30,7 @@ See more info about the led lights [here](../led_blinking/).
 Then we can connect the ethercat cable (to any of the two connectors available).
 
 <img src="../../img/ethercat.jpg" alt="Actuator" style="width: 400px;"/>
+<img src="../../img/cable.jpg" alt="Actuator" style="width: 400px;"/>
 
 And you should be ready to go. 
 
