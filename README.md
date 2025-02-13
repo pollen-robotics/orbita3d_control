@@ -19,6 +19,24 @@ This repository contains all libraries required to control an Orbita3d actuator.
 
 See the [full documentation](https://pollen-robotics.github.io/orbita3d_control/)
 
+## Installation
+
+In order to run this project, you need to have Rust installed on your machine. You can install it by following the instructions on the [official Rust website](https://www.rust-lang.org/tools/install).
+Additionally, you will need to have the EtherCAT master installed on your machine. You can find the instructions on how to install it [here](https://pollen-robotics.github.io/orbita3d_control/installation/installation_ethercat.md).
+
+
+To install the project, you can clone the repository 
+
+```shell
+git clone git@github.com:pollen-robotics/orbita3d_control.git
+```
+
+Then, you can build the project by running:
+
+```shell
+cargo build --release
+```
+
 ## Usage
 
 The package can be used in different ways:

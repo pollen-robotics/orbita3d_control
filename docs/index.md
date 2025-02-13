@@ -10,6 +10,9 @@ nav_order: 1
 [![Python checks](https://github.com/pollen-robotics/orbita3d_control/actions/workflows/python.yml/badge.svg)](https://github.com/pollen-robotics/orbita3d_control/actions/workflows/python.yml)
 
 
+<img src="img/orbita_vertical.png" width="100" align="right">
+
+
 ## Overview
 
 This repository contains all libraries required to control an Orbita3d actuator. It allows:
@@ -26,6 +29,9 @@ Additionally, you will need to have the EtherCAT master installed on your machin
 
 ## Installation
 
+In order to run this project, you need to have Rust installed on your machine. You can install it by following the instructions on the [official Rust website](https://www.rust-lang.org/tools/install).
+Additionally, you will need to have the EtherCAT master installed on your machine. You can find the instructions on how to install it [here](installation_ethercat.md).
+
 To install the project, you can clone the repository 
 
 ```shell
@@ -37,6 +43,16 @@ Then, you can build the project by running:
 ```shell
 cargo build --release
 ```
+
+
+## Usage
+
+The package can be used in different ways:
+
+- [Rust API]({{config.repo_url}}/orbita3d_controller/README.md): Rust API to control the actuator  - see in [docs](installation/install_package)
+- [Python API]({{config.repo_url}}/orbita3d_c_api/python/README.md): Python bindings for the C-API library - see in [docs](installation/python)
+- [C-API library]({{config.repo_url}}/orbita3d_c_api/README.md): plain C-API library to control the actuator - see in [docs](installation/orbita_c)
+- **ROS2 integration**: The package can be integrated in a ROS2 system using the provided humble integration package - see in [docs](installation/ros)
 
 ### Via Rust
 

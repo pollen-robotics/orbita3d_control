@@ -11,7 +11,6 @@ use std::{error::Error, thread, time::Duration};
 use clap::Parser;
 
 use poulpe_ethercat_grpc::server::launch_server;
-use tokio;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
