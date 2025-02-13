@@ -1,6 +1,5 @@
 use poulpe_ethercat_grpc::server::launch_server;
 use std::error::Error;
-use tokio;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
@@ -13,5 +12,5 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         .unwrap()
         .block_on(launch_server("config/ethercat.yaml"))?;
 
-    return Ok(());
+    Ok(())
 }

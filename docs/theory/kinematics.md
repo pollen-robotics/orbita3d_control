@@ -287,9 +287,9 @@ def forward_kinematics(thetas, initial_guess=(0,1,0,1,0,1), yaw_offset=0):
     eqs.append(Eq(v(3).dot(v(3)),1).subs(p_subs))
     eqs.append((v(1)+v(2)+v(3)).subs(p_subs))
     eqs=[e for e in eqs if e not in [True, False] ]
-    
+
     sols=nsolve(eqs,(cp1,sp1,cp2,sp2,cp3,sp3),initial_guess,dict=True,tol=1e-10)
-    
+
     sp1_n=float(sols[0][sp1])
     sp2_n=float(sols[0][sp2])
     sp3_n=float(sols[0][sp3])
@@ -311,13 +311,13 @@ def forward_kinematics(thetas, initial_guess=(0,1,0,1,0,1), yaw_offset=0):
     v1sol=np.array([-v1sol[1][0],v1sol[0][0],v1sol[2][0]],dtype=np.float64)
     v2sol=np.array([-v2sol[1][0],v2sol[0][0],v2sol[2][0]],dtype=np.float64)
     v3sol=np.array([-v3sol[1][0],v3sol[0][0],v3sol[2][0]],dtype=np.float64)
-    
+
     V_mat=np.matrix([v1sol,v2sol,v3sol])
     #config de base
     b1=np.array([np.cos(np.radians(0)),np.sin(np.radians(0)),0])
     b2=np.array([np.cos(np.radians(120)),np.sin(np.radians(120)),0])
     b3=np.array([np.cos(np.radians(-120)),np.sin(np.radians(-120)),0])
-    
+
     #dans le repère Orbita:
     yaw_offset=-np.pi/2.0
     #yaw_offset=0

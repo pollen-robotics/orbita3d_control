@@ -48,3 +48,4 @@ kinematics_model:
   gamma_max: 3.05433 # 175 degrees
 ...
 ```
+
