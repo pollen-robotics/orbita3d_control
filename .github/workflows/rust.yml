@@ -84,9 +84,9 @@ jobs:
       - name: Build Docs
         run: |
           export ETHERCAT_PATH=$(pwd)/ethercat-hg 
+          pip install pdoc
           sh docs/generate_api_docs.sh
           
-
       - name: Upload Rust Docs
         uses: actions/upload-artifact@v4
         with:
