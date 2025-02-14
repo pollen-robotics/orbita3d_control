@@ -5,134 +5,69 @@ on: [push, pull_request]
 env:
     CARGO_TERM_COLOR: always
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-  
 jobs:
-  build:
-      runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-      steps:
-      - uses: actions/checkout@v3
-      
-      - name: Cache Cargo Dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            cargo-${{ runner.os }}-
-
-      - name: Deps
-        run: |
-              sudo apt-get update
-              sudo apt-get install -y libudev-dev
-
-      - name: Setup Rust Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-
-      - name: Toolchain in  nightly mode
-        run: |
-          rustup component add rustfmt --toolchain nightly
-          rustup component add clippy --toolchain nightly
-
-      - name: Install protc
-        run: sudo apt install -y protobuf-compiler libprotobuf-dev
+        steps:
+        - uses: actions/checkout@v3
         
-      - name: Install Mercurial
-        run: sudo apt-get install -y mercurial
-        
-      - name: Set up IgH repo
-        run: |
-          hg clone http://hg.code.sf.net/p/etherlabmaster/code ethercat-hg
-          cd ethercat-hg
-          hg update stable-1.5
-          ./bootstrap
-          ./configure --disable-8139too
-        
-      # - name: Check 
-      #   run: |
-      #     ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests
-      - name:  Build
-        run: |
-          ETHERCAT_PATH=$(pwd)/ethercat-hg cargo build -j $(nproc)
+        - name: Cache Cargo Dependencies
+          uses: actions/cache@v3
+          with:
+            path: |
+              ~/.cargo/registry
+              ~/.cargo/git
+              target
+            key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+            restore-keys: |
+              cargo-${{ runner.os }}-
+
+        - name: Deps
+          run: |
+                sudo apt-get update
+                sudo apt-get install -y libudev-dev
+
+        - name: Setup Rust Toolchain
+          uses: actions-rs/toolchain@v1
+          with:
+            toolchain: nightly
+            override: true
+  
+        - name: Toolchain in  nightly mode
+          run: |
+            rustup component add rustfmt --toolchain nightly
+            rustup component add clippy --toolchain nightly
+
+        - name: Install protc
+          run: sudo apt install -y protobuf-compiler libprotobuf-dev
           
-      - name: Test
-        run: |
-          ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test  -j $(nproc) -- --test-threads=2  $(nproc)
-      
-      - name: Format
-        run: |
-          ETHERCAT_PATH=$(pwd)/ethercat-hg cargo fmt --all -- --check
-              
-      - name: Lint
-        run: |
-          ETHERCAT_PATH=$(pwd)/ethercat-hg cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Build Docs
-        run: |
-          export ETHERCAT_PATH=$(pwd)/ethercat-hg 
-          pip install pdoc
-          sh docs/generate_api_docs.sh
+        - name: Install Mercurial
+          run: sudo apt-get install -y mercurial
           
-      - name: Upload Rust Docs
-        uses: actions/upload-artifact@v4
-        with:
-          name: rust-docs
-          path: docs/api
-          retention-days: 1  # Keep for 5 days
-
-  docs:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Download Rust Docs
-        uses: actions/download-artifact@v4
-        with:
-          name: rust-docs
-          path: docs/api
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-         
-      - name: Install MkDocs and dependencies
-        run: |
-          cd docs
-          pip install -r requirements.txt
-      
-      - name: Build MkDocs site
-        run: |
-          mkdocs build --site-dir site
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: docs
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        - name: Set up IgH repo
+          run: |
+            hg clone http://hg.code.sf.net/p/etherlabmaster/code ethercat-hg
+            cd ethercat-hg
+            hg update stable-1.5
+            ./bootstrap
+            ./configure --disable-8139too
+          
+        # - name: Check 
+        #   run: |
+        #     ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests
+        - name:  Build
+          run: |
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo build -j $(nproc)
+            
+        - name: Test
+          run: |
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test  -j $(nproc) -- --test-threads=2  $(nproc)
+        
+        - name: Format
+          run: |
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo fmt --all -- --check
+                
+        - name: Lint
+          run: |
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo clippy --all-targets --all-features -- -D warnings
