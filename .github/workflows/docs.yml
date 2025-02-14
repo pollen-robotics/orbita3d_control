@@ -1,4 +1,4 @@
-name: Rust Lint and Test
+name: Deploy docs
 
 on: [push, pull_request]
 
@@ -85,7 +85,8 @@ jobs:
       - name: Build Docs
         run: |
           export ETHERCAT_PATH=$(pwd)/ethercat-hg 
-          pip install pdoc
+          pip install pdoc 
+          pip install -U cffi
           sh docs/generate_api_docs.sh
           
       - name: Upload Rust Docs
@@ -93,7 +94,7 @@ jobs:
         with:
           name: rust-docs
           path: docs/api
-          retention-days: 1  # Keep for 5 days
+          retention-days: 1  # Keep for 1 days
 
   docs:
     runs-on: ubuntu-latest
