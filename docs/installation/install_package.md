@@ -9,7 +9,6 @@ permalink: /installation/rust
 In order to run this project, you need to have Rust installed on your machine. You can install it by following the instructions on the [official Rust website](https://www.rust-lang.org/tools/install).
 Additionally, you will need to have the EtherCAT master installed on your machine. You can find the instructions on how to install it [here](installation_ethercat.md).
 
-
 ## Installation
 
 To install the project, you can clone the repository 
@@ -31,7 +30,8 @@ If everithing went well you will be able to run the simple test, position your t
 ```shell
 RUST_LOG=info cargo run --release --example=poulpe3d -- --start-server
 ```
-Thi test will do a short sinusoidal movement of the orbita actuator around the yaw axis.
+
+This test will do a short sinusoidal movement of the orbita actuator around the yaw axis.
 
 <video width="300" controls>
     <source src="../../img/sinus.mp4" type="video/mp4">

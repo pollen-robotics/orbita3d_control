@@ -65,6 +65,11 @@ This repository contains the following sub-packages:
 * [orbita3d_description](orbita3d_description/README.md): URDF/ros2_control description of the actuator
 * [orbita3d_system_hwi](orbita3d_system_hwi/README.md): ros2 control hardware system interface for the actuator
 
+## Related repos
+
+- Poulpe Boards Ethercat stack: [poulpe_ethercat_controller](https://github.com/pollen-robotics/poulpe_ethercat_controller)
+- Poulpe Boards firmware: [firmware_Poulpe](https://github.com/pollen-robotics/firmware_Poulpe)
+
 
 ## Changelog
 
