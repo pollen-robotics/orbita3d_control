@@ -20,7 +20,7 @@ build_dynamixel = ["rustypot", "serialport"]
 rprompt = "2.1"
 cache_cache = "0.1.1"
 log = "0.4.20"
-env_logger = "0.8.4"
+env_logger = "0.9.0"
 motor_toolbox_rs = { git = "https://github.com/pollen-robotics/motor_toolbox_rs", branch = "develop" }
 orbita3d_kinematics = { version = "0.1.0", path = "../orbita3d_kinematics" }
 serde = { version = "1.0.183", features = ["derive"] }

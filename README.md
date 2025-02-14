@@ -21,21 +21,13 @@ See the [full documentation](https://pollen-robotics.github.io/orbita3d_control/
 
 ## Installation
 
-In order to run this project, you need to have Rust installed on your machine. You can install it by following the instructions on the [official Rust website](https://www.rust-lang.org/tools/install).
-Additionally, you will need to have the EtherCAT master installed on your machine. You can find the instructions on how to install it [here](https://pollen-robotics.github.io/orbita3d_control/installation/installation_ethercat.md).
+In order to run this project, you need to have two main prerequisites: Rust and EtherCAT master installed on your machine
+
+- The guide to installing Rust can be found on the [official Rust website](https://www.rust-lang.org/tools/install).
+- See how to install EtherCAT master IgH in our  [installation guide](https://pollen-robotics.github.io/orbita3d_control/installation/installation_ethercat.md).
 
 
-To install the project, you can clone the repository 
-
-```shell
-git clone git@github.com:pollen-robotics/orbita3d_control.git
-```
-
-Then, you can build the project by running:
-
-```shell
-cargo build --release
-```
+The orbita3d control stack can then installed in several differenet ways - see [installation](https://pollen-robotics.github.io/orbita3d_control/installation/install_package.md) for more details
 
 ## Usage
 
@@ -46,7 +38,7 @@ The package can be used in different ways:
 - [C-API library](orbita3d_c_api/README.md): plain C-API library to control the actuator - see in [docs](https://pollen-robotics.github.io/orbita3d_control/installation/orbita_c)
 - **ROS2 integration**: The package can be integrated in a ROS2 system using the provided humble integration package - see in [docs](https://pollen-robotics.github.io/orbita3d_control/installation/ros)
 
-## Contents
+## Crate structure
 
 This repository contains the following sub-packages:
 

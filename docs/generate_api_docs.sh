@@ -1,7 +1,8 @@
 echo "Generating API documentation..."
 rm -r docs/api/
 RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --no-deps --lib
-RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --no-deps --package poulpe_ethercat_controller
+RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --no-deps --package poulpe_ethercat_controller --lib
+RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --no-deps --package poulpe_ethercat_grpc --lib
 cp -r target/doc/ docs/api
 
 # pdoc 
