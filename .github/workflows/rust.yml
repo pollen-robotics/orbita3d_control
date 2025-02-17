@@ -11,6 +11,17 @@ jobs:
 
         steps:
         - uses: actions/checkout@v3
+        
+        - name: Cache Cargo Dependencies
+          uses: actions/cache@v3
+          with:
+            path: |
+              ~/.cargo/registry
+              ~/.cargo/git
+              target
+            key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+            restore-keys: |
+              cargo-${{ runner.os }}-
 
         - name: Deps
           run: |
@@ -41,18 +52,17 @@ jobs:
             hg update stable-1.5
             ./bootstrap
             ./configure --disable-8139too
-
-        - name: Check
+          
+        # - name: Check 
+        #   run: |
+        #     ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests
+        - name:  Build
           run: |
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo check --all --tests
-        
-        - name: Build
-          run: |
-            ETHERCAT_PATH=$(pwd)/ethercat-hg RUST_BACKTRACE=full cargo build --release
-        
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo build -j $(nproc)
+            
         - name: Test
           run: |
-            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test
+            ETHERCAT_PATH=$(pwd)/ethercat-hg cargo test  -j $(nproc) -- --test-threads=2  $(nproc)
         
         - name: Format
           run: |

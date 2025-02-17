@@ -2,23 +2,7 @@
 //!
 //! This crate provides a controller for the Orbita3d actuator.
 //!
-//! # Overview
-//!
-//! ## Setup
-//! - [x] Load configuration from a file
-//! - [x] Support for different communication layers (Dynamixel like serial, Fake)
-//!
-//! ## Control
-//! - [x] Enable/Disable torque
-//! - [x] Read the current orientation as quaternion (position, velocity, torque)
-//! - [x] Set the target orientation as quaternion (position)
-//! - [x] Extra raw motors parameters (velocity limit, torque limit, pid gains)
-//!
-//! ## Communication
-//! - [x] Fake motors
-//! - [x] Dynamixel like serial
-//! - [x] Poulpe serial dynamixel
-//! - [x] EtherCAT communication
+//! The main Class is `Orbita3dController` which allows to control the Orbita3d actuator.
 //!
 //! # Examples
 //! ```rust
@@ -39,16 +23,22 @@
 //! ```
 
 pub mod io;
-use io::{CachedDynamixelSerialController, DynamixelSerialController, Orbita3dIOConfig};
+
+use io::Orbita3dIOConfig;
+
+#[cfg(feature = "build_ethercat")]
+use crate::io::EthercatPoulpeController;
+#[cfg(feature = "build_dynamixel")]
+use io::{
+    CachedDynamixelPoulpeController, CachedDynamixelSerialController, DynamixelPoulpeController,
+    DynamixelSerialController,
+};
+
 use motor_toolbox_rs::{FakeMotorsController, MotorsController, Result, PID};
 
 use orbita3d_kinematics::{conversion, Orbita3dKinematicsModel};
 use serde::{Deserialize, Serialize};
 use std::{thread, time::Duration};
-
-use crate::io::{
-    CachedDynamixelPoulpeController, DynamixelPoulpeController, EthercatPoulpeController,
-};
 
 #[derive(Debug, Deserialize, Serialize)]
 /// Orbita3d Config
@@ -138,6 +128,7 @@ impl Orbita3dController {
 
         let controller: Box<dyn MotorsController<3> + Send> = match config.io {
             // This is a legacy mode, not maintained anymore
+            #[cfg(feature = "build_dynamixel")]
             Orbita3dIOConfig::DynamixelSerial(dxl_config) => match dxl_config.use_cache {
                 true => {
                     let controller = CachedDynamixelSerialController::new(
@@ -165,6 +156,7 @@ impl Orbita3dController {
                 }
             },
             // This is a legacy mode, not maintained anymore
+            #[cfg(feature = "build_dynamixel")]
             Orbita3dIOConfig::DynamixelPoulpe(dxl_config) => match dxl_config.use_cache {
                 true => {
                     let controller = CachedDynamixelPoulpeController::new(
@@ -212,6 +204,7 @@ impl Orbita3dController {
                 Box::new(controller)
             }
             // The ethercat mode with the "Poulpe" electronics
+            #[cfg(feature = "build_ethercat")]
             Orbita3dIOConfig::PoulpeEthercat(ethercat_config) => {
                 let controller = EthercatPoulpeController::new(
                     &ethercat_config.url,

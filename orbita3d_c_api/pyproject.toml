@@ -1,9 +1,20 @@
 [project]
 name = "orbita3d"
-dependencies = ["cffi", "numpy", "pyyaml", "scipy"]
 version = "1.1.2"
+dependencies = ["cffi", "numpy", "pyyaml", "scipy"]
+requires-python = ">=3.7"
+description = "Orbita3D Python bindings"
+license = { text = "MIT" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
 [build-system]
-requires = ["maturin>=1.0,<2.0"]
+requires = ["maturin>=1.0,<2.0", "setuptools", "wheel", "cffi"]
 build-backend = "maturin"
 
 

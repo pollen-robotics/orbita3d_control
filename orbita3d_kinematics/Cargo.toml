@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 log = "0.4.20"
-env_logger = "0.8.4"
+env_logger = "0.9.0"
 levenberg-marquardt = "0.12.0"
 nalgebra = "0.30.1"
 ndarray = "0.15.6"

@@ -31,7 +31,7 @@ The benchmarking program is in the `poulpe3d_test` example. The benchmarking pro
 
 To run the program do the following:
 ```bash
-RUST_LOG=info cargo run --example=poulpe3d_test 
+RUST_LOG=info cargo run --release --example=poulpe3d_test -- --start-server
 ```
 The program will ask you the path to the input and the output csv files and will also use the default configuration file `config/fake.yaml`. If you want to use a different configuration file, you can specify it with the `--configfile` flag. 
 
@@ -47,4 +47,4 @@ List of flags:
 
 ### Running the benchmarking program with the benchmarking data
 - Run the test program with an input csv file:
-  - ie: `cargo run --example=poulpe3d_test -- --configfile=config/ethercat_poulpe.yaml --input-csv=benchmarking/test_input.csv --viewer --output-csv=test_output.csv`
+  - ie: `cargo run --release --example=poulpe3d_test -- --start-server --configfile=config/ethercat_poulpe.yaml --input-csv=benchmarking/test_input.csv --viewer --output-csv=test_output.csv`

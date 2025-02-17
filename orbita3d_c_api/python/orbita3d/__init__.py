@@ -395,6 +395,54 @@ class Orbita3dController:
         pids = ffi.new("double(*)[3][3]", tuple(pids))
         check(lib.orbita3d_set_raw_motors_pid_gains(self.uid, pids))
 
+    def get_raw_motors_velocity(self) -> Tuple[float, float, float]:
+        """Get the raw motors velocity.
+
+        Be carfeful, this is not the end-effector velocity. But this is the raw velocity of the disks!
+
+        Returns:
+            The raw motors velocity (in radians per second).
+        """
+        velocity = ffi.new("double(*)[3]")
+        check(lib.orbita3d_get_raw_motors_velocity(self.uid, velocity))
+        return tuple(velocity[0])
+    
+    def get_raw_motors_position(self) -> Tuple[float, float, float]:
+        """Get the raw motors position.
+
+        Be carfeful, this is not the end-effector position. But this is the raw position of the disks!
+
+        Returns:
+            The raw motors position (in radians).
+        """
+        position = ffi.new("double(*)[3]")
+        check(lib.orbita3d_get_raw_motors_position(self.uid, position))
+        return tuple(position[0])
+    
+    def get_raw_motors_current(self) -> Tuple[float, float, float]:
+        """Get the raw motors torque.
+
+        Be carfeful, this is not the end-effector torque. But this is the raw torque of the disks!
+
+        Returns:
+            The raw motors torque (in Newton meters).
+        """
+        torque = ffi.new("double(*)[3]")
+        check(lib.orbita3d_get_raw_motors_current(self.uid, torque))
+        return tuple(torque[0])
+    
+
+    def get_raw_axis_sensor(self) -> Tuple[float, float, float]:
+        """Get the raw axis sensor.
+
+        Be carfeful, this is not the end-effector position. But this is the raw position of the disks!
+
+        Returns:
+            The raw axis sensor (in radians).
+        """
+        axis = ffi.new("double(*)[3]")
+        check(lib.orbita3d_get_axis_sensors(self.uid, axis))
+        return tuple(axis[0])
 
 def check(err):
     if err != 0:

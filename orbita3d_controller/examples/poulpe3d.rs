@@ -4,33 +4,9 @@ use std::f64::consts::PI;
 use std::time::SystemTime;
 use std::{error::Error, thread, time::Duration};
 
-// use log::info;
-// use log::Level;
+use poulpe_ethercat_grpc::server::launch_server;
 
 use clap::Parser;
-
-// #[derive(Parser, Debug)]
-// #[command(author, version, about, long_about = None)]
-// struct Args {
-//     /// tty
-//     #[arg(short, long, default_value = "/dev/ttyUSB0")]
-//     serialport: String,
-//     /// baud
-//     #[arg(short, long, default_value_t = 2_000_000)]
-//     baudrate: u32,
-
-//     /// id
-//     #[arg(short, long, default_value_t = 42)]
-//     id: u8,
-
-//     ///sinus amplitude (f64)
-//     #[arg(short, long, default_value_t = 10.0)]
-//     amplitude: f32,
-
-//     ///sinus frequency (f64)
-//     #[arg(short, long, default_value_t = 1.0)]
-//     frequency: f32,
-// }
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -39,6 +15,8 @@ struct Args {
     // #[arg(default_value = "config/dxl_poulpe.yaml")]
     #[arg(short, long, default_value = "config/ethercat_poulpe.yaml")]
     configfile: String,
+    #[arg(short, long)]
+    start_server: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -46,6 +24,21 @@ fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
     log::info!("Config file: {}", args.configfile);
+
+    if args.start_server {
+        log::info!("Starting the server");
+        // run in a thread, do not block main thread
+        thread::spawn(|| {
+            tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(4)
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(launch_server("config/ethercat.yaml"))
+                .unwrap();
+        });
+        thread::sleep(Duration::from_secs(2));
+    }
 
     let mut controller = Orbita3dController::with_config(&args.configfile)?;
 

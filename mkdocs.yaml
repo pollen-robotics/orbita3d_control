@@ -1,0 +1,48 @@
+site_name: Orbita3d Control stack
+site_description: Documentation for the Orbita3d project
+site_url: https://pollen-robotics.github.io/orbita3d_control/
+repo_url: https://github.com/pollen-robotics/orbita3d_control/tree/develop
+edit_uri: https://github.com/pollen-robotics/orbita3d_control/blob/develop/docs/
+
+# repo_name: poulpe_ethercat_controller
+copyright: |
+  Copyright &copy; 2025 Pollen Robotics
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - yaml
+    - rust
+    - shell
+    - bash
+    - python
+    - terminal
+    - console
+  hljs_style: github
+  custom_dir: docs/custom_theme/
+  logo: img/favicon.ico
+
+not_in_nav:
+   api
+
+extra_css:
+  - extras/override.css
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+
+markdown_extensions:
+  - mdx_math
+  - callouts
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - macros
+  
+  
