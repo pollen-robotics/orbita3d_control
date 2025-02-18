@@ -24,7 +24,7 @@ Then there are two ways to install the python bindings:
 If you are using the python-only version of the code you can install the code directly from the repository. 
 
 ```shell
-pip install git+https://github.com/pollen-robotics/orbita3d_control.git#subdirectory=orbita_c_api --verbose
+pip install git+https://github.com/pollen-robotics/orbita3d_control.git#subdirectory=orbita3d_c_api --verbose
 ```
 
 NOTE: <details><summary>Installing specific versions or branches of the code</summary>
@@ -32,7 +32,7 @@ NOTE: <details><summary>Installing specific versions or branches of the code</su
 > You can also specify the version of the code that you want to install by using the tag. For example, if you want to install the `v1.1.4` version of the  code you can use the following command (or any other tag/branch that you want to install):
 > 
 > ```shell
-> pip install git+https://github.com/pollen-robotics/orbita3d_control.git@v1.1.4#subdirectory=orbita_c_api --verbose
+> pip install git+https://github.com/pollen-robotics/orbita3d_control.git@v1.1.4#subdirectory=orbita3d_c_api --verbose
 > ```
 > 
 > </details>
@@ -198,7 +198,7 @@ time.sleep(1)
 orbita = Orbita3dController.from_config("path/to/orbita3d_config.yaml")
 
 # enable the actuator
-orbita.enable_torque()
+orbita.enable_torque(reset_target=True)
 
 # do a simple sinusoidal movement of the actuator
 t0 = time.time()
@@ -237,7 +237,7 @@ from orbita3d import Orbita3dController
 orbita = Orbita3dController.from_config("path/to/orbita3d_config.yaml")
 
 # enable the actuator
-orbita.enable_torque()
+orbita.enable_torque(reset_target=True)
 
 # do a simple sinusoidal movement of the actuator
 t0 = time.time()
