@@ -21,16 +21,16 @@ The crate is designed to be used as a library in your project. You can include i
 ....
 [dependencies]
 ...
-orbita3d_control = { git = "https://github.com/pollen-robotics/orbita3d_control.git", branch = "develop" }
+orbita3d_controller = { git = "https://github.com/pollen-robotics/orbita3d_control.git", branch = "develop" }
 ```
 
-You can also include only sub-crates that you need. For example, if you only need the controller crate
+Or if you need the kinematics module as well:
 
 ```toml
 ....
 [dependencies]
 ...
-orbita3d_controller = { git = "https://github.com/pollen-robotics/orbita3d_control.git", branch = "develop" }
+orbita3d_kinematics = { git = "https://github.com/pollen-robotics/orbita3d_control.git", branch = "develop" }
 ```
 
 Then you can use it in your Rust code directly. See the examples in the `examples` folder for more information - [here]({{ config.repo_url }}/orbita3d_controller/examples/).
