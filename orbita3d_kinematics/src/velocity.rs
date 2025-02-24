@@ -48,8 +48,7 @@ impl Orbita3dKinematicsModel {
         j_inv: Matrix3<f64>,
         output_vel: Vector3<f64>,
     ) -> Vector3<f64> {
-        let j = j_inv.pseudo_inverse(1.0e-6).unwrap();
-        j * output_vel
+        j_inv * output_vel
     }
 
     fn compute_output_velocity_from_j_inv(
@@ -57,7 +56,8 @@ impl Orbita3dKinematicsModel {
         j_inv: Matrix3<f64>,
         input_vel: Vector3<f64>,
     ) -> Vector3<f64> {
-        j_inv * input_vel
+        let j = j_inv.pseudo_inverse(1.0e-7).unwrap();
+        j * input_vel
     }
 }
 

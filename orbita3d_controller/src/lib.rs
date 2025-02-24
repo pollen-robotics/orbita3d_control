@@ -544,4 +544,45 @@ impl Orbita3dController {
     pub fn emergency_stop(&mut self) {
         self.inner.emergency_stop()
     }
+
+    /// Set target velocity axis-angle representaiton in rad/s
+    /// 
+    /// # Arguments
+    /// * target: axis-angle representation of the target velocity (rad/s)
+    pub fn set_target_velocity(&mut self, target: [f64; 3]) -> Result<()> {
+
+        // calculate the velocity kinematics
+        let thetas = self.inner.get_current_position()?;
+        // input velocity - velocity of the motors
+        let mut theta_vel = self.kinematics.compute_input_velocity(thetas, target.into());
+        // aplly the reduction
+        let red = self.inner.reduction();
+        for i in 0..3 {
+            theta_vel[i] *= red[i].unwrap();
+        }
+
+        self.inner.set_target_velocity(theta_vel)
+    }
+
+    /// Set target torque axis-angle representaiton in N.m
+    /// 
+    /// # Arguments
+    /// * target: axis-angle representation of the target torque (N.m)
+    pub fn set_target_torque(&mut self, target: [f64; 3]) -> Result<()> {
+        
+        // calculate the torque kinematics
+        let thetas = self.inner.get_current_position()?;
+        // input torque - torque of the motors
+        let mut theta_torque = self.kinematics.compute_input_torque(thetas, target.into());
+        // aplly the reduction
+        let red = self.inner.reduction();
+        for i in 0..3 {
+            theta_torque[i] /= red[i].unwrap();
+        }
+
+        self.inner.set_target_torque(theta_torque)
+
+
+    }
+
 }
