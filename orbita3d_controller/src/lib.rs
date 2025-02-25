@@ -255,7 +255,20 @@ impl Orbita3dController {
     /// Get the current orientation (as quaternion (qx, qy, qz, qw))
     pub fn get_current_orientation(&mut self) -> Result<[f64; 4]> {
         let thetas = self.inner.get_current_position()?;
-        let rot = self.kinematics.compute_forward_kinematics(thetas);
+        let mut rot = self.kinematics.compute_forward_kinematics(thetas);
+
+        // apply axis inversion
+        // TODO: this is not the best way to do it, we should apply the inversion to the quaternion
+        let inverted_axes = self.inner.output_inverted_axes();
+        let mut euler = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    euler[i] = -euler[i];
+                }
+            }
+        }
+        rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(euler[0], euler[1], euler[2]);
         Ok(conversion::rotation_matrix_to_quaternion(rot))
     }
 
@@ -283,42 +296,106 @@ impl Orbita3dController {
         let thetas = self.inner.get_current_position()?;
         let input_velocity = self.inner.get_current_velocity()?;
 
-        let rot = self
+        let mut vel = self
             .kinematics
             .compute_output_velocity(thetas, input_velocity);
-        Ok(rot.into())
+
+        // apply axis inversion
+        // TODO: the inversion is applied to the angle-axis representation of the torque
+        // although it is not the best way to do it, it is the only way to do it with the current implementation
+        // we should decide which representation to invert and do it consistently
+        let inverted_axes = self.inner.output_inverted_axes();
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    vel[i] = -vel[i];
+                }
+            }
+        }
+
+        Ok(vel.into())
     }
     /// Get the current torque (as pseudo vector)
     pub fn get_current_torque(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
         let input_torque = self.inner.get_current_torque()?;
 
-        Ok(self
+        let mut torque = self
             .kinematics
-            .compute_output_torque(thetas, input_torque)
-            .into())
+            .compute_output_torque(thetas, input_torque);
+
+        // apply axis inversion
+        // TODO: the inversion is applied to the angle-axis representation of the torque
+        // although it is not the best way to do it, it is the only way to do it with the current implementation
+        // we should decide which representation to invert and do it consistently
+        let inverted_axes = self.inner.output_inverted_axes();
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    torque[i] = -torque[i];
+                }
+            }
+        }
+        Ok(torque.into())
     }
 
     /// Get the target orientation (as quaternion (qx, qy, qz, qw))
     pub fn get_target_orientation(&mut self) -> Result<[f64; 4]> {
         let thetas = self.inner.get_target_position()?;
-        let rot = self.kinematics.compute_forward_kinematics(thetas);
+        let mut rot = self.kinematics.compute_forward_kinematics(thetas);
+        // apply axis inversion
+        // TODO: this is not the best way to do it, we should apply the inversion to the quaternion
+        let inverted_axes = self.inner.output_inverted_axes();
+        let mut euler = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    euler[i] = -euler[i];
+                }
+            }
+        }
+        rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(euler[0], euler[1], euler[2]);
         Ok(conversion::rotation_matrix_to_quaternion(rot))
     }
 
     /// Get the target orientation (as intrinsic rpy with multiturn)
     pub fn get_target_rpy_orientation(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_target_position()?;
-        let rpy = self
+        let mut rpy = self
             .kinematics
             .compute_forward_kinematics_rpy_multiturn(thetas)?;
+
+        // apply the output axis inversion
+        let inverted_axes = self.inner.output_inverted_axes();
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    rpy[i] = -rpy[i];
+                }
+            }
+        }
         Ok(rpy)
     }
 
     /// Set the target orientation (as quaternion (qx, qy, qz, qw))
     pub fn set_target_orientation(&mut self, target: [f64; 4]) -> Result<()> {
-        let rot =
+
+        let mut rot =
             conversion::quaternion_to_rotation_matrix(target[0], target[1], target[2], target[3]);
+
+        // apply axis inversion
+        // TODO: this is not the best way to do it, we should apply the inversion to the quaternion
+        let inverted_axes = self.inner.output_inverted_axes();
+        let mut euler = conversion::matrix_to_intrinsic_roll_pitch_yaw(rot);
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    euler[i] = -euler[i];
+                }
+            }
+        }
+        rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(euler[0], euler[1], euler[2]);
+
         let thetas = self.kinematics.compute_inverse_kinematics(rot)?;
         self.inner.set_target_position(thetas)
     }
@@ -550,13 +627,25 @@ impl Orbita3dController {
     /// # Arguments
     /// * target: axis-angle representation of the target velocity (rad/s)
     pub fn set_target_velocity(&mut self, target: [f64; 3]) -> Result<()> {
+        let mut target_vel = target;
+        // apply the axis inversion
+        let inverted_axes = self.inner.output_inverted_axes();
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    target_vel[i] = -target_vel[i];
+                }
+            }
+        }
+
         // calculate the velocity kinematics
         let thetas = self.inner.get_current_position()?;
         // input velocity - velocity of the motors
         let mut theta_vel = self
             .kinematics
-            .compute_input_velocity(thetas, target.into());
-        // aplly the reduction
+            .compute_input_velocity(thetas, target_vel.into());
+
+        // apply the reduction
         let red = self.inner.reduction();
         for i in 0..3 {
             theta_vel[i] *= red[i].unwrap();
@@ -570,10 +659,21 @@ impl Orbita3dController {
     /// # Arguments
     /// * target: axis-angle representation of the target torque (N.m)
     pub fn set_target_torque(&mut self, target: [f64; 3]) -> Result<()> {
+
+        let mut target_torque = target;
+        // apply the axis inversion
+        let inverted_axes = self.inner.output_inverted_axes();
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    target_torque[i] = -target_torque[i];
+                }
+            }
+        }
         // calculate the torque kinematics
         let thetas = self.inner.get_current_position()?;
         // input torque - torque of the motors
-        let mut theta_torque = self.kinematics.compute_input_torque(thetas, target.into());
+        let mut theta_torque = self.kinematics.compute_input_torque(thetas, target_torque.into());
         // aplly the reduction
         let red = self.inner.reduction();
         for i in 0..3 {
