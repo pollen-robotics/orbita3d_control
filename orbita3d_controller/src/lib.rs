@@ -546,15 +546,16 @@ impl Orbita3dController {
     }
 
     /// Set target velocity axis-angle representaiton in rad/s
-    /// 
+    ///
     /// # Arguments
     /// * target: axis-angle representation of the target velocity (rad/s)
     pub fn set_target_velocity(&mut self, target: [f64; 3]) -> Result<()> {
-
         // calculate the velocity kinematics
         let thetas = self.inner.get_current_position()?;
         // input velocity - velocity of the motors
-        let mut theta_vel = self.kinematics.compute_input_velocity(thetas, target.into());
+        let mut theta_vel = self
+            .kinematics
+            .compute_input_velocity(thetas, target.into());
         // aplly the reduction
         let red = self.inner.reduction();
         for i in 0..3 {
@@ -565,11 +566,10 @@ impl Orbita3dController {
     }
 
     /// Set target torque axis-angle representaiton in N.m
-    /// 
+    ///
     /// # Arguments
     /// * target: axis-angle representation of the target torque (N.m)
     pub fn set_target_torque(&mut self, target: [f64; 3]) -> Result<()> {
-        
         // calculate the torque kinematics
         let thetas = self.inner.get_current_position()?;
         // input torque - torque of the motors
@@ -581,8 +581,5 @@ impl Orbita3dController {
         }
 
         self.inner.set_target_torque(theta_torque)
-
-
     }
-
 }
