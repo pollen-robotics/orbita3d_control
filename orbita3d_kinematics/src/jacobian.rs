@@ -13,16 +13,19 @@ impl Orbita3dKinematicsModel {
     /// # Returns
     /// * The inverse jacobian as a 3x3 matrix.
     pub fn jacobian_inverse(&self, rot: Rotation3<f64>, thetas: [f64; 3]) -> Matrix3<f64> {
-        let v = self.platform_unit_vectors_from_mat(rot);
+        // has to be trasponsed here - not sure why (otherwise v.row(0) takes the frist column rather than row)
+        // TODO verify furhter and find why this happens
+        let v = self.platform_unit_vectors_from_mat(rot).transpose();
 
         let sa1 = self.alpha.sin();
         let ca1 = self.alpha.cos();
         let st1 = thetas[0].sin();
         let ct1 = thetas[0].cos();
-        let st2 = thetas[1].sin();
-        let ct2 = thetas[1].cos();
-        let st3 = thetas[2].sin();
-        let ct3 = thetas[2].cos();
+        // these thetas need to have 120 degrees added or subtracted
+        let st2 = (thetas[1] + 120.0_f64.to_radians()).sin();
+        let ct2 = (thetas[1] + 120.0_f64.to_radians()).cos();
+        let st3 = (thetas[2] - 120.0_f64.to_radians()).sin();
+        let ct3 = (thetas[2] - 120.0_f64.to_radians()).cos();
 
         let row1_denom = -sa1 * st1 * v.row(0)[0] + sa1 * ct1 * v.row(0)[1];
         let row2_denom = -sa1 * st2 * v.row(1)[0] + sa1 * ct2 * v.row(1)[1];
