@@ -61,7 +61,7 @@ pub fn array_to_vector3(a: [f64; 3]) -> Vector3<f64> {
 #[cfg(test)]
 mod tests {
     use rand::Rng;
-    use std::f64::consts::PI;
+    use core::f64::consts::PI;
 
     use super::*;
 

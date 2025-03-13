@@ -1,5 +1,4 @@
 use nalgebra::{Matrix2, Matrix3, Rotation3, Vector2, Vector3};
-use std::f64::consts::PI;
 
 const TOLERANCE_ZERO_YAW: f64 = 1e-6; // Define a small tolerance for near-zero values
 
@@ -13,8 +12,8 @@ pub enum InverseSolutionErrorKind {
     /// Invalid solution found.
     InvalidSolution(Rotation3<f64>, Vector3<f64>),
 }
-impl std::fmt::Display for InverseSolutionErrorKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for InverseSolutionErrorKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             InverseSolutionErrorKind::NoSolution(rot) => {
                 write!(f, "No solution found for rotation matrix: {}", rot)
@@ -27,7 +26,7 @@ impl std::fmt::Display for InverseSolutionErrorKind {
         }
     }
 }
-impl std::error::Error for InverseSolutionErrorKind {}
+impl core::error::Error for InverseSolutionErrorKind {}
 
 impl Orbita3dKinematicsModel {
     /// Compute the inverse kinematics of the Orbita3d platform.
@@ -81,24 +80,24 @@ impl Orbita3dKinematicsModel {
         log::debug!("valid Thetas {:?}", thetas);
         // if yaw is more than Pi, we may have to deal with some edge cases
         let true_yaw = target_rpy[2] + self.offset; //FIXME????
-        if true_yaw.abs() >= std::f64::consts::PI {
+        if true_yaw.abs() >= core::f64::consts::PI {
             // Compute the k*2*Pi offset if the yaw target is more than 1 full rotation
 
             // let nb_turns = (target_rpy[2] / std::f64::consts::TAU).trunc(); //number of full turn
-            let nb_turns = (true_yaw / std::f64::consts::TAU).trunc(); //number of full turn
+            let nb_turns = (true_yaw / core::f64::consts::TAU).trunc(); //number of full turn
             if nb_turns.abs() >= 1.0 {
-                multiturn_offset = std::f64::consts::TAU * (nb_turns);
+                multiturn_offset = core::f64::consts::TAU * (nb_turns);
             }
             // also, if yaw.abs().rem_euclid(2.0 * PI) > pi, we might want to consider the 2pi complement
             // if target_rpy[2].abs().rem_euclid(std::f64::consts::TAU) >= std::f64::consts::PI
-            if true_yaw.abs().rem_euclid(std::f64::consts::TAU) >= std::f64::consts::PI
+            if true_yaw.abs().rem_euclid(core::f64::consts::TAU) >= core::f64::consts::PI
                 && !(thetas[0].signum() == thetas[1].signum()
                     && thetas[1].signum() == thetas[2].signum())
             {
-                multiturn_offset += target_rpy[2].signum() * std::f64::consts::TAU
+                multiturn_offset += target_rpy[2].signum() * core::f64::consts::TAU
             }
 
-            log::debug!("Yaw more than Pi, nb full turns: {nb_turns}, yaw%2pi: {:?} offset: {multiturn_offset} theta before: {:?}",true_yaw.abs().rem_euclid(std::f64::consts::TAU),thetas);
+            log::debug!("Yaw more than Pi, nb full turns: {nb_turns}, yaw%2pi: {:?} offset: {multiturn_offset} theta before: {:?}",true_yaw.abs().rem_euclid(core::f64::consts::TAU),thetas);
 
             log::debug!("thetas {:?}", thetas);
 
@@ -232,7 +231,7 @@ impl Orbita3dKinematicsModel {
             // Unique solution
             if a_i.abs() <= 1.5 * f64::EPSILON {
                 let unique_sol = -c_i / (2.0 * b_i);
-                solutions_theta = [unique_sol.atan() * 2.0, PI];
+                solutions_theta = [unique_sol.atan() * 2.0, core::f64::consts::PI];
             }
             // Polynome has 2 roots
             else {
@@ -247,7 +246,7 @@ impl Orbita3dKinematicsModel {
                 solutions_theta = dual_sol.map(|v| v.atan() * 2.0);
             }
 
-            solutions_theta = solutions_theta.map(|v| v.rem_euclid(2.0 * std::f64::consts::PI));
+            solutions_theta = solutions_theta.map(|v| v.rem_euclid(2.0 * core::f64::consts::PI));
 
             if solutions_theta[0].is_nan() && solutions_theta[1].is_nan() {
                 thetas[i] = f64::NAN;

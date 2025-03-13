@@ -8,6 +8,8 @@
 //!
 //! See the [README.md](./README.md) for more information.
 
+#![no_std]
+
 use nalgebra::{Matrix3, Rotation3, Vector3};
 
 pub mod conversion;
