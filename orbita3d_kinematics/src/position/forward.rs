@@ -1,7 +1,7 @@
 use levenberg_marquardt::{LeastSquaresProblem, LevenbergMarquardt};
 use nalgebra::{Matrix3, Owned, Rotation3, SMatrix, SVector, Vector3, U12, U6};
 use ndarray_einsum_beta::einsum;
-use nshare::{RefNdarray2, ToNalgebra};
+use nshare::{AsNdarray2, IntoNalgebra};
 
 use crate::{conversion, InverseSolutionErrorKind, Orbita3dKinematicsModel};
 
@@ -259,12 +259,15 @@ impl Orbita3dKinematicsModel {
 
 fn align_vectors(a: Matrix3<f64>, b: Matrix3<f64>) -> Rotation3<f64> {
     // Find the rotation matrix to align two sets of vectors (based on scipy implementation)
-    let na = a.ref_ndarray2().into_shape((3, 3)).unwrap();
-    let nb = b.ref_ndarray2().into_shape((3, 3)).unwrap();
+    let na= a.as_ndarray2();
+    let na = na.to_shape((3, 3)).unwrap();
+    let nb = b.as_ndarray2();
+    let nb = nb.to_shape((3, 3)).unwrap();
 
     let mat_b = einsum("ji,jk->ik", &[&na, &nb])
-        .unwrap()
-        .into_shape((3, 3))
+        .unwrap();
+    let mat_b = mat_b
+        .to_shape((3, 3))
         .unwrap();
 
     let matrix_b = mat_b.view().into_nalgebra();
