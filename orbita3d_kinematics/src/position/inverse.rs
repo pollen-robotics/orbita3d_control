@@ -145,7 +145,7 @@ impl Orbita3dKinematicsModel {
     pub fn compute_valid_solution(
         &self,
         target_rpy: [f64; 3],
-        mut thetas: [f64; 3],
+        thetas: [f64; 3],
     ) -> Result<[f64; 3], InverseSolutionErrorKind> {
         // Select the "real world" solution from the geometric one: => disks should not cross each over
         // For each theta, there is 2 solutions (only one valid):
@@ -174,27 +174,31 @@ impl Orbita3dKinematicsModel {
                     all_solutions[i as usize][j as usize] = thetas[j as usize];
                 } else {
                     all_solutions[i as usize][j as usize] =
-                        thetas[j as usize] - thetas[j as usize].signum() * std::f64::consts::TAU;
+                        thetas[j as usize] - thetas[j as usize].signum() * core::f64::consts::TAU;
                 }
             }
         }
-        let mut validvec = Vec::new();
-        for sol in all_solutions {
-            match self.check_gammas(sol.into()) {
-                Ok(()) => validvec.push(sol),
-                Err(_) => continue,
+
+        let mut sol1 = None;
+        let mut sol2 = None;
+
+        all_solutions.iter().filter(|sol| self.check_gammas(Vector3::from(**sol)).is_ok()).for_each(|sol| {
+            if sol1.is_none() {
+                sol1 = Some(*sol);
+            } else if sol2.is_none() {
+                sol2 = Some(*sol);
+            } else {
+                unreachable!()
             }
-        }
+        });
+
         log::debug!(
             "all solutions: {:?}\nvalid solutions: {:?}",
             all_solutions,
-            validvec
+            (sol1, sol2)
         );
-        // There is either one solution or 2 valid solutions
-        if validvec.len() == 1 {
-            thetas = validvec[0];
-        } else {
-            if validvec.is_empty() {
+        let thetas = match (sol1, sol2) {
+            (None, None) => {
                 log::debug!(
                     "NO VALID SOLUTION! target: {:?}\n thetas: {:?}\nall_solutions: {:?}",
                     target_rpy,
@@ -211,26 +215,29 @@ impl Orbita3dKinematicsModel {
                     compute_gammas(thetas.into()),
                 ));
             }
+            (Some(sol1), None) => sol1,
+            (None, Some(_)) => unreachable!(),
+            (Some(sol1), Some(sol2)) => {
+                // here we have the 2 solutions (both 2pi complement), we chose the one with the same yaw sign
+                let mut yaw_sign = (target_rpy[2] + self.offset).signum();
+                let mut theta_sign = sol1[0].signum();
 
-            // here we have the 2 solutions (both 2pi complement), we chose the one with the same yaw sign
-            let mut yaw_sign = (target_rpy[2] + self.offset).signum();
-            let mut theta_sign = validvec[0][0].signum();
-
-            // If the yaw or thetas are very close to zero, treat them as effectively zero
-            if (target_rpy[2] + self.offset).abs() < TOLERANCE_ZERO_YAW {
-                yaw_sign = 0.0;
+                // If the yaw or thetas are very close to zero, treat them as effectively zero
+                if (target_rpy[2] + self.offset).abs() < TOLERANCE_ZERO_YAW {
+                    yaw_sign = 0.0;
+                }
+                if sol1[0].abs() < TOLERANCE_ZERO_YAW {
+                    theta_sign = 0.0;
+                }
+                // Compare the yaw sign and theta sign
+                // but now accounting for near-zero values
+                if theta_sign == yaw_sign {
+                    sol1
+                } else {
+                    sol2
+                }
             }
-            if validvec[0][0].abs() < TOLERANCE_ZERO_YAW {
-                theta_sign = 0.0;
-            }
-            // Compare the yaw sign and theta sign
-            // but now accounting for near-zero values
-            if theta_sign == yaw_sign {
-                thetas = validvec[0];
-            } else {
-                thetas = validvec[1];
-            }
-        }
+        };
         // log::debug!("valid Thetas {:?}", thetas);
         Ok(thetas)
     }
