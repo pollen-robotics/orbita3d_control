@@ -12,6 +12,23 @@ pub enum InverseSolutionErrorKind {
     /// Invalid solution found.
     InvalidSolution(Rotation3<f64>, Vector3<f64>),
 }
+
+#[derive(Debug)]
+pub struct GammasOutOfRange {
+    min: f64,
+    max: f64,
+    gammas: Vector3<f64>,
+    thetas: Vector3<f64>,
+}
+
+impl core::fmt::Display for GammasOutOfRange {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "Gammas out of range: ! {} < {:?} < {} (thetas {})", self.min, self.max, self.gammas, self.thetas)
+    }
+}
+
+impl core::error::Error for GammasOutOfRange {}
+
 impl core::fmt::Display for InverseSolutionErrorKind {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
@@ -109,16 +126,17 @@ impl Orbita3dKinematicsModel {
         Ok(thetas)
     }
 
-    pub fn check_gammas(&self, thetas: Vector3<f64>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn check_gammas(&self, thetas: Vector3<f64>) -> Result<(), GammasOutOfRange> {
         let gammas = compute_gammas(thetas);
         // println!("CHECK GAMMAS: {:?}", gammas);
         for g in gammas.iter() {
             if !((*g > self.gamma_min) && (*g < self.gamma_max)) {
-                let msg = format!(
-                    "Gammas out of range: ! {:?} < {:?} < {:?} (thetas {:?})",
-                    self.gamma_min, gammas, self.gamma_max, thetas
-                );
-                return Err((msg).into());
+                return Err(GammasOutOfRange {
+                    min: self.gamma_min,
+                    max: self.gamma_max,
+                    gammas,
+                    thetas,
+                })
             }
         }
         Ok(())
