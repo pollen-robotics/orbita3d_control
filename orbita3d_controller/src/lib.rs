@@ -49,7 +49,20 @@ pub struct Orbita3dConfig {
     pub disks: DisksConfig,
     /// Kinematics model config
     pub kinematics_model: Orbita3dKinematicsModel,
+    /// Should we invert some axis? (in roll/pitch/yaw)
     pub inverted_axes: [Option<bool>; 3],
+    pub motor_gearbox_params: Option<MotorGearboxConfig>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+/// Motor/gearbox characteristics
+pub struct MotorGearboxConfig {
+    /// motor and gearbox characteristics for current/torque conversion
+    pub motor_gearbox_ratio: f64,
+    pub motor_nominal_current: f64,
+    pub motor_nominal_torque: f64,
+    pub motor_efficiency: f64,
+    pub motor_gearbox_efficiency: f64,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -213,6 +226,7 @@ impl Orbita3dController {
                     config.disks.zeros,
                     config.disks.reduction,
                     config.inverted_axes,
+                    config.motor_gearbox_params,
                 )?;
                 log::info!("Using poulpe ethercat controller {:?}", controller);
 
@@ -292,11 +306,19 @@ impl Orbita3dController {
     pub fn get_current_torque(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
         let input_torque = self.inner.get_current_torque()?;
-
-        Ok(self
+        let torque_current_ratio = self.inner.torque_current_ratio();
+        let mut raw_torque = self
             .kinematics
             .compute_output_torque(thetas, input_torque)
-            .into())
+            .into();
+        if torque_current_ratio.is_none() {
+            Ok(raw_torque)
+        } else {
+            raw_torque
+                .iter_mut()
+                .for_each(|t| *t *= torque_current_ratio.unwrap());
+            Ok(raw_torque)
+        }
     }
 
     /// Get the target orientation (as quaternion (qx, qy, qz, qw))

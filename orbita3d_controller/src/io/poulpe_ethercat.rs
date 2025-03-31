@@ -1,3 +1,4 @@
+use crate::MotorGearboxConfig;
 use motor_toolbox_rs::{Limit, MotorsController, RawMotorsIO, Result, PID};
 use poulpe_ethercat_grpc::client::PoulpeRemoteClient;
 use serde::{Deserialize, Serialize};
@@ -30,6 +31,8 @@ pub struct EthercatPoulpeController {
     limits: [Option<Limit>; 3],
     inverted_axes: [Option<bool>; 3],
     axis_sensor_zeros: [Option<f64>; 3],
+
+    motor_gearbox_params: Option<MotorGearboxConfig>,
 }
 
 impl EthercatPoulpeController {
@@ -41,6 +44,7 @@ impl EthercatPoulpeController {
         zero: ZeroType,
         reductions: f64,
         inverted_axes: [Option<bool>; 3],
+        motor_gearbox_params: Option<MotorGearboxConfig>,
     ) -> Result<Self> {
         let update_time = Duration::from_secs_f32(0.002);
 
@@ -122,6 +126,7 @@ impl EthercatPoulpeController {
             limits: [None; 3],
             inverted_axes,
             axis_sensor_zeros: [None; 3],
+            motor_gearbox_params,
         };
 
         info!(
@@ -225,6 +230,21 @@ impl MotorsController<3> for EthercatPoulpeController {
     // }
     fn output_inverted_axes(&self) -> [Option<bool>; 3] {
         self.inverted_axes
+    }
+
+    fn torque_current_ratio(&self) -> Option<f64> {
+        if self.motor_gearbox_params.is_none() {
+            None
+        } else {
+            let params = self.motor_gearbox_params.as_ref().unwrap();
+            Some(
+                params.motor_nominal_torque
+                    * params.motor_efficiency
+                    * params.motor_gearbox_efficiency
+                    / params.motor_nominal_current
+                    * params.motor_gearbox_ratio,
+            )
+        }
     }
 }
 
