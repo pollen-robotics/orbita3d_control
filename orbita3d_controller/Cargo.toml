@@ -21,8 +21,7 @@ rprompt = "2.1"
 cache_cache = "0.1.1"
 log = "0.4.20"
 env_logger = "0.9.0"
-# motor_toolbox_rs = { git = "https://github.com/pollen-robotics/motor_toolbox_rs", branch = "develop" }
-motor_toolbox_rs = { git = "https://github.com/pollen-robotics/motor_toolbox_rs", branch = "41-current-torque-ratio" }
+motor_toolbox_rs = { git = "https://github.com/pollen-robotics/motor_toolbox_rs", branch = "develop" }
 orbita3d_kinematics = { version = "0.1.0", path = "../orbita3d_kinematics" }
 serde = { version = "1.0.183", features = ["derive"] }
 serde_yaml = "0.9.25"
@@ -32,10 +31,8 @@ clap = { version = "4.0.32", features = ["derive"] }
 tokio = { version = "1.0.1", features = ["full"] }
 
 # EtherCAT dependencies
-# poulpe_ethercat_grpc = { path = "../../poulpe_ethercat_controller/poulpe_ethercat_grpc" }
-#poulpe_ethercat_grpc = { path = "../../../../dev/poulpe_ethercat_controller/poulpe_ethercat_grpc" } #robot
-poulpe_ethercat_grpc = { git = "https://github.com/pollen-robotics/poulpe_ethercat_controller.git", branch = "develop" , optional=true}
 
+poulpe_ethercat_grpc = { git = "https://github.com/pollen-robotics/poulpe_ethercat_controller.git", branch = "develop" , optional=true}
 # dynamixel dependencies
 serialport = {version = "4.2.2", optional = true}
 rustypot = { git = "https://github.com/pollen-robotics/rustypot", optional = true}

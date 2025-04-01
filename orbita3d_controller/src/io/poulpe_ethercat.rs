@@ -33,6 +33,7 @@ pub struct EthercatPoulpeController {
     axis_sensor_zeros: [Option<f64>; 3],
 
     motor_gearbox_params: Option<MotorGearboxConfig>,
+    // default_mode: Option<u8>,
 }
 
 impl EthercatPoulpeController {
@@ -45,6 +46,7 @@ impl EthercatPoulpeController {
         reductions: f64,
         inverted_axes: [Option<bool>; 3],
         motor_gearbox_params: Option<MotorGearboxConfig>,
+        default_mode: Option<u8>,
     ) -> Result<Self> {
         let update_time = Duration::from_secs_f32(0.002);
 
@@ -115,9 +117,16 @@ impl EthercatPoulpeController {
         io.set_velocity_limit(id as u16, [1.0; 3].to_vec());
         io.set_torque_limit(id as u16, [1.0; 3].to_vec());
 
-        //We can only change the mode if torque=off, then we ensure we are ProfilePositionMode
-        io.set_mode_of_operation(id as u16, 1); //0=NoMode, 1=ProfilePositionMode, 3=ProfileVelocityMode, 4=ProfileTorqueMode
-
+        if let Some(mode) = default_mode {
+            if mode == 0 || mode == 1 || mode == 2 || mode == 3 {
+                io.set_mode_of_operation(id as u16, mode.into()); //0=NoMode, 1=ProfilePositionMode, 3=ProfileVelocityMode, 4=ProfileTorqueMode
+            } else {
+                io.set_mode_of_operation(id as u16, 1); //0=NoMode, 1=ProfilePositionMode, 3=ProfileVelocityMode, 4=ProfileTorqueMode
+            }
+        } else {
+            //We can only change the mode if torque=off, then we ensure we are ProfilePositionMode
+            io.set_mode_of_operation(id as u16, 1); //0=NoMode, 1=ProfilePositionMode, 3=ProfileVelocityMode, 4=ProfileTorqueMode
+        }
         let mut poulpe_controller = EthercatPoulpeController {
             io,
             id: id as u16,
@@ -304,6 +313,7 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         Ok(())
     }
 
+    //TODO add thit in poulpe_ethercat_controller
     // fn get_target_velocity(&mut self) -> Result<[f64; 3]> {
     //     match self.io.get_target_velocity(self.id) {
     //         Ok(vel) => Ok([vel[0] as f64, vel[1] as f64, vel[2] as f64]),
@@ -317,6 +327,7 @@ impl RawMotorsIO<3> for EthercatPoulpeController {
         Ok(())
     }
 
+    //TODO add thit in poulpe_ethercat_controller
     // fn get_target_torque(&mut self) -> Result<[f64; 3]> {
     //     match self.io.get_target_torque(self.id) {
     //         Ok(vel) => Ok([vel[0] as f64, vel[1] as f64, vel[2] as f64]),

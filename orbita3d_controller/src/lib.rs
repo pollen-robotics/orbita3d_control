@@ -52,6 +52,7 @@ pub struct Orbita3dConfig {
     /// Should we invert some axis? (in roll/pitch/yaw)
     pub inverted_axes: [Option<bool>; 3],
     pub motor_gearbox_params: Option<MotorGearboxConfig>,
+    pub default_mode: Option<u8>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -227,6 +228,7 @@ impl Orbita3dController {
                     config.disks.reduction,
                     config.inverted_axes,
                     config.motor_gearbox_params,
+                    config.default_mode,
                 )?;
                 log::info!("Using poulpe ethercat controller {:?}", controller);
 
@@ -674,6 +676,31 @@ impl Orbita3dController {
         self.inner.set_target_velocity(theta_vel)
     }
 
+    // pub fn get_target_velocity(&mut self) -> Result<[f64; 3]> {
+    //     let mut theta_vel = self.inner.get_target_velocity()?;
+    //     // calculate the velocity kinematics
+    //     let thetas = self.inner.get_current_position()?;
+    //     // input velocity - velocity of the motors
+    //     let mut target_vel = self
+    //         .kinematics
+    //         .compute_output_velocity(thetas, theta_vel.into());
+
+    //     let inverted_axes = self.inner.output_inverted_axes();
+    //     for i in 0..3 {
+    //         if let Some(inverted) = inverted_axes[i] {
+    //             if inverted {
+    //                 target_vel[i] = -target_vel[i];
+    //             }
+    //         }
+    //     }
+    //     // apply the reduction
+    //     let red = self.inner.reduction();
+    //     for i in 0..3 {
+    //         target_vel[i] /= red[i].unwrap();
+    //     }
+    //     Ok(target_vel)
+    // }
+
     /// Set target torque axis-angle representaiton in N.m
     ///
     /// # Arguments
@@ -703,4 +730,29 @@ impl Orbita3dController {
 
         self.inner.set_target_torque(theta_torque)
     }
+
+    // pub fn get_target_torque(&mut self) -> Result<[f64; 3]> {
+    //     let mut theta_torque = self.inner.get_target_torque()?;
+    //     // calculate the torque kinematics
+    //     let thetas = self.inner.get_current_position()?;
+    //     // input torque - torque of the motors
+    //     let mut target_torque = self
+    //         .kinematics
+    //         .compute_output_torque(thetas, theta_torque.into());
+
+    //     let inverted_axes = self.inner.output_inverted_axes();
+    //     for i in 0..3 {
+    //         if let Some(inverted) = inverted_axes[i] {
+    //             if inverted {
+    //                 target_torque[i] = -target_torque[i];
+    //             }
+    //         }
+    //     }
+    //     // aplly the reduction
+    //     let red = self.inner.reduction();
+    //     for i in 0..3 {
+    //         target_torque[i] /= red[i].unwrap();
+    //     }
+    //     Ok(target_torque)
+    // }
 }

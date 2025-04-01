@@ -109,6 +109,7 @@ namespace orbita3d_system_hwi
     auto ret = CallbackReturn::SUCCESS;
 
     hw_states_torque_ = std::numeric_limits<double>::quiet_NaN();
+    hw_states_control_mode_ = std::numeric_limits<double>::quiet_NaN();
     loop_counter_read = 0;
     loop_counter_write = 0;
 
@@ -333,6 +334,10 @@ namespace orbita3d_system_hwi
       hw_commands_p_gain_[i] = hw_states_p_gain_[i];
       hw_commands_i_gain_[i] = hw_states_i_gain_[i];
       hw_commands_d_gain_[i] = hw_states_d_gain_[i];
+      hw_commands_ctrl_velocity_[i] = 0.0; //for now, we don't have read access to target velocity and torque
+      hw_commands_ctrl_torque_[i] = 0.0;
+
+
     }
 
     hw_states_error_ = 0;
@@ -351,6 +356,31 @@ namespace orbita3d_system_hwi
 
     //wait
     rclcpp::sleep_for(std::chrono::milliseconds(10));
+
+
+    // control mode
+    if (orbita3d_get_control_mode(this->uid, &hw_states_control_mode_) != 0)
+    {
+
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ CONTROL MODE ERROR!", info_.name.c_str());
+      // ret= CallbackReturn::ERROR;
+            initOk=false;
+    }
+    if(hw_states_control_mode_==0 || hw_states_control_mode_==1||hw_states_control_mode_==2||hw_states_control_mode_==3)
+      hw_commands_control_mode_ = hw_states_control_mode_;
+    else{
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ CONTROL MODE ERROR! BAD CONTROL MODE: %d", info_.name.c_str(),hw_states_control_mode_);
+      // ret= CallbackReturn::ERROR;
+            initOk=false;
+    }
+    rclcpp::sleep_for(std::chrono::milliseconds(10));
+
+
+
     if(!initOk && nb_tries<5)
       RCLCPP_INFO_THROTTLE(
           rclcpp::get_logger("Orbita3dSystem"),
@@ -429,9 +459,18 @@ namespace orbita3d_system_hwi
         state_interfaces.emplace_back(hardware_interface::StateInterface(
             gpio.name, "errors", &hw_states_error_));
 
-        RCLCPP_INFO(
-            rclcpp::get_logger("Orbita3dSystem"),
-            "export state interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str());
+        RCLCPP_INFO(rclcpp::get_logger("Orbita3dSystem"),
+                    "export state interface (%s) \"%s\"!", info_.name.c_str(),
+                    gpio.name.c_str());
+
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+            gpio.name, "control_mode", &hw_states_control_mode_));
+
+        RCLCPP_INFO(rclcpp::get_logger("Orbita3dSystem"),
+                    "export state interface (%s) \"%s\"!", info_.name.c_str(),
+                    gpio.name.c_str());
+
+
       }
       else if (gpio.name.find("raw_motor") != std::string::npos)
       {
@@ -498,9 +537,25 @@ namespace orbita3d_system_hwi
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
           joint.name, hardware_interface::HW_IF_POSITION, &hw_commands_position_[i]));
 
+      RCLCPP_INFO(rclcpp::get_logger("Orbita3dSystem"),
+                  "export command interface (%s) \"%s\"!", info_.name.c_str(),
+                  joint.name.c_str());
+
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(
+          joint.name, hardware_interface::HW_IF_VELOCITY, &hw_commands_velocity_[i]));
+
       RCLCPP_INFO(
           rclcpp::get_logger("Orbita3dSystem"),
           "export command interface (%s) \"%s\"!", info_.name.c_str(), joint.name.c_str());
+
+      command_interfaces.emplace_back(hardware_interface::CommandInterface(
+          joint.name, hardware_interface::HW_IF_EFFORT, &hw_commands_torque_[i]));
+
+      RCLCPP_INFO(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "export command interface (%s) \"%s\"!", info_.name.c_str(), joint.name.c_str());
+
+
     }
 
     // motor index (not corresponding to the GPIO index)
@@ -516,9 +571,17 @@ namespace orbita3d_system_hwi
         command_interfaces.emplace_back(hardware_interface::CommandInterface(
             info_.name.c_str(), "torque", &hw_commands_torque_));
 
-        RCLCPP_INFO(
-            rclcpp::get_logger("Orbita3dSystem"),
-            "export command interface (%s) \"%s\"!", info_.name.c_str(), gpio.name.c_str());
+        RCLCPP_INFO(rclcpp::get_logger("Orbita3dSystem"),
+                    "export command interface (%s) \"%s\"!", info_.name.c_str(),
+                    gpio.name.c_str());
+
+        command_interfaces.emplace_back(hardware_interface::CommandInterface(
+            gpio.name, "control_mode", &hw_commands_control_mode_));
+
+        RCLCPP_INFO(rclcpp::get_logger("Orbita3dSystem"),
+                    "export command interface (%s) \"%s\"!", info_.name.c_str(),
+                    gpio.name.c_str());
+
       }
       else if (gpio.name.find("raw_motor") != std::string::npos)
       {
@@ -597,6 +660,19 @@ namespace orbita3d_system_hwi
           "(%s) Error getting torque status!", info_.name.c_str());
     }
     hw_states_torque_ = torque_on ? 1.0 : 0.0;
+
+
+    // control mode
+    if (orbita3d_get_control_mode(this->uid, &hw_states_control_mode_) != 0)
+    {
+
+      RCLCPP_ERROR(
+          rclcpp::get_logger("Orbita3dSystem"),
+          "(%s) READ CONTROL MODE ERROR!", info_.name.c_str());
+
+    }
+
+
 
     uint8_t errors = 0;
 
@@ -809,8 +885,23 @@ namespace orbita3d_system_hwi
         hw_commands_position_[2] = hw_states_position_[2];
       }
 
+      if (hw_states_torque_ == 0) {
+	  //Only allowed when torque is off
+	  if(hw_commands_control_mode_ != hw_states_control_mode_ && (hw_commands_control_mode_==0 || hw_commands_control_mode_==1||hw_commands_control_mode_==2||hw_commands_control_mode_==3))
+	  {
 
-    // RPY multiturn mode
+	      // control mode
+	      if (orbita3d_set_control_mode(this->uid, &hw_commands_control_mode_) != 0)
+	      {
+
+		  RCLCPP_ERROR(
+		      rclcpp::get_logger("Orbita3dSystem"),
+			  "(%s) WRITE CONTROL MODE ERROR!", info_.name.c_str());
+
+	      }
+	  }
+      }
+      // RPY multiturn mode
 
     double fb[3];
     if (orbita3d_set_target_rpy_orientation_fb(this->uid, &hw_commands_position_, &fb) != 0)
@@ -850,6 +941,37 @@ namespace orbita3d_system_hwi
       hw_states_position_[2] = fb[2];
 
     }
+
+    // TARGET VELOCITY
+    if(hw_commands_ctrl_velocity_[0]!=0.0 || hw_commands_ctrl_velocity_[1]!=0.0 || hw_commands_ctrl_velocity_[2]!=0.0 ){
+      if (orbita3d_set_target_velocity(this->uid,
+                                       &hw_commands_ctrl_velocity_) != 0)
+      {
+
+      RCLCPP_ERROR_THROTTLE(
+          rclcpp::get_logger("Orbita3dSystem"),
+          clock_,
+          LOG_THROTTLE_DURATION,
+          "(%s) WRITE TARGET VELOCITY ERROR!", info_.name.c_str());
+
+      }
+    }
+
+    // TARGET TORQUE
+    if(hw_commands_ctrl_torque_[0]!=0.0 || hw_commands_ctrl_torque_[1]!=0.0 || hw_commands_ctrl_torque_[2]!=0.0 ){
+      if (orbita3d_set_target_torque(this->uid,
+                                       &hw_commands_ctrl_torque_) != 0)
+      {
+
+      RCLCPP_ERROR_THROTTLE(
+          rclcpp::get_logger("Orbita3dSystem"),
+          clock_,
+          LOG_THROTTLE_DURATION,
+          "(%s) WRITE TARGET TORQUE ERROR!", info_.name.c_str());
+
+      }
+    }
+
 
 
     // rclcpp::sleep_for(std::chrono::milliseconds(1)); // This one should not be necessary in cached mode but otherwise I have some error (drawback: it reduces the frequency)
