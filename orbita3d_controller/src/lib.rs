@@ -350,14 +350,12 @@ impl Orbita3dController {
                 }
             }
         }
-        let torque_current_ratio = self.inner.torque_current_ratio();
 
-        if torque_current_ratio.is_none() {
+        // If parameters are known, convert to Nm
+        if let Some(ratio) = self.inner.torque_current_ratio() {
+            torque.iter_mut().for_each(|t| *t *= ratio);
             Ok(torque.into())
         } else {
-            torque
-                .iter_mut()
-                .for_each(|t| *t *= torque_current_ratio.unwrap());
             Ok(torque.into())
         }
     }

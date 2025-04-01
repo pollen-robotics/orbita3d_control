@@ -33,7 +33,8 @@ pub struct EthercatPoulpeController {
     axis_sensor_zeros: [Option<f64>; 3],
 
     motor_gearbox_params: Option<MotorGearboxConfig>,
-    // default_mode: Option<u8>,
+    #[allow(dead_code)]
+    default_mode: Option<u8>,
 }
 
 impl EthercatPoulpeController {
@@ -136,6 +137,7 @@ impl EthercatPoulpeController {
             inverted_axes,
             axis_sensor_zeros: [None; 3],
             motor_gearbox_params,
+            default_mode,
         };
 
         info!(
