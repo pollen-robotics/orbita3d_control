@@ -359,7 +359,8 @@ namespace orbita3d_system_hwi
 
 
     // control mode
-    if (orbita3d_get_control_mode(this->uid, &hw_states_control_mode_) != 0)
+    uint8_t mode=0;
+    if (orbita3d_get_control_mode(this->uid, &mode) != 0)
     {
 
       RCLCPP_ERROR(
@@ -368,12 +369,13 @@ namespace orbita3d_system_hwi
       // ret= CallbackReturn::ERROR;
             initOk=false;
     }
+    hw_states_control_mode_=mode;
     if(hw_states_control_mode_==0 || hw_states_control_mode_==1||hw_states_control_mode_==2||hw_states_control_mode_==3)
       hw_commands_control_mode_ = hw_states_control_mode_;
     else{
       RCLCPP_ERROR(
           rclcpp::get_logger("Orbita3dSystem"),
-          "(%s) READ CONTROL MODE ERROR! BAD CONTROL MODE: %d", info_.name.c_str(),hw_states_control_mode_);
+          "(%s) READ CONTROL MODE ERROR! BAD CONTROL MODE: %d", info_.name.c_str(),(uint8_t)hw_states_control_mode_);
       // ret= CallbackReturn::ERROR;
             initOk=false;
     }
@@ -542,14 +544,14 @@ namespace orbita3d_system_hwi
                   joint.name.c_str());
 
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
-          joint.name, hardware_interface::HW_IF_VELOCITY, &hw_commands_velocity_[i]));
+          joint.name, hardware_interface::HW_IF_VELOCITY, &hw_commands_ctrl_velocity_[i]));
 
       RCLCPP_INFO(
           rclcpp::get_logger("Orbita3dSystem"),
           "export command interface (%s) \"%s\"!", info_.name.c_str(), joint.name.c_str());
 
       command_interfaces.emplace_back(hardware_interface::CommandInterface(
-          joint.name, hardware_interface::HW_IF_EFFORT, &hw_commands_torque_[i]));
+          joint.name, hardware_interface::HW_IF_EFFORT, &hw_commands_ctrl_torque_[i]));
 
       RCLCPP_INFO(
           rclcpp::get_logger("Orbita3dSystem"),
@@ -662,8 +664,10 @@ namespace orbita3d_system_hwi
     hw_states_torque_ = torque_on ? 1.0 : 0.0;
 
 
+
     // control mode
-    if (orbita3d_get_control_mode(this->uid, &hw_states_control_mode_) != 0)
+    uint8_t mode=0;
+    if (orbita3d_get_control_mode(this->uid, &mode) != 0)
     {
 
       RCLCPP_ERROR(
@@ -671,7 +675,7 @@ namespace orbita3d_system_hwi
           "(%s) READ CONTROL MODE ERROR!", info_.name.c_str());
 
     }
-
+    hw_states_control_mode_=mode;
 
 
     uint8_t errors = 0;
@@ -890,8 +894,9 @@ namespace orbita3d_system_hwi
 	  if(hw_commands_control_mode_ != hw_states_control_mode_ && (hw_commands_control_mode_==0 || hw_commands_control_mode_==1||hw_commands_control_mode_==2||hw_commands_control_mode_==3))
 	  {
 
-	      // control mode
-	      if (orbita3d_set_control_mode(this->uid, &hw_commands_control_mode_) != 0)
+            // control mode
+	      uint8_t mode=(uint8_t)hw_commands_control_mode_;
+	      if (orbita3d_set_control_mode(this->uid, &mode) != 0)
 	      {
 
 		  RCLCPP_ERROR(
