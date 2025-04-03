@@ -324,6 +324,24 @@ int32_t orbita3d_set_control_mode(uint32_t uid,
 /// * i32 - 0 if the emergency stop signal was sent successfully, 1 otherwise.
 int32_t orbita3d_emergency_stop(uint32_t uid);
 
+/// Set the target velocity of the platform (rad/s)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * velocity: *const [f64; 3] - The target velocity of the platform.
+/// # Returns
+/// * i32 - 0 if the velocity was set successfully, 1 otherwise.
+int32_t orbita3d_set_target_velocity(uint32_t uid, const double (*output_velocity)[3]);
+
+/// Set the target torque of the platform
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * torque: *const [f64; 3] - The target torque of the platform.
+/// # Returns
+/// * i32 - 0 if the torque was set successfully, 1 otherwise.
+int32_t orbita3d_set_target_torque(uint32_t uid, const double (*torque)[3]);
+
 /// Create a new Orbita3dKinematicsModel.
 Orbita3dKinematicsModel create_orbita3d_kinematics_model(double alpha,
                                                          double gamma_min,

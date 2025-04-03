@@ -10,28 +10,35 @@
 
 #define LOG_THROTTLE_DURATION 30000
 
-namespace orbita3d_system_hwi
-{
-  using namespace hardware_interface;
-class Orbita3dSystem : public hardware_interface::SystemInterface
-{
+namespace orbita3d_system_hwi {
+using namespace hardware_interface;
+class Orbita3dSystem : public hardware_interface::SystemInterface {
 public:
-    RCLCPP_SHARED_PTR_DEFINITIONS(Orbita3dSystem)
+  RCLCPP_SHARED_PTR_DEFINITIONS(Orbita3dSystem)
 
-    CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
+  CallbackReturn on_init(const hardware_interface::HardwareInfo &info) override;
 
-    std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
-    std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
+  std::vector<hardware_interface::StateInterface>
+  export_state_interfaces() override;
+  std::vector<hardware_interface::CommandInterface>
+  export_command_interfaces() override;
 
-    CallbackReturn on_activate(const rclcpp_lifecycle::State & previous_state) override;
-    CallbackReturn on_deactivate(const rclcpp_lifecycle::State & previous_state) override;
+  CallbackReturn
+  on_activate(const rclcpp_lifecycle::State &previous_state) override;
+  CallbackReturn
+  on_deactivate(const rclcpp_lifecycle::State &previous_state) override;
 
-    hardware_interface::return_type read(const rclcpp::Time &, const rclcpp::Duration &) override;
-    hardware_interface::return_type write(const rclcpp::Time &, const rclcpp::Duration &) override;
+  hardware_interface::return_type read(const rclcpp::Time &,
+                                       const rclcpp::Duration &) override;
+  hardware_interface::return_type write(const rclcpp::Time &,
+                                        const rclcpp::Duration &) override;
 
 private:
   double hw_states_torque_;
   double hw_commands_torque_;
+
+  double hw_states_control_mode_;
+  double hw_commands_control_mode_;
 
   double hw_states_error_;
   double hw_commands_error_;
@@ -41,7 +48,6 @@ private:
   double hw_states_effort_[3];
   double hw_commands_position_[3];
 
-
   double hw_states_torque_limit_[3];
   double hw_states_speed_limit_[3];
   double hw_states_motor_velocities_[3];
@@ -49,8 +55,7 @@ private:
   double hw_states_motor_temperatures_[3];
   double hw_states_board_temperatures_[3];
 
-    double hw_states_axis_sensors_[3];
-
+  double hw_states_axis_sensors_[3];
 
   double hw_states_p_gain_[3];
   double hw_states_i_gain_[3];
@@ -59,6 +64,9 @@ private:
   double hw_commands_speed_limit_[3];
   double hw_commands_torque_limit_[3];
 
+  double hw_commands_ctrl_velocity_[3];
+  double hw_commands_ctrl_torque_[3];
+
   double hw_commands_p_gain_[3];
   double hw_commands_i_gain_[3];
   double hw_commands_d_gain_[3];
@@ -66,15 +74,13 @@ private:
   // Store time between update loops
   rclcpp::Clock clock_;
   rclcpp::Time last_timestamp_;
-  rclcpp::Time current_timestamp;  // Avoid initialization on each read
+  rclcpp::Time current_timestamp; // Avoid initialization on each read
 
   uint32_t uid;
   uint32_t loop_counter_read;
   uint32_t loop_counter_write;
-
-
 };
 
-}
+} // namespace orbita3d_system_hwi
 
 #endif // _ORBITA3D_SYSTEM_HWI

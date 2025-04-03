@@ -791,6 +791,46 @@ pub extern "C" fn orbita3d_emergency_stop(uid: u32) -> i32 {
     0
 }
 
+#[no_mangle]
+/// Set the target velocity of the platform (rad/s)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * velocity: *const [f64; 3] - The target velocity of the platform.
+/// # Returns
+/// * i32 - 0 if the velocity was set successfully, 1 otherwise.
+pub extern "C" fn orbita3d_set_target_velocity(uid: u32, output_velocity: &[f64; 3]) -> i32 {
+    match CONTROLLER
+        .get_mut(&uid)
+        .unwrap()
+        .set_target_velocity(*output_velocity)
+    {
+        Ok(_) => 0,
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+/// Set the target torque of the platform
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * torque: *const [f64; 3] - The target torque of the platform.
+/// # Returns
+/// * i32 - 0 if the torque was set successfully, 1 otherwise.
+pub extern "C" fn orbita3d_set_target_torque(uid: u32, torque: &[f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().set_target_torque(*torque) {
+        Ok(_) => 0,
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
 /// Get the next available unique identifier
 fn get_available_uid() -> u32 {
     let mut uid = UID.lock().unwrap();
