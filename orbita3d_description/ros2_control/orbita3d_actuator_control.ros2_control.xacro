@@ -8,6 +8,8 @@
       </state_interface>
       <state_interface name="errors" />
       <command_interface name="torque"/>
+      <state_interface name="control_mode" />
+      <command_interface name="control_mode"/>
 
     </gpio>
 

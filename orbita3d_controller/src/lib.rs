@@ -49,7 +49,21 @@ pub struct Orbita3dConfig {
     pub disks: DisksConfig,
     /// Kinematics model config
     pub kinematics_model: Orbita3dKinematicsModel,
+    /// Should we invert some axis? (in roll/pitch/yaw)
     pub inverted_axes: [Option<bool>; 3],
+    pub motor_gearbox_params: Option<MotorGearboxConfig>,
+    pub default_mode: Option<u8>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+/// Motor/gearbox characteristics
+pub struct MotorGearboxConfig {
+    /// motor and gearbox characteristics for current/torque conversion
+    pub motor_gearbox_ratio: f64,
+    pub motor_nominal_current: f64,
+    pub motor_nominal_torque: f64,
+    pub motor_efficiency: f64,
+    pub motor_gearbox_efficiency: f64,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -213,6 +227,8 @@ impl Orbita3dController {
                     config.disks.zeros,
                     config.disks.reduction,
                     config.inverted_axes,
+                    config.motor_gearbox_params,
+                    config.default_mode,
                 )?;
                 log::info!("Using poulpe ethercat controller {:?}", controller);
 
@@ -320,9 +336,7 @@ impl Orbita3dController {
         let thetas = self.inner.get_current_position()?;
         let input_torque = self.inner.get_current_torque()?;
 
-        let mut torque = self
-            .kinematics
-            .compute_output_torque(thetas, input_torque);
+        let mut torque = self.kinematics.compute_output_torque(thetas, input_torque);
 
         // apply axis inversion
         // TODO: the inversion is applied to the angle-axis representation of the torque
@@ -336,7 +350,14 @@ impl Orbita3dController {
                 }
             }
         }
-        Ok(torque.into())
+
+        // If parameters are known, convert to Nm
+        if let Some(ratio) = self.inner.torque_current_ratio() {
+            torque.iter_mut().for_each(|t| *t *= ratio);
+            Ok(torque.into())
+        } else {
+            Ok(torque.into())
+        }
     }
 
     /// Get the target orientation (as quaternion (qx, qy, qz, qw))
@@ -379,7 +400,6 @@ impl Orbita3dController {
 
     /// Set the target orientation (as quaternion (qx, qy, qz, qw))
     pub fn set_target_orientation(&mut self, target: [f64; 4]) -> Result<()> {
-
         let mut rot =
             conversion::quaternion_to_rotation_matrix(target[0], target[1], target[2], target[3]);
 
@@ -654,12 +674,36 @@ impl Orbita3dController {
         self.inner.set_target_velocity(theta_vel)
     }
 
+    // pub fn get_target_velocity(&mut self) -> Result<[f64; 3]> {
+    //     let mut theta_vel = self.inner.get_target_velocity()?;
+    //     // calculate the velocity kinematics
+    //     let thetas = self.inner.get_current_position()?;
+    //     // input velocity - velocity of the motors
+    //     let mut target_vel = self
+    //         .kinematics
+    //         .compute_output_velocity(thetas, theta_vel.into());
+
+    //     let inverted_axes = self.inner.output_inverted_axes();
+    //     for i in 0..3 {
+    //         if let Some(inverted) = inverted_axes[i] {
+    //             if inverted {
+    //                 target_vel[i] = -target_vel[i];
+    //             }
+    //         }
+    //     }
+    //     // apply the reduction
+    //     let red = self.inner.reduction();
+    //     for i in 0..3 {
+    //         target_vel[i] /= red[i].unwrap();
+    //     }
+    //     Ok(target_vel)
+    // }
+
     /// Set target torque axis-angle representaiton in N.m
     ///
     /// # Arguments
     /// * target: axis-angle representation of the target torque (N.m)
     pub fn set_target_torque(&mut self, target: [f64; 3]) -> Result<()> {
-
         let mut target_torque = target;
         // apply the axis inversion
         let inverted_axes = self.inner.output_inverted_axes();
@@ -673,7 +717,9 @@ impl Orbita3dController {
         // calculate the torque kinematics
         let thetas = self.inner.get_current_position()?;
         // input torque - torque of the motors
-        let mut theta_torque = self.kinematics.compute_input_torque(thetas, target_torque.into());
+        let mut theta_torque = self
+            .kinematics
+            .compute_input_torque(thetas, target_torque.into());
         // aplly the reduction
         let red = self.inner.reduction();
         for i in 0..3 {
@@ -682,4 +728,29 @@ impl Orbita3dController {
 
         self.inner.set_target_torque(theta_torque)
     }
+
+    // pub fn get_target_torque(&mut self) -> Result<[f64; 3]> {
+    //     let mut theta_torque = self.inner.get_target_torque()?;
+    //     // calculate the torque kinematics
+    //     let thetas = self.inner.get_current_position()?;
+    //     // input torque - torque of the motors
+    //     let mut target_torque = self
+    //         .kinematics
+    //         .compute_output_torque(thetas, theta_torque.into());
+
+    //     let inverted_axes = self.inner.output_inverted_axes();
+    //     for i in 0..3 {
+    //         if let Some(inverted) = inverted_axes[i] {
+    //             if inverted {
+    //                 target_torque[i] = -target_torque[i];
+    //             }
+    //         }
+    //     }
+    //     // aplly the reduction
+    //     let red = self.inner.reduction();
+    //     for i in 0..3 {
+    //         target_torque[i] /= red[i].unwrap();
+    //     }
+    //     Ok(target_torque)
+    // }
 }
