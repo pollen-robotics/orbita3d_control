@@ -674,6 +674,9 @@ impl Orbita3dController {
         self.inner.set_target_velocity(theta_vel)
     }
 
+    pub fn get_reduction(&mut self) -> [Option<f64>; 3] {
+        self.inner.reduction()
+    }
     // pub fn get_target_velocity(&mut self) -> Result<[f64; 3]> {
     //     let mut theta_vel = self.inner.get_target_velocity()?;
     //     // calculate the velocity kinematics

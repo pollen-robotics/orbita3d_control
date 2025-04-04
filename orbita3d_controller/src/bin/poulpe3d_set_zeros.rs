@@ -36,18 +36,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Set Orbita3D in the zero position! (5s)");
     thread::sleep(Duration::from_secs(5));
     let mut axis_sensors = controller.get_axis_sensors()?;
-
+    let r = controller.get_reduction();
+    println!("Reduction: {:?}", r);
     for s in axis_sensors.iter_mut() {
-        *s *= 12.0 / 64.0; //FIXME how to get the ratio?
+        if let Some(reduction) = r[0] {
+            *s *= 1.0 / reduction;
+        } else {
+            *s *= 12.0 / 64.0;
+        }
     }
 
-    // println!("Zeros to write to the yaml config");
-    // println!();
+    println!("Zeros to write to the yaml config");
+    println!();
     // println!("disks:");
     // println!("  zeros: !HallZero");
-    // println!("    hardware_zero: {:?}", axis_sensors);
+    println!("hardware_zero: {:?}", axis_sensors);
     // println!("    hall_indice: [0, 5, 11] (FIXME: This should be known from the hardware)");
 
+    println!("\nOR\n");
     println!("Zeros to pass to cargo at the firmware compile time");
     println!();
     println!(
