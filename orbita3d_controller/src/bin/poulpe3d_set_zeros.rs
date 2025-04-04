@@ -1,7 +1,7 @@
-use orbita3d_controller::Orbita3dController;
-use std::{error::Error, thread, time::Duration};
-
 use clap::Parser;
+use orbita3d_controller::Orbita3dController;
+use poulpe_ethercat_grpc::server::launch_server;
+use std::{error::Error, thread, time::Duration};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -15,6 +15,19 @@ struct Args {
 fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     let args = Args::parse();
+
+    log::info!("Starting the server");
+    // run in a thread, do not block main thread
+    thread::spawn(|| {
+        tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(4)
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(launch_server("config/ethercat.yaml"))
+            .unwrap();
+    });
+    thread::sleep(Duration::from_secs(2));
 
     log::info!("Config file: {}", args.configfile);
 
