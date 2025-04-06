@@ -11,6 +11,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use nalgebra::{Matrix3, Rotation3, Vector3};
+#[cfg(not(feature = "std"))]
+use nalgebra::ComplexField;
 
 pub mod conversion;
 mod jacobian;

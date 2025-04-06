@@ -1,4 +1,6 @@
 use nalgebra::{Matrix3, Rotation3, RowVector3};
+#[cfg(not(feature = "std"))]
+use nalgebra::{ComplexField};
 
 use crate::Orbita3dKinematicsModel;
 

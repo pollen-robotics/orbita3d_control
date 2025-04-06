@@ -11,8 +11,9 @@ levenberg-marquardt = "0.14.0"
 nalgebra = { version = "0.33.2", default-features = false, features = ["libm"]}
 ndarray = { version = "0.16.1", default-features = false }
 ndarray_einsum_beta = { git = "https://github.com/bangconghuynh/einsum.git", default-features = false, optional = true}
-nshare = { version = "0.10.0"}
+nshare = { version = "0.10.0", default-features = false, features = ["nalgebra", "ndarray"]}
 serde = { version = "1.0.183", default-features = false, features = ["derive"] }
+num-traits = { version = "0.2.19", default-features = false, features = ["libm"] }
 
 [features]
 default = ["forward_kinematics"]
