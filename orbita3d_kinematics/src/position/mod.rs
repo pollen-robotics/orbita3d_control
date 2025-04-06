@@ -1,3 +1,4 @@
+#[cfg(feature = "forward_kinematics")]
 mod forward;
 mod inverse;
 pub use inverse::InverseSolutionErrorKind;

@@ -8,14 +8,16 @@
 //!
 //! See the [README.md](./README.md) for more information.
 
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 use nalgebra::{Matrix3, Rotation3, Vector3};
 
 pub mod conversion;
 mod jacobian;
 mod position;
+#[cfg(feature = "forward_kinematics")]
 mod torque;
+#[cfg(feature = "forward_kinematics")]
 mod velocity;
 
 pub use position::InverseSolutionErrorKind;

@@ -8,11 +8,16 @@ edition = "2021"
 [dependencies]
 log = "0.4.20"
 levenberg-marquardt = "0.14.0"
-nalgebra = "0.33.2"
-ndarray = "0.16.1"
-ndarray_einsum_beta = { git = "https://github.com/bangconghuynh/einsum.git" }
-nshare = "0.10.0"
-serde = { version = "1.0.183", features = ["derive"] }
+nalgebra = { version = "0.33.2", default-features = false, features = ["libm"]}
+ndarray = { version = "0.16.1", default-features = false }
+ndarray_einsum_beta = { git = "https://github.com/bangconghuynh/einsum.git", default-features = false, optional = true}
+nshare = { version = "0.10.0"}
+serde = { version = "1.0.183", default-features = false, features = ["derive"] }
+
+[features]
+default = ["forward_kinematics"]
+forward_kinematics = ["std", "dep:ndarray_einsum_beta"]
+std = []
 
 [dev-dependencies]
 rand = "0.8.5"

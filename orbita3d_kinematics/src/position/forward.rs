@@ -1,6 +1,5 @@
 use levenberg_marquardt::{LeastSquaresProblem, LevenbergMarquardt};
 use nalgebra::{Matrix3, Owned, Rotation3, SMatrix, SVector, Vector3, U12, U6};
-use ndarray_einsum_beta::einsum;
 use nshare::{AsNdarray2, IntoNalgebra};
 
 use crate::{conversion, InverseSolutionErrorKind, Orbita3dKinematicsModel};
@@ -264,7 +263,7 @@ fn align_vectors(a: Matrix3<f64>, b: Matrix3<f64>) -> Rotation3<f64> {
     let nb = b.as_ndarray2();
     let nb = nb.to_shape((3, 3)).unwrap();
 
-    let mat_b = einsum("ji,jk->ik", &[&na, &nb])
+    let mat_b = ndarray_einsum_beta::einsum("ji,jk->ik", &[&na, &nb])
         .unwrap();
     let mat_b = mat_b
         .to_shape((3, 3))
