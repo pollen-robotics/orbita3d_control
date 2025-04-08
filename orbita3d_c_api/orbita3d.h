@@ -183,6 +183,42 @@ int32_t orbita3d_get_raw_motors_torque_limit(uint32_t uid, double (*limit)[3]);
 /// * i32 - 0 if the torque limit was set successfully, 1 otherwise.
 int32_t orbita3d_set_raw_motors_torque_limit(uint32_t uid, const double (*limit)[3]);
 
+/// Get the current torque limit of the axes (Nm)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * limit: *mut [f64; 3] - The current torque limit of the axes.
+/// # Returns
+/// * i32 - 0 if the torque limit was retrieved successfully, 1 otherwise.
+int32_t orbita3d_get_torque_limit(uint32_t uid, double (*limit)[3]);
+
+/// Set the current torque limit of the axes (Nm)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * limit: *const [f64; 3] - The current torque limit of the motors.
+/// # Returns
+/// * i32 - 0 if the torque limit was set successfully, 1 otherwise.
+int32_t orbita3d_set_torque_limit(uint32_t uid, const double (*limit)[3]);
+
+/// Get the current velocity limit of the axes (rad/s)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * limit: *mut [f64; 3] - The velocity limit of the axes.
+/// # Returns
+/// * i32 - 0 if the velocity limit was retrieved successfully, 1 otherwise.
+int32_t orbita3d_get_velocity_limit(uint32_t uid, double (*limit)[3]);
+
+/// Set the current velocity limit of the axes (rad/s)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * limit: *const [f64; 3] - The velocity limit of the axes.
+/// # Returns
+/// * i32 - 0 if the velocity limit was set successfully, 1 otherwise.
+int32_t orbita3d_set_velocity_limit(uint32_t uid, const double (*limit)[3]);
+
 /// Get the current PID gains of the motors
 ///
 /// # Arguments

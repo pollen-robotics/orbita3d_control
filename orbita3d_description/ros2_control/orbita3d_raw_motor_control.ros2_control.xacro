@@ -2,11 +2,19 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:macro name="orbita3d_raw_motor_control" params="name">
       <gpio name="${name}">
+
         <state_interface name="speed_limit"/>
         <command_interface name="speed_limit"/>
 
         <state_interface name="torque_limit"/>
         <command_interface name="torque_limit"/>
+
+        <state_interface name="raw_speed_limit"/>
+        <command_interface name="raw_speed_limit"/>
+
+        <state_interface name="raw_torque_limit"/>
+        <command_interface name="raw_torque_limit"/>
+
 
         <state_interface name="p_gain"/>
         <command_interface name="p_gain"/>

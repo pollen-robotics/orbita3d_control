@@ -62,6 +62,7 @@ pub struct MotorGearboxConfig {
     pub motor_gearbox_ratio: f64,
     pub motor_nominal_current: f64,
     pub motor_nominal_torque: f64,
+    pub motor_nominal_velocity: f64,
     pub motor_efficiency: f64,
     pub motor_gearbox_efficiency: f64,
 }
@@ -523,22 +524,164 @@ impl Orbita3dController {
         }
     }
 
-    /// Get the velocity limit of each raw motor (in rad/s)
+    pub fn set_torque_limit(&mut self, limit: [f64; 3]) -> Result<()> {
+        // // apply the axis inversion => useless here?
+        // let inverted_axes = self.inner.output_inverted_axes();
+        // for i in 0..3 {
+        //     if let Some(inverted) = inverted_axes[i] {
+        //         if inverted {
+        //             target_torque[i] = -target_torque[i];
+        //         }
+        //     }
+        // }
+        // calculate the torque kinematics
+        let thetas = self.inner.get_current_position()?;
+        // input torque - torque of the motors
+        let mut theta_limit = self.kinematics.compute_input_torque(thetas, limit.into());
+        // apply the reduction
+        let red = self.inner.reduction();
+        for i in 0..3 {
+            theta_limit[i] /= red[i].unwrap();
+        }
+
+        // If parameters are known, convert to from Nm to mA
+        if let Some(ratio) = self.inner.torque_current_ratio() {
+            theta_limit.iter_mut().for_each(|t| *t /= ratio);
+        }
+        // Convert the mA into the %
+        if let Some(nominal_current) = self.inner.nominal_current() {
+            theta_limit
+                .iter_mut()
+                .for_each(|t| *t /= nominal_current * 1000.0);
+        }
+
+        self.inner.set_torque_limit(theta_limit)
+    }
+
+    pub fn get_torque_limit(&mut self) -> Result<[f64; 3]> {
+        let thetas = self.inner.get_current_position()?;
+        let mut input_torque_limit = self.inner.get_torque_limit()?;
+        // Convert the % into the mA
+        if let Some(nominal_current) = self.inner.nominal_current() {
+            input_torque_limit
+                .iter_mut()
+                .for_each(|t| *t *= nominal_current * 1000.0);
+        }
+        // If parameters are known, convert to Nm
+        if let Some(ratio) = self.inner.torque_current_ratio() {
+            input_torque_limit.iter_mut().for_each(|t| *t *= ratio);
+        }
+
+        // apply the reduction. Here?
+        let red = self.inner.reduction(); //Orbita reduction
+        for i in 0..3 {
+            input_torque_limit[i] *= red[i].unwrap();
+        }
+
+        let torque_limit = self
+            .kinematics
+            .compute_output_torque(thetas, input_torque_limit);
+
+        // apply axis inversion
+        // TODO: the inversion is applied to the angle-axis representation of the torque
+        // although it is not the best way to do it, it is the only way to do it with the current implementation
+        // we should decide which representation to invert and do it consistently
+        // let inverted_axes = self.inner.output_inverted_axes();
+        // for i in 0..3 {
+        //     if let Some(inverted) = inverted_axes[i] {
+        //         if inverted {
+        //             torque[i] = -torque[i];
+        //         }
+        //     }
+        // }
+
+        Ok(torque_limit.into())
+    }
+
+    pub fn get_velocity_limit(&mut self) -> Result<[f64; 3]> {
+        let thetas = self.inner.get_current_position()?;
+        let mut input_velocity_limit = self.inner.get_velocity_limit()?;
+
+        // Convert the % into the rad/s
+        if let Some(nominal_velocity) = self.inner.nominal_velocity() {
+            input_velocity_limit
+                .iter_mut()
+                .for_each(|t| *t *= nominal_velocity);
+        }
+
+        // apply the reduction. Here?
+        let red = self.inner.reduction(); //Orbita reduction
+        for i in 0..3 {
+            input_velocity_limit[i] /= red[i].unwrap();
+        }
+
+        let vel = self
+            .kinematics
+            .compute_output_velocity(thetas, input_velocity_limit);
+
+        // apply axis inversion
+        // TODO: the inversion is applied to the angle-axis representation of the torque
+        // although it is not the best way to do it, it is the only way to do it with the current implementation
+        // we should decide which representation to invert and do it consistently
+        // let inverted_axes = self.inner.output_inverted_axes();
+        // for i in 0..3 {
+        //     if let Some(inverted) = inverted_axes[i] {
+        //         if inverted {
+        //             vel[i] = -vel[i];
+        //         }
+        //     }
+        // }
+
+        Ok(vel.into())
+    }
+
+    pub fn set_velocity_limit(&mut self, limit: [f64; 3]) -> Result<()> {
+        // let mut target_limit = limit;
+        // apply the axis inversion
+        // let inverted_axes = self.inner.output_inverted_axes();
+        // for i in 0..3 {
+        //     if let Some(inverted) = inverted_axes[i] {
+        //         if inverted {
+        //             target_limit[i] = -target_limit[i];
+        //         }
+        //     }
+        // }
+
+        // calculate the velocity kinematics
+        let thetas = self.inner.get_current_position()?;
+        // input velocity - velocity of the motors
+        let mut theta_limit = self.kinematics.compute_input_velocity(thetas, limit.into());
+
+        // apply the reduction
+        let red = self.inner.reduction();
+        for i in 0..3 {
+            theta_limit[i] *= red[i].unwrap();
+        }
+
+        // Convert the rad/s into %
+        if let Some(nominal_velocity) = self.inner.nominal_velocity() {
+            theta_limit.iter_mut().for_each(|t| *t /= nominal_velocity);
+        }
+
+        self.inner.set_velocity_limit(theta_limit)
+    }
+
+    /// Get the velocity limit of each raw motor (in % of max motor velocity)
     /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn get_raw_motors_velocity_limit(&mut self) -> Result<[f64; 3]> {
         self.inner.get_velocity_limit()
     }
-    /// Set the velocity limit of each raw motor (in rad/s)
+    /// Set the velocity limit of each raw motor (in % of max motor velocity)
     /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn set_raw_motors_velocity_limit(&mut self, limit: [f64; 3]) -> Result<()> {
         self.inner.set_velocity_limit(limit)
     }
-    /// Get the torque limit of each raw motor (in N.m)
+    /// Get the torque limit of each raw motor (in % of motor max current)
     /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn get_raw_motors_torque_limit(&mut self) -> Result<[f64; 3]> {
         self.inner.get_torque_limit()
     }
-    /// Set the torque limit of each raw motor (in N.m)
+    /// Set the torque limit of each raw motor (in % of motor max current)
     /// caution: this is the raw value used by the motors used inside the actuator, not a limit to orbita3d orientation!
     pub fn set_raw_motors_torque_limit(&mut self, limit: [f64; 3]) -> Result<()> {
         self.inner.set_torque_limit(limit)
@@ -705,6 +848,7 @@ impl Orbita3dController {
     /// * target: axis-angle representation of the target torque (N.m)
     pub fn set_target_torque(&mut self, target: [f64; 3]) -> Result<()> {
         let mut target_torque = target;
+
         // apply the axis inversion
         let inverted_axes = self.inner.output_inverted_axes();
         for i in 0..3 {
@@ -724,6 +868,11 @@ impl Orbita3dController {
         let red = self.inner.reduction();
         for i in 0..3 {
             theta_torque[i] /= red[i].unwrap();
+        }
+
+        // If parameters are known, convert to from Nm to mA
+        if let Some(ratio) = self.inner.torque_current_ratio() {
+            theta_torque.iter_mut().for_each(|t| *t /= ratio);
         }
 
         self.inner.set_target_torque(theta_torque)

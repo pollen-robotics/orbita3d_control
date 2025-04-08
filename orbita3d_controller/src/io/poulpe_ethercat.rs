@@ -258,6 +258,24 @@ impl MotorsController<3> for EthercatPoulpeController {
             )
         }
     }
+
+    fn nominal_current(&self) -> Option<f64> {
+        if self.motor_gearbox_params.is_none() {
+            None
+        } else {
+            let params = self.motor_gearbox_params.as_ref().unwrap();
+            Some(params.motor_nominal_current)
+        }
+    }
+
+    fn nominal_velocity(&self) -> Option<f64> {
+        if self.motor_gearbox_params.is_none() {
+            None
+        } else {
+            let params = self.motor_gearbox_params.as_ref().unwrap();
+            Some(params.motor_nominal_velocity)
+        }
+    }
 }
 
 impl RawMotorsIO<3> for EthercatPoulpeController {
