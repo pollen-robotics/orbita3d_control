@@ -61,8 +61,10 @@ pub struct MotorGearboxConfig {
     /// motor and gearbox characteristics for current/torque conversion
     pub motor_gearbox_ratio: f64,
     pub motor_nominal_current: f64,
+    pub motor_max_current: f64,
     pub motor_nominal_torque: f64,
     pub motor_nominal_velocity: f64,
+    pub motor_max_velocity: f64,
     pub motor_efficiency: f64,
     pub motor_gearbox_efficiency: f64,
 }
@@ -549,10 +551,10 @@ impl Orbita3dController {
             theta_limit.iter_mut().for_each(|t| *t /= ratio);
         }
         // Convert the mA into the %
-        if let Some(nominal_current) = self.inner.nominal_current() {
+        if let Some(max_current) = self.inner.max_current() {
             theta_limit
                 .iter_mut()
-                .for_each(|t| *t /= nominal_current * 1000.0);
+                .for_each(|t| *t /= max_current * 1000.0);
         }
 
         self.inner.set_torque_limit(theta_limit)
@@ -562,10 +564,10 @@ impl Orbita3dController {
         let thetas = self.inner.get_current_position()?;
         let mut input_torque_limit = self.inner.get_torque_limit()?;
         // Convert the % into the mA
-        if let Some(nominal_current) = self.inner.nominal_current() {
+        if let Some(max_current) = self.inner.max_current() {
             input_torque_limit
                 .iter_mut()
-                .for_each(|t| *t *= nominal_current * 1000.0);
+                .for_each(|t| *t *= max_current * 1000.0);
         }
         // If parameters are known, convert to Nm
         if let Some(ratio) = self.inner.torque_current_ratio() {
@@ -603,10 +605,10 @@ impl Orbita3dController {
         let mut input_velocity_limit = self.inner.get_velocity_limit()?;
 
         // Convert the % into the rad/s
-        if let Some(nominal_velocity) = self.inner.nominal_velocity() {
+        if let Some(max_velocity) = self.inner.max_velocity() {
             input_velocity_limit
                 .iter_mut()
-                .for_each(|t| *t *= nominal_velocity);
+                .for_each(|t| *t *= max_velocity);
         }
 
         // apply the reduction. Here?
@@ -659,8 +661,8 @@ impl Orbita3dController {
         }
 
         // Convert the rad/s into %
-        if let Some(nominal_velocity) = self.inner.nominal_velocity() {
-            theta_limit.iter_mut().for_each(|t| *t /= nominal_velocity);
+        if let Some(max_velocity) = self.inner.max_velocity() {
+            theta_limit.iter_mut().for_each(|t| *t /= max_velocity);
         }
 
         self.inner.set_velocity_limit(theta_limit)
