@@ -9,12 +9,6 @@
         <state_interface name="torque_limit"/>
         <command_interface name="torque_limit"/>
 
-        <state_interface name="raw_speed_limit"/>
-        <command_interface name="raw_speed_limit"/>
-
-        <state_interface name="raw_torque_limit"/>
-        <command_interface name="raw_torque_limit"/>
-
 
         <state_interface name="p_gain"/>
         <command_interface name="p_gain"/>
