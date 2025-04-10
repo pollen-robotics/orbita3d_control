@@ -223,6 +223,10 @@ impl Orbita3dController {
             // The ethercat mode with the "Poulpe" electronics
             #[cfg(feature = "build_ethercat")]
             Orbita3dIOConfig::PoulpeEthercat(ethercat_config) => {
+                log::debug!(
+                    "DEBUG: motor_gearbox_params: {:?}",
+                    config.motor_gearbox_params
+                );
                 let controller = EthercatPoulpeController::new(
                     &ethercat_config.url,
                     ethercat_config.id,
