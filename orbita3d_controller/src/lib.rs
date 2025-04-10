@@ -360,6 +360,7 @@ impl Orbita3dController {
 
         // If parameters are known, convert to Nm
         if let Some(ratio) = self.inner.torque_current_ratio() {
+            log::debug!("DEBUG torque_current_ration: {:?}", ratio);
             torque.iter_mut().for_each(|t| *t *= ratio);
             Ok(torque.into())
         } else {
