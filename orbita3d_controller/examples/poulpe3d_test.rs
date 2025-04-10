@@ -200,6 +200,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         let axis_zeros = controller.get_axis_sensor_zeros()?;
         let board_temp = controller.get_board_temperatures()?;
         let control_mode = controller.get_control_mode()?;
+
+        let rawlim = controller.get_raw_motors_torque_limit()?;
+        let lim = controller.get_torque_limit()?;
+
+        log::debug!("DEBUG LIMITS: raw {:?} axis {:?}", rawlim, lim);
         all_data.push(Output {
             timestamp: t,
             torque_on: torque,

@@ -223,10 +223,7 @@ impl Orbita3dController {
             // The ethercat mode with the "Poulpe" electronics
             #[cfg(feature = "build_ethercat")]
             Orbita3dIOConfig::PoulpeEthercat(ethercat_config) => {
-                log::debug!(
-                    "DEBUG: motor_gearbox_params: {:?}",
-                    config.motor_gearbox_params
-                );
+                log::debug!("motor_gearbox_params: {:?}", config.motor_gearbox_params);
                 let controller = EthercatPoulpeController::new(
                     &ethercat_config.url,
                     ethercat_config.id,
@@ -341,10 +338,14 @@ impl Orbita3dController {
     /// Get the current torque (as pseudo vector)
     pub fn get_current_torque(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
-        let input_torque = self.inner.get_current_torque()?;
 
-        let mut torque = self.kinematics.compute_output_torque(thetas, input_torque);
-
+        let mut input_torque = self.inner.get_current_torque()?; //raw mA motor current
+                                                                 // log::debug!("DEBUG raw torque: {:?}", input_torque);
+        let red = self.inner.reduction(); //Orbita reduction
+        for i in 0..3 {
+            input_torque[i] *= red[i].unwrap();
+        }
+        // log::debug!("DEBUG red torque: {:?}", input_torque);
         // apply axis inversion
         // TODO: the inversion is applied to the angle-axis representation of the torque
         // although it is not the best way to do it, it is the only way to do it with the current implementation
@@ -353,20 +354,21 @@ impl Orbita3dController {
         for i in 0..3 {
             if let Some(inverted) = inverted_axes[i] {
                 if inverted {
-                    torque[i] = -torque[i];
+                    input_torque[i] = -input_torque[i];
                 }
             }
         }
-
-        // If parameters are known, convert to Nm
+        // log::debug!("DEBUG inverted torque: {:?}", input_torque);
+        // If parameters are known, convert mA to Nm
         if let Some(ratio) = self.inner.torque_current_ratio() {
-            log::debug!("DEBUG torque pre ratio: {:?}", torque);
-            torque.iter_mut().for_each(|t| *t *= ratio);
-            log::debug!("DEBUG torque post ratio: {:?} (ratio: {:?})", torque, ratio);
-            Ok(torque.into())
-        } else {
-            Ok(torque.into())
+            input_torque
+                .iter_mut()
+                .for_each(|t| *t = *t * ratio / 1000.0);
         }
+        // log::debug!("DEBUG Nm torque: {:?}", input_torque);
+        let torque = self.kinematics.compute_output_torque(thetas, input_torque);
+        // log::debug!("DEBUG Nm axis torque: {:?}", torque);
+        Ok(torque.into())
     }
 
     /// Get the target orientation (as quaternion (qx, qy, qz, qw))
@@ -532,6 +534,7 @@ impl Orbita3dController {
         }
     }
 
+    // FIXME! This computation is wrong
     pub fn set_torque_limit(&mut self, limit: [f64; 3]) -> Result<()> {
         // // apply the axis inversion => useless here?
         // let inverted_axes = self.inner.output_inverted_axes();
@@ -566,30 +569,34 @@ impl Orbita3dController {
         self.inner.set_torque_limit(theta_limit)
     }
 
+    // FIXME! This computation is wrong
     pub fn get_torque_limit(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;
         let mut input_torque_limit = self.inner.get_torque_limit()?;
-        // Convert the % into the mA
+        // log::debug!("DEBUG raw torque limit: {:?}", input_torque_limit);
+        // Convert the % into the A
         if let Some(max_current) = self.inner.max_current() {
             input_torque_limit
                 .iter_mut()
-                .for_each(|t| *t *= max_current * 1000.0);
+                .for_each(|t| *t *= max_current);
         }
-        // If parameters are known, convert to Nm
-        if let Some(ratio) = self.inner.torque_current_ratio() {
-            input_torque_limit.iter_mut().for_each(|t| *t *= ratio);
-        }
-
+        // log::debug!("DEBUG A torque limit: {:?}", input_torque_limit);
         // apply the reduction. Here?
         let red = self.inner.reduction(); //Orbita reduction
         for i in 0..3 {
             input_torque_limit[i] *= red[i].unwrap();
         }
 
+        // log::debug!("DEBUG A reduction torque limit: {:?}", input_torque_limit);
+        // If parameters are known, convert to Nm
+        if let Some(ratio) = self.inner.torque_current_ratio() {
+            input_torque_limit.iter_mut().for_each(|t| *t *= ratio);
+        }
+        // log::debug!("DEBUG Nm torque limit: {:?}", input_torque_limit);
         let torque_limit = self
             .kinematics
             .compute_output_torque(thetas, input_torque_limit);
-
+        // log::debug!("DEBUG Nm kin torque limit: {:?}", torque_limit);
         // apply axis inversion
         // TODO: the inversion is applied to the angle-axis representation of the torque
         // although it is not the best way to do it, it is the only way to do it with the current implementation
@@ -880,7 +887,9 @@ impl Orbita3dController {
 
         // If parameters are known, convert to from Nm to mA
         if let Some(ratio) = self.inner.torque_current_ratio() {
-            theta_torque.iter_mut().for_each(|t| *t /= ratio);
+            theta_torque
+                .iter_mut()
+                .for_each(|t| *t = *t / ratio * 1000.0);
         }
 
         self.inner.set_target_torque(theta_torque)
