@@ -1,6 +1,7 @@
 use levenberg_marquardt::{LeastSquaresProblem, LevenbergMarquardt};
+#[cfg(not(any(feature = "std", test)))]
+use nalgebra::{ComplexField, RealField};
 use nalgebra::{Matrix3, Owned, Rotation3, SMatrix, SVector, Vector3, U12, U6};
-use nshare::{AsNdarray2, IntoNalgebra};
 
 use crate::{conversion, InverseSolutionErrorKind, Orbita3dKinematicsModel};
 
@@ -151,8 +152,8 @@ impl Orbita3dKinematicsModel {
                             // From the average yaw of the disks, compute the real rpy
                             // it can be 180<|yaw|<360 or |yaw|>360
                             let nb_turns = (disk_yaw_avg / core::f64::consts::TAU).trunc(); //number of full turn
-                                                                                           // let nb_turns: f64 =
-                                                                                           //     (disk_yaw_avg / std::f64::consts::TAU).round();
+                                                                                            // let nb_turns: f64 =
+                                                                                            //     (disk_yaw_avg / std::f64::consts::TAU).round();
 
                             log::debug!("=> nb_turns {:?}", nb_turns);
 
@@ -257,25 +258,12 @@ impl Orbita3dKinematicsModel {
 }
 
 fn align_vectors(a: Matrix3<f64>, b: Matrix3<f64>) -> Rotation3<f64> {
-    // Find the rotation matrix to align two sets of vectors (based on scipy implementation)
-    let na= a.as_ndarray2();
-    let na = na.to_shape((3, 3)).unwrap();
-    let nb = b.as_ndarray2();
-    let nb = nb.to_shape((3, 3)).unwrap();
-
-    let mat_b = ndarray_einsum_beta::einsum("ji,jk->ik", &[&na, &nb])
-        .unwrap();
-    let mat_b = mat_b
-        .to_shape((3, 3))
-        .unwrap();
-
-    let matrix_b = mat_b.view().into_nalgebra();
-
+    let matrix_b = a.transpose() * b;
     let mat_svd = matrix_b.svd(true, true);
     let mut u = mat_svd.u.unwrap();
     let vh = mat_svd.v_t.unwrap();
 
-    let uv = u.clone() * vh.clone();
+    let uv = u * vh;
 
     if uv.determinant() < 0.0 {
         u.set_column(
@@ -284,19 +272,7 @@ fn align_vectors(a: Matrix3<f64>, b: Matrix3<f64>) -> Rotation3<f64> {
         );
     }
 
-    let mat_c = u * vh;
-
-    let m = Matrix3::from_row_slice(&[
-        mat_c.row(0)[0],
-        mat_c.row(0)[1],
-        mat_c.row(0)[2],
-        mat_c.row(1)[0],
-        mat_c.row(1)[1],
-        mat_c.row(1)[2],
-        mat_c.row(2)[0],
-        mat_c.row(2)[1],
-        mat_c.row(2)[2],
-    ]);
+    let m = u * vh;
 
     Rotation3::from_matrix_unchecked(m)
 }
