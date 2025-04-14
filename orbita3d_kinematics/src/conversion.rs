@@ -1,5 +1,5 @@
 use nalgebra::{Quaternion, Rotation3, UnitQuaternion, Vector3};
-#[cfg(not(feature = "std"))]
+#[cfg(not(any(feature = "std", test)))]
 use nalgebra::{ComplexField, RealField};
 /// Convert a quaternion to a rotation matrix.
 pub fn quaternion_to_rotation_matrix(qx: f64, qy: f64, qz: f64, qw: f64) -> Rotation3<f64> {

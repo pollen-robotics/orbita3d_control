@@ -1,5 +1,5 @@
 use nalgebra::{Matrix2, Matrix3, Rotation3, Vector2, Vector3};
-#[cfg(not(feature = "std"))]
+#[cfg(not(any(feature = "std", test)))]
 use nalgebra::{ComplexField, RealField};
 use num_traits::ops::euclid::Euclid;
 
@@ -288,7 +288,7 @@ impl Orbita3dKinematicsModel {
 
             let mut theta = 0.0;
 
-            let v_i = Vector2::from_iterator(v.row(i).columns(0, 2).transpose().iter().cloned());
+            let v_i: Vector2<_> = v.fixed_rows::<1>(i).fixed_columns::<2>(0).transpose();
 
             if self.passiv_arms_direct {
                 for (j, &sol) in solutions_theta.iter().enumerate() {
