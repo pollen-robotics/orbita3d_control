@@ -1,8 +1,21 @@
 use nalgebra::{Matrix2, Matrix3, Rotation3, Vector2, Vector3};
 #[cfg(not(any(feature = "std", test)))]
 use nalgebra::{ComplexField, RealField};
-use num_traits::ops::euclid::Euclid;
 
+#[cfg(not(any(feature = "std", test)))]
+#[inline]
+fn rem_euclid(lhs: &f64, rhs: &f64) -> f64 {
+    let r = lhs % rhs;
+    if r < 0.0 {
+        r + rhs.abs()
+    } else {
+        r
+    }
+}
+#[cfg(any(feature = "std", test))]
+fn rem_euclid(lhs: &f64, rhs: &f64) -> f64 {
+    f64::rem_euclid(*lhs, *rhs)
+}
 const TOLERANCE_ZERO_YAW: f64 = 1e-6; // Define a small tolerance for near-zero values
 
 use crate::{conversion, Orbita3dKinematicsModel};
@@ -110,14 +123,14 @@ impl Orbita3dKinematicsModel {
             }
             // also, if yaw.abs().rem_euclid(2.0 * PI) > pi, we might want to consider the 2pi complement
             // if target_rpy[2].abs().rem_euclid(std::f64::consts::TAU) >= std::f64::consts::PI
-            if Euclid::rem_euclid(&true_yaw.abs(), &core::f64::consts::TAU) >= core::f64::consts::PI
+            if rem_euclid(&true_yaw.abs(), &core::f64::consts::TAU) >= core::f64::consts::PI
                 && !(thetas[0].signum() == thetas[1].signum()
                     && thetas[1].signum() == thetas[2].signum())
             {
                 multiturn_offset += target_rpy[2].signum() * core::f64::consts::TAU
             }
 
-            log::debug!("Yaw more than Pi, nb full turns: {nb_turns}, yaw%2pi: {:?} offset: {multiturn_offset} theta before: {:?}",Euclid::rem_euclid(&true_yaw.abs(), &core::f64::consts::TAU),thetas);
+            log::debug!("Yaw more than Pi, nb full turns: {nb_turns}, yaw%2pi: {:?} offset: {multiturn_offset} theta before: {:?}",rem_euclid(&true_yaw.abs(), &core::f64::consts::TAU),thetas);
 
             log::debug!("thetas {:?}", thetas);
 
@@ -274,7 +287,8 @@ impl Orbita3dKinematicsModel {
                 solutions_theta = dual_sol.map(|v| v.atan() * 2.0);
             }
 
-            solutions_theta = solutions_theta.map(|v| Euclid::rem_euclid(&v, &(2.0 * core::f64::consts::PI)));
+            solutions_theta =
+                solutions_theta.map(|v| rem_euclid(&v, &(2.0 * core::f64::consts::PI)));
 
             if solutions_theta[0].is_nan() && solutions_theta[1].is_nan() {
                 thetas[i] = f64::NAN;
