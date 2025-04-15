@@ -195,56 +195,50 @@ impl Orbita3dKinematicsModel {
             }
         }
 
-        let mut sol1 = None;
-        let mut sol2 = None;
+        log::debug!("all solutions: {:?}", all_solutions);
+        let mut solution_iter = all_solutions
+            .iter()
+            .filter(|sol| self.check_gammas(Vector3::from(**sol)).is_ok());
 
-        all_solutions.iter().filter(|sol| self.check_gammas(Vector3::from(**sol)).is_ok()).for_each(|sol| {
-            if sol1.is_none() {
-                sol1 = Some(*sol);
-            } else if sol2.is_none() {
-                sol2 = Some(*sol);
-            } else {
-                unreachable!()
-            }
-        });
+        let Some(sol1) = solution_iter.next() else {
+            log::debug!(
+                "NO VALID SOLUTION! target: {:?}\n thetas: {:?}\nall_solutions: {:?}",
+                target_rpy,
+                thetas,
+                all_solutions
+            );
+            let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(
+                target_rpy[0],
+                target_rpy[1],
+                target_rpy[2],
+            );
+            return Err(InverseSolutionErrorKind::InvalidSolution(
+                rot,
+                compute_gammas(thetas.into()),
+            ));
+        };
 
-        log::debug!(
-            "all solutions: {:?}\nvalid solutions: {:?}",
-            all_solutions,
-            (sol1, sol2)
-        );
-        let thetas = match (sol1, sol2) {
-            (None, None) => {
-                log::debug!(
-                    "NO VALID SOLUTION! target: {:?}\n thetas: {:?}\nall_solutions: {:?}",
-                    target_rpy,
-                    thetas,
-                    all_solutions
-                );
-                let rot = conversion::intrinsic_roll_pitch_yaw_to_matrix(
-                    target_rpy[0],
-                    target_rpy[1],
-                    target_rpy[2],
-                );
-                return Err(InverseSolutionErrorKind::InvalidSolution(
-                    rot,
-                    compute_gammas(thetas.into()),
-                ));
-            }
-            (Some(sol1), None) => sol1,
-            (None, Some(_)) => unreachable!(),
-            (Some(sol1), Some(sol2)) => {
+        log::debug!("valid solution 1: {:?}", sol1);
+
+        let sol2 = solution_iter.next();
+
+        let thetas = match sol2 {
+            None => sol1,
+            Some(sol2) => {
                 // here we have the 2 solutions (both 2pi complement), we chose the one with the same yaw sign
-                let mut yaw_sign = (target_rpy[2] + self.offset).signum();
-                let mut theta_sign = sol1[0].signum();
 
                 // If the yaw or thetas are very close to zero, treat them as effectively zero
-                if (target_rpy[2] + self.offset).abs() < TOLERANCE_ZERO_YAW {
-                    yaw_sign = 0.0;
-                }
-                if sol1[0].abs() < TOLERANCE_ZERO_YAW {
-                    theta_sign = 0.0;
-                }
+                let yaw_sign = if (target_rpy[2] + self.offset).abs() < TOLERANCE_ZERO_YAW {
+                    0.0
+                } else {
+                    // otherwise get the sign
+                    (target_rpy[2] + self.offset).signum()
+                };
+                let theta_sign = if sol1[0].abs() < TOLERANCE_ZERO_YAW {
+                    0.0
+                } else {
+                    sol1[0].signum()
+                };
                 // Compare the yaw sign and theta sign
                 // but now accounting for near-zero values
                 if theta_sign == yaw_sign {
@@ -254,8 +248,9 @@ impl Orbita3dKinematicsModel {
                 }
             }
         };
-        // log::debug!("valid Thetas {:?}", thetas);
-        Ok(thetas)
+
+        log::debug!("valid Thetas {:?}", thetas);
+        Ok(*thetas)
     }
 
     fn find_thetas_from_v(&self, v: Matrix3<f64>) -> Vector3<f64> {
