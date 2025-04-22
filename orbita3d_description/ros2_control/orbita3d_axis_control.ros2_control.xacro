@@ -17,7 +17,7 @@
       </xacro:unless>
       <xacro:if value="$(arg use_mujoco)">
         <command_interface name="position_pid" />
-        <param name="position_kp">20</param>
+        <param name="position_kp">150</param>
         <param name="position_ki">10</param>
         <param name="position_kd">1</param>
         <param name="position_i_max">10000</param>
