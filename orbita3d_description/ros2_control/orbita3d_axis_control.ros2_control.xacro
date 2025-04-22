@@ -12,11 +12,17 @@
         <param name="initial_value">0.0</param>
       </state_interface>
 
-      <command_interface name="position_pid" />
-      <param name="position_kp">20</param>
-      <param name="position_ki">10</param>
-      <param name="position_kd">1</param>
-      <param name="position_i_max">10000</param>
+      <xacro:unless value="$(arg use_mujoco)">
+        <command_interface name="position" />
+      </xacro:unless>
+      <xacro:if value="$(arg use_mujoco)">
+        <command_interface name="position_pid" />
+        <param name="position_kp">20</param>
+        <param name="position_ki">10</param>
+        <param name="position_kd">1</param>
+        <param name="position_i_max">10000</param>
+      </xacro:if>
+
     </joint>
   </xacro:macro>
 </robot>
