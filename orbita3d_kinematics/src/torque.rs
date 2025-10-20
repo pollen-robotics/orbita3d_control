@@ -1,6 +1,6 @@
 use nalgebra::{Matrix3, Vector3};
 
-use crate::Orbita3dKinematicsModel;
+use crate::{conversion, Orbita3dKinematicsModel};
 
 impl Orbita3dKinematicsModel {
     /// Compute the forward static torque
@@ -32,6 +32,21 @@ impl Orbita3dKinematicsModel {
         let rot = self.compute_forward_kinematics(thetas);
         let j_inv = self.jacobian_inverse(rot, thetas);
 
+        self.compute_input_torque_from_j_inv(j_inv, output_torque)
+            .into()
+    }
+
+
+    pub fn compute_input_torque_from_rpy_output_torque(
+        &self,
+        thetas: [f64; 3],
+        output_torque_rpy: Vector3<f64>,
+    ) -> [f64; 3] {
+        let rot = self.compute_forward_kinematics(thetas);
+        let thetas_rpy = conversion::quaternion_to_roll_pitch_yaw(conversion::rotation_matrix_to_quaternion(rot));
+        let j_inv = self.jacobian_inverse(rot, thetas);
+        let j_gimbal =  conversion::gimbal_jacobian(thetas_rpy[0], thetas_rpy[1], thetas_rpy[2]);
+        let output_torque = j_gimbal.transpose().pseudo_inverse(1e-3).unwrap() * output_torque_rpy;
         self.compute_input_torque_from_j_inv(j_inv, output_torque)
             .into()
     }

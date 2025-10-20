@@ -895,6 +895,42 @@ impl Orbita3dController {
         self.inner.set_target_torque(theta_torque)
     }
 
+
+    pub fn set_target_torque_rpy(&mut self, target_rpy: [f64; 3]) -> Result<()> {
+        let mut target_torque = target_rpy;
+
+        // apply the axis inversion
+        let inverted_axes = self.inner.output_inverted_axes();
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    target_torque[i] = -target_torque[i];
+                }
+            }
+        }
+        // calculate the torque kinematics
+        let thetas = self.inner.get_current_position()?;
+        // input torque - torque of the motors
+        let mut theta_torque = self
+            .kinematics
+            .compute_input_torque_from_rpy_output_torque(thetas, target_torque.into());
+        // aplly the reduction
+        let red = self.inner.reduction();
+        for i in 0..3 {
+            theta_torque[i] /= red[i].unwrap();
+        }
+
+        // If parameters are known, convert to from Nm to mA
+        if let Some(ratio) = self.inner.torque_current_ratio() {
+            theta_torque
+                .iter_mut()
+                .for_each(|t| *t = *t / ratio * 1000.0);
+        }
+
+        self.inner.set_target_torque(theta_torque)
+    }
+
+
     // pub fn get_target_torque(&mut self) -> Result<[f64; 3]> {
     //     let mut theta_torque = self.inner.get_target_torque()?;
     //     // calculate the torque kinematics

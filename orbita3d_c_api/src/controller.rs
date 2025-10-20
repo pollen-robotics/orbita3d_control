@@ -909,6 +909,25 @@ pub extern "C" fn orbita3d_set_target_torque(uid: u32, torque: &[f64; 3]) -> i32
     }
 }
 
+#[no_mangle]
+/// Set the target torque of the platform
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * torque: *const [f64; 3] - The target torque of the platform.
+/// # Returns
+/// * i32 - 0 if the torque was set successfully, 1 otherwise.
+pub extern "C" fn orbita3d_set_target_torque_rpy(uid: u32, torque: &[f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().set_target_torque_rpy(*torque) {
+        Ok(_) => 0,
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+
 /// Get the next available unique identifier
 fn get_available_uid() -> u32 {
     let mut uid = UID.lock().unwrap();

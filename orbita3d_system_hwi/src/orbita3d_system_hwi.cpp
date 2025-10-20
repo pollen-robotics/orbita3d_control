@@ -1074,9 +1074,10 @@ namespace orbita3d_system_hwi
     }
 
     // TARGET TORQUE
-    if(hw_commands_ctrl_torque_[0]!=0.0 || hw_commands_ctrl_torque_[1]!=0.0 || hw_commands_ctrl_torque_[2]!=0.0 ){
-      if (orbita3d_set_target_torque(this->uid,
-                                       &hw_commands_ctrl_torque_) != 0)
+    // if(hw_commands_ctrl_torque_[0]!=0.0 || hw_commands_ctrl_torque_[1]!=0.0 || hw_commands_ctrl_torque_[2]!=0.0 )
+    {
+      //if (orbita3d_set_target_torque(this->uid,
+      if (orbita3d_set_target_torque_rpy(this->uid, &hw_commands_ctrl_torque_) != 0)
       {
 
       RCLCPP_ERROR_THROTTLE(
