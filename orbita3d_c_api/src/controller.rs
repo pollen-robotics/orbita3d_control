@@ -195,6 +195,27 @@ pub extern "C" fn orbita3d_get_current_torque(uid: u32, torque: &mut [f64; 3]) -
 }
 
 #[no_mangle]
+/// Get the current torque applied by the actuator
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * torque: *mut [f64; 3] - The current torque applied to the platform.
+/// # Returns
+/// * i32 - 0 if the torque was retrieved successfully, 1 otherwise.
+pub extern "C" fn orbita3d_get_current_torque_rpy(uid: u32, torque: &mut [f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_current_torque_rpy() {
+        Ok(tor) => {
+            *torque = tor;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
 /// Get the current target orientation of the platform (quaternion)
 ///
 /// # Arguments

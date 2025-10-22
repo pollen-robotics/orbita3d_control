@@ -197,7 +197,7 @@ namespace orbita3d_system_hwi
     rclcpp::sleep_for(std::chrono::milliseconds(10));
 
     // Current torque
-    if (orbita3d_get_current_torque(this->uid, &hw_states_effort_) != 0)
+    if (orbita3d_get_current_torque_rpy(this->uid, &hw_states_effort_) != 0)
     {
 
       RCLCPP_ERROR(
@@ -820,7 +820,7 @@ namespace orbita3d_system_hwi
     // rclcpp::sleep_for(std::chrono::milliseconds(1));
 
     //Current torque
-    if (orbita3d_get_current_torque(this->uid, &hw_states_effort_) != 0) {
+    if (orbita3d_get_current_torque_rpy(this->uid, &hw_states_effort_) != 0) {
 
       // ret=hardware_interface::return_type::ERROR;
 

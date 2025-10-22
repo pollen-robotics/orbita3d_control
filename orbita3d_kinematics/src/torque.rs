@@ -51,6 +51,20 @@ impl Orbita3dKinematicsModel {
             .into()
     }
 
+    pub fn compute_rpy_output_torque_from_input_torque(
+        &self,
+        thetas: [f64; 3],
+        input_torque: [f64; 3],
+    ) -> Vector3<f64> {
+        let rot = self.compute_forward_kinematics(thetas);
+        let thetas_rpy = conversion::quaternion_to_roll_pitch_yaw(conversion::rotation_matrix_to_quaternion(rot));
+        let j_inv = self.jacobian_inverse(rot, thetas);
+        let output_torque = self.compute_output_torque_from_j_inv(j_inv, input_torque.into());
+        let j_gimbal =  conversion::gimbal_jacobian(thetas_rpy[0], thetas_rpy[1], thetas_rpy[2]);
+        j_gimbal.transpose() * output_torque
+    }
+
+
     fn compute_output_torque_from_j_inv(
         &self,
         j_inv: Matrix3<f64>,

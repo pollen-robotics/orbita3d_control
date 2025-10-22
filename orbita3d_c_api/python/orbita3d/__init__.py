@@ -249,6 +249,17 @@ class Orbita3dController:
         check(lib.orbita3d_get_current_torque(self.uid, q_torque))
         return tuple(q_torque[0])
 
+
+    def get_current_torque_rpy(self) -> Tuple[float, float, float]:
+        """Get the current torque of the end-effector (roll, pitch, yaw).
+
+        Returns:
+            The axis-angle representing the end-effector torque, magnitude is the torque magnitude in Nm and the axis is the rotation axis.
+        """
+        q_torque = ffi.new("double(*)[3]")
+        check(lib.orbita3d_get_current_torque_rpy(self.uid, q_torque))
+        return tuple(q_torque[0])
+
     def get_target_orientation(self) -> Tuple[float, float, float, float]:
         """Get the target orientation of the end-effector.
 

@@ -335,6 +335,43 @@ impl Orbita3dController {
 
         Ok(vel.into())
     }
+
+    /// Get the current torque (as roll pitch yaw torques)
+    pub fn get_current_torque_rpy(&mut self) -> Result<[f64; 3]> {
+        let thetas = self.inner.get_current_position()?;
+
+        let mut input_torque = self.inner.get_current_torque()?; //raw mA motor current
+                                                                 // log::debug!("DEBUG raw torque: {:?}", input_torque);
+        let red = self.inner.reduction(); //Orbita reduction
+        for i in 0..3 {
+            input_torque[i] *= red[i].unwrap();
+        }
+
+        // If parameters are known, convert mA to Nm
+        if let Some(ratio) = self.inner.torque_current_ratio() {
+            input_torque
+                .iter_mut()
+                .for_each(|t| *t = *t * ratio / 1000.0);
+        }
+
+        // input torque - torque of the motors
+        let mut output_torque_rpy = self
+            .kinematics
+            .compute_rpy_output_torque_from_input_torque(thetas, input_torque.into());
+        
+        // apply axis inversion
+        let inverted_axes = self.inner.output_inverted_axes();
+        for i in 0..3 {
+            if let Some(inverted) = inverted_axes[i] {
+                if inverted {
+                    output_torque_rpy[i] = -output_torque_rpy[i];
+                }
+            }
+        }
+
+        Ok(output_torque_rpy.into())
+    }
+
     /// Get the current torque (as pseudo vector)
     pub fn get_current_torque(&mut self) -> Result<[f64; 3]> {
         let thetas = self.inner.get_current_position()?;

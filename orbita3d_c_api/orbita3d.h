@@ -87,6 +87,15 @@ int32_t orbita3d_get_current_velocity(uint32_t uid, double (*velocity)[3]);
 /// * i32 - 0 if the torque was retrieved successfully, 1 otherwise.
 int32_t orbita3d_get_current_torque(uint32_t uid, double (*torque)[3]);
 
+/// Get the current torque applied by the actuator
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * torque: *mut [f64; 3] - The current torque applied to the platform.
+/// # Returns
+/// * i32 - 0 if the torque was retrieved successfully, 1 otherwise.
+int32_t orbita3d_get_current_torque_rpy(uint32_t uid, double (*torque)[3]);
+
 /// Get the current target orientation of the platform (quaternion)
 ///
 /// # Arguments
