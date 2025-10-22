@@ -342,11 +342,7 @@ impl Orbita3dController {
 
         let mut input_torque = self.inner.get_current_torque()?; //raw mA motor current
                                                                  // log::debug!("DEBUG raw torque: {:?}", input_torque);
-        let red = self.inner.reduction(); //Orbita reduction
-        for i in 0..3 {
-            input_torque[i] *= red[i].unwrap();
-        }
-
+        
         // If parameters are known, convert mA to Nm
         if let Some(ratio) = self.inner.torque_current_ratio() {
             input_torque
@@ -378,10 +374,12 @@ impl Orbita3dController {
 
         let mut input_torque = self.inner.get_current_torque()?; //raw mA motor current
                                                                  // log::debug!("DEBUG raw torque: {:?}", input_torque);
-        let red = self.inner.reduction(); //Orbita reduction
-        for i in 0..3 {
-            input_torque[i] *= red[i].unwrap();
-        }
+        
+        // no need to invert, already done in the motor controller toolbox
+        // let red = self.inner.reduction(); //Orbita reduction
+        // for i in 0..3 {
+        //     input_torque[i] *= red[i].unwrap();
+        // }
         // log::debug!("DEBUG red torque: {:?}", input_torque);
         // apply axis inversion
         // TODO: the inversion is applied to the angle-axis representation of the torque
