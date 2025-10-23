@@ -84,19 +84,19 @@ class KinematicsModel:
             thetas: The three motors angles (in radians).
             thetas_torque: The three motors torques (in Newton meters).
         Returns:
-            The quaternion representing the end-effector orientation torque (qx, qy, qz, qw).
+            The platform output torque (in Newton meters) - axis-angle.
         """
         thetas = ffi.new("double(*)[3]", tuple(thetas))
         thetas_torque = ffi.new("double(*)[3]", tuple(thetas_torque))
-        q_torque = ffi.new("double(*)[4]")
+        target_out = ffi.new("double(*)[3]")
 
         check(
             lib.orbita3d_kinematics_forward_torque(
-                self.model, thetas, thetas_torque, q_torque
+                self.model, thetas, thetas_torque, target_out
             )
         )
 
-        return tuple(q_torque[0])
+        return tuple(target_out[0])
 
     def inverse_position(
         self, q: Tuple[float, float, float, float]
@@ -217,6 +217,17 @@ class Orbita3dController:
         q = ffi.new("double(*)[4]")
         check(lib.orbita3d_get_current_orientation(self.uid, q))
         return tuple(q[0])
+    
+    
+    def get_current_rpy_orientation(self) -> Tuple[float, float, float]:
+        """Get the current orientation of the end-effector.
+
+        Returns:
+            The intrinsic Euler representing the end-effector orientation (roll, pitch, yaw).
+        """
+        rpy = ffi.new("double(*)[3]")
+        check(lib.orbita3d_get_current_rpy_orientation(self.uid, rpy))
+        return tuple(rpy[0])
 
     def get_current_velocity(self) -> Tuple[float, float, float]:
         """Get the current velocity of the end-effector.
@@ -238,6 +249,17 @@ class Orbita3dController:
         check(lib.orbita3d_get_current_torque(self.uid, q_torque))
         return tuple(q_torque[0])
 
+
+    def get_current_torque_rpy(self) -> Tuple[float, float, float]:
+        """Get the current torque of the end-effector (roll, pitch, yaw).
+
+        Returns:
+            The axis-angle representing the end-effector torque, magnitude is the torque magnitude in Nm and the axis is the rotation axis.
+        """
+        q_torque = ffi.new("double(*)[3]")
+        check(lib.orbita3d_get_current_torque_rpy(self.uid, q_torque))
+        return tuple(q_torque[0])
+
     def get_target_orientation(self) -> Tuple[float, float, float, float]:
         """Get the target orientation of the end-effector.
 
@@ -256,8 +278,7 @@ class Orbita3dController:
         """
         q = ffi.new("double(*)[4]", tuple(q))
         check(lib.orbita3d_set_target_orientation(self.uid, q))
-
-
+    
     def get_target_rpy_orientation(self) -> Tuple[float, float, float]:
         """Get the target orientation of the end-effector.
 
@@ -483,6 +504,15 @@ class Orbita3dController:
         """
         torque = ffi.new("double(*)[3]", tuple(torque))
         check(lib.orbita3d_set_target_torque(self.uid, torque))
+        
+    def set_target_torque_rpy(self, torque: Tuple[float, float, float]) -> None:
+        """Set the target torque of the end-effector in roll-pitch-yaw.
+
+        Args:
+            torque: The intrinsic Euler representing the end-effector orientation torque (roll, pitch, yaw).
+        """
+        torque = ffi.new("double(*)[3]", tuple(torque))
+        check(lib.orbita3d_set_target_torque_rpy(self.uid, torque))
     
     def set_target_velocity(self, velocity: Tuple[float, float, float]) -> None:
         """Set the target velocity of the end-effector.

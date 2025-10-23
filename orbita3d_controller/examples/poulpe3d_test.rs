@@ -57,19 +57,35 @@ struct Output {
     target_roll: f64,
     target_pitch: f64,
     target_yaw: f64,
+    present_velocity_roll: f64,
+    present_velocity_pitch: f64,
+    present_velocity_yaw: f64,
+    present_torque_roll: f64,
+    present_torque_pitch: f64,
+    present_torque_yaw: f64,
     present_pos_top: f64,
     present_pos_mid: f64,
     present_pos_bot: f64,
     present_velocity_top: f64,
     present_velocity_mid: f64,
     present_velocity_bot: f64,
-    present_torque_top: f64,
-    present_torque_mid: f64,
-    present_torque_bot: f64,
+    present_current_top: f64,
+    present_current_mid: f64,
+    present_current_bot: f64,
+    present_temperature_top: f64,
+    present_temperature_mid: f64,
+    present_temperature_bot: f64,
     axis_sensor_top: f64,
     axis_sensor_mid: f64,
     axis_sensor_bot: f64,
+    axis_zeros_top: f64,
+    axis_zeros_mid: f64,
+    axis_zeros_bot: f64,
+    board_temperature_top: f64,
+    board_temperature_mid: f64,
+    board_temperature_bot: f64,
     board_state: u8,
+    control_mode: u8,
 }
 
 use rprompt::prompt_reply;
@@ -171,17 +187,24 @@ fn main() -> Result<(), Box<dyn Error>> {
         let t = now.elapsed().unwrap().as_secs_f64();
         let input_csv_data: Input = in_csv?;
         log::debug!("INPUT: {:?}", input_csv_data);
-
-        //Read feedback from Orbita
         let curr_rpy = controller.get_current_rpy_orientation()?;
         let torque = controller.is_torque_on()?;
-        // let curr_vel = controller.get_current_velocity()?;
-        // let curr_torque = controller.get_current_torque()?;
-        let curr_vel = controller.get_raw_motors_velocity()?;
-        let curr_torque = controller.get_raw_motors_current()?;
-        let curr_pos = controller.get_raw_motors_positions()?;
+        let curr_vel = controller.get_current_velocity()?;
+        let curr_torque = controller.get_current_torque()?;
+        let curr_raw_vel = controller.get_raw_motors_velocity()?;
+        let curr_raw_torque = controller.get_raw_motors_current()?;
+        let curr_raw_pos = controller.get_raw_motors_positions()?;
+        let curr_temp = controller.get_motor_temperatures()?;
         let curr_axis = controller.get_axis_sensors()?;
         let curr_state = controller.get_board_state()?;
+        let axis_zeros = controller.get_axis_sensor_zeros()?;
+        let board_temp = controller.get_board_temperatures()?;
+        let control_mode = controller.get_control_mode()?;
+
+        let rawlim = controller.get_raw_motors_torque_limit()?;
+        let lim = controller.get_torque_limit()?;
+
+        log::debug!("DEBUG LIMITS: raw {:?} axis {:?}", rawlim, lim);
         all_data.push(Output {
             timestamp: t,
             torque_on: torque,
@@ -191,19 +214,35 @@ fn main() -> Result<(), Box<dyn Error>> {
             target_roll: input_csv_data.target_roll,
             target_pitch: input_csv_data.target_pitch,
             target_yaw: input_csv_data.target_yaw,
-            present_pos_top: curr_pos[0],
-            present_pos_mid: curr_pos[1],
-            present_pos_bot: curr_pos[2],
-            present_velocity_top: curr_vel[0],
-            present_velocity_mid: curr_vel[1],
-            present_velocity_bot: curr_vel[2],
-            present_torque_top: curr_torque[0],
-            present_torque_mid: curr_torque[1],
-            present_torque_bot: curr_torque[2],
+            present_velocity_roll: curr_vel[0],
+            present_velocity_pitch: curr_vel[1],
+            present_velocity_yaw: curr_vel[2],
+            present_torque_roll: curr_torque[0],
+            present_torque_pitch: curr_torque[1],
+            present_torque_yaw: curr_torque[2],
+            present_pos_top: curr_raw_pos[0],
+            present_pos_mid: curr_raw_pos[1],
+            present_pos_bot: curr_raw_pos[2],
+            present_velocity_top: curr_raw_vel[0],
+            present_velocity_mid: curr_raw_vel[1],
+            present_velocity_bot: curr_raw_vel[2],
+            present_current_top: curr_raw_torque[0],
+            present_current_mid: curr_raw_torque[1],
+            present_current_bot: curr_raw_torque[2],
+            present_temperature_top: curr_temp[0],
+            present_temperature_mid: curr_temp[1],
+            present_temperature_bot: curr_temp[2],
             axis_sensor_top: curr_axis[0],
             axis_sensor_bot: curr_axis[2],
             axis_sensor_mid: curr_axis[1],
+            axis_zeros_top: axis_zeros[0],
+            axis_zeros_mid: axis_zeros[2],
+            axis_zeros_bot: axis_zeros[1],
+            board_temperature_top: board_temp[0],
+            board_temperature_mid: board_temp[1],
+            board_temperature_bot: board_temp[2],
             board_state: curr_state,
+            control_mode: control_mode[0],
         });
 
         let tosleep = (input_csv_data.timestamp - t) * 1000.0;
@@ -263,9 +302,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             rec.log("velocity/present/pitch", &rerun::Scalar::new(curr_vel[1]))?;
             rec.log("velocity/present/yaw", &rerun::Scalar::new(curr_vel[2]))?;
 
+            rec.log("velocity/raw/top", &rerun::Scalar::new(curr_raw_vel[0]))?;
+            rec.log("velocity/raw/middle", &rerun::Scalar::new(curr_raw_vel[1]))?;
+            rec.log("velocity/raw/bottom", &rerun::Scalar::new(curr_raw_vel[2]))?;
+
             rec.log("torque/present/roll", &rerun::Scalar::new(curr_torque[0]))?;
             rec.log("torque/present/pitch", &rerun::Scalar::new(curr_torque[1]))?;
             rec.log("torque/present/yaw", &rerun::Scalar::new(curr_torque[2]))?;
+
+            rec.log("torque/raw/top", &rerun::Scalar::new(curr_raw_torque[0]))?;
+            rec.log("torque/raw/middle", &rerun::Scalar::new(curr_raw_torque[1]))?;
+            rec.log("torque/raw/bottom", &rerun::Scalar::new(curr_raw_torque[2]))?;
 
             rec.log(
                 "position/axis_sensor/roll",
