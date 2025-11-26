@@ -35,7 +35,7 @@ tokio = { version = "1.0.1", features = ["full"] }
 poulpe_ethercat_grpc = { git = "https://github.com/pollen-robotics/poulpe_ethercat_controller.git", branch = "develop" , optional=true}
 # dynamixel dependencies
 serialport = {version = "4.2.2", optional = true}
-rustypot = { git = "https://github.com/pollen-robotics/rustypot", optional = true}
+rustypot = { git = "https://github.com/pollen-robotics/rustypot", optional = true, rev = "96c83c5"}
 
 [dev-dependencies]
 rand = "0.8.5"
