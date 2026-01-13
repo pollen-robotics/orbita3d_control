@@ -50,6 +50,9 @@ private:
 
   double hw_states_torque_limit_[3];
   double hw_states_speed_limit_[3];
+  double hw_states_raw_torque_limit_[3];
+  double hw_states_raw_speed_limit_[3];
+
   double hw_states_motor_velocities_[3];
   double hw_states_motor_currents_[3];
   double hw_states_motor_temperatures_[3];
@@ -63,6 +66,17 @@ private:
 
   double hw_commands_speed_limit_[3];
   double hw_commands_torque_limit_[3];
+
+  double prev_hw_commands_speed_limit_[3];
+  double prev_hw_commands_torque_limit_[3];
+
+
+  double hw_commands_raw_speed_limit_[3];
+  double hw_commands_raw_torque_limit_[3];
+
+  double prev_hw_commands_raw_speed_limit_[3];
+  double prev_hw_commands_raw_torque_limit_[3];
+
 
   double hw_commands_ctrl_velocity_[3];
   double hw_commands_ctrl_torque_[3];

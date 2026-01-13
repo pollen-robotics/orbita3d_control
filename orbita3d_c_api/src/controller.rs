@@ -195,6 +195,27 @@ pub extern "C" fn orbita3d_get_current_torque(uid: u32, torque: &mut [f64; 3]) -
 }
 
 #[no_mangle]
+/// Get the current torque applied by the actuator
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * torque: *mut [f64; 3] - The current torque applied to the platform.
+/// # Returns
+/// * i32 - 0 if the torque was retrieved successfully, 1 otherwise.
+pub extern "C" fn orbita3d_get_current_torque_rpy(uid: u32, torque: &mut [f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_current_torque_rpy() {
+        Ok(tor) => {
+            *torque = tor;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
 /// Get the current target orientation of the platform (quaternion)
 ///
 /// # Arguments
@@ -443,6 +464,84 @@ pub extern "C" fn orbita3d_set_raw_motors_torque_limit(uid: u32, limit: &[f64; 3
         .unwrap()
         .set_raw_motors_torque_limit(*limit)
     {
+        Ok(_) => 0,
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+/// Get the current torque limit of the axes (Nm)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * limit: *mut [f64; 3] - The current torque limit of the axes.
+/// # Returns
+/// * i32 - 0 if the torque limit was retrieved successfully, 1 otherwise.
+pub extern "C" fn orbita3d_get_torque_limit(uid: u32, limit: &mut [f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_torque_limit() {
+        Ok(lim) => {
+            *limit = lim;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+/// Set the current torque limit of the axes (Nm)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * limit: *const [f64; 3] - The current torque limit of the motors.
+/// # Returns
+/// * i32 - 0 if the torque limit was set successfully, 1 otherwise.
+pub extern "C" fn orbita3d_set_torque_limit(uid: u32, limit: &[f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().set_torque_limit(*limit) {
+        Ok(_) => 0,
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+/// Get the current velocity limit of the axes (rad/s)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * limit: *mut [f64; 3] - The velocity limit of the axes.
+/// # Returns
+/// * i32 - 0 if the velocity limit was retrieved successfully, 1 otherwise.
+pub extern "C" fn orbita3d_get_velocity_limit(uid: u32, limit: &mut [f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().get_velocity_limit() {
+        Ok(lim) => {
+            *limit = lim;
+            0
+        }
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+/// Set the current velocity limit of the axes (rad/s)
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * limit: *const [f64; 3] - The velocity limit of the axes.
+/// # Returns
+/// * i32 - 0 if the velocity limit was set successfully, 1 otherwise.
+pub extern "C" fn orbita3d_set_velocity_limit(uid: u32, limit: &[f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().set_velocity_limit(*limit) {
         Ok(_) => 0,
         Err(e) => {
             print_error(e);
@@ -830,6 +929,25 @@ pub extern "C" fn orbita3d_set_target_torque(uid: u32, torque: &[f64; 3]) -> i32
         }
     }
 }
+
+#[no_mangle]
+/// Set the target torque of the platform
+///
+/// # Arguments
+/// * uid: u32 - The unique identifier of the controller.
+/// * torque: *const [f64; 3] - The target torque of the platform.
+/// # Returns
+/// * i32 - 0 if the torque was set successfully, 1 otherwise.
+pub extern "C" fn orbita3d_set_target_torque_rpy(uid: u32, torque: &[f64; 3]) -> i32 {
+    match CONTROLLER.get_mut(&uid).unwrap().set_target_torque_rpy(*torque) {
+        Ok(_) => 0,
+        Err(e) => {
+            print_error(e);
+            1
+        }
+    }
+}
+
 
 /// Get the next available unique identifier
 fn get_available_uid() -> u32 {

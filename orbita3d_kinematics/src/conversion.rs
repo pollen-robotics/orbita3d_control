@@ -58,6 +58,29 @@ pub fn array_to_vector3(a: [f64; 3]) -> Vector3<f64> {
     Vector3::new(a[0], a[1], a[2])
 }
 
+// Angular Jacobian for a 3-DOF gimbal with intersecting axes.
+// Columns are joint axes expressed in the base frame.
+pub fn gimbal_jacobian(roll: f64, pitch: f64, _yaw: f64) -> nalgebra::Matrix3<f64> {
+    
+    let ex = Vector3::new(1.0, 0.0, 0.0);
+    let ey = Vector3::new(0.0, 1.0, 0.0);
+    let ez = Vector3::new(0.0, 0.0, 1.0);
+
+    let mx = Rotation3::from_axis_angle(&Vector3::x_axis(), roll);
+    let my = Rotation3::from_axis_angle(&Vector3::y_axis(), pitch);
+    //let mz = Rotation3::from_axis_angle(&Vector3::z_axis(), yaw);
+
+    // Joint 1: about base X
+    let a1 = ex;
+    // Joint 2: about Y after joint 1
+    let a2 = mx * ey;
+    // Joint 3: about Z after joint 2
+    let a3 = mx * my * ez;
+    // let _R = mx * my * mz;  // body->base
+
+    nalgebra::Matrix3::from_columns(&[a1, a2, a3])
+}
+
 #[cfg(test)]
 mod tests {
     use rand::Rng;

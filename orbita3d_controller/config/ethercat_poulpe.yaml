@@ -17,3 +17,12 @@ inverted_axes:
   - false
   - false
   - false
+motor_gearbox_params:
+  motor_gearbox_ratio: 28.1715976331 #ecx22l
+  motor_nominal_current: 2.13 #A
+  motor_max_current: 2.5 #A
+  motor_nominal_torque: 0.0481 #Nm
+  motor_nominal_velocity: 40.0 #rad/s
+  motor_max_velocity: 40.0 #rad/s
+  motor_efficiency: 0.87
+  motor_gearbox_efficiency: 0.9
