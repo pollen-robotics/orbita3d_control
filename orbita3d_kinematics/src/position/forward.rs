@@ -1,7 +1,7 @@
 use levenberg_marquardt::{LeastSquaresProblem, LevenbergMarquardt};
+#[cfg(not(any(feature = "std", test)))]
+use nalgebra::{ComplexField, RealField};
 use nalgebra::{Matrix3, Owned, Rotation3, SMatrix, SVector, Vector3, U12, U6};
-use ndarray_einsum_beta::einsum;
-use nshare::{RefNdarray2, ToNalgebra};
 
 use crate::{conversion, InverseSolutionErrorKind, Orbita3dKinematicsModel};
 
@@ -141,24 +141,24 @@ impl Orbita3dKinematicsModel {
                                 log::debug!("bad yaw sign");
                                 if rpy[2] < 0.0 {
                                     log::debug!("\t+TAU");
-                                    rpy[2] += std::f64::consts::TAU;
+                                    rpy[2] += core::f64::consts::TAU;
                                 } else {
                                     log::debug!("\t-TAU");
-                                    rpy[2] -= std::f64::consts::TAU;
+                                    rpy[2] -= core::f64::consts::TAU;
                                 }
                             }
                             log::debug!("=> RPY with yaw sign {:?}", rpy);
 
                             // From the average yaw of the disks, compute the real rpy
                             // it can be 180<|yaw|<360 or |yaw|>360
-                            let nb_turns = (disk_yaw_avg / std::f64::consts::TAU).trunc(); //number of full turn
-                                                                                           // let nb_turns: f64 =
-                                                                                           //     (disk_yaw_avg / std::f64::consts::TAU).round();
+                            let nb_turns = (disk_yaw_avg / core::f64::consts::TAU).trunc(); //number of full turn
+                                                                                            // let nb_turns: f64 =
+                                                                                            //     (disk_yaw_avg / std::f64::consts::TAU).round();
 
                             log::debug!("=> nb_turns {:?}", nb_turns);
 
-                            if (disk_yaw_avg.abs() >= std::f64::consts::PI)
-                                && (disk_yaw_avg.abs() < std::f64::consts::TAU)
+                            if (disk_yaw_avg.abs() >= core::f64::consts::PI)
+                                && (disk_yaw_avg.abs() < core::f64::consts::TAU)
                             {
                                 // We are in 180<|yaw|<360
                                 if nb_turns.abs() > 0.0 || nb_turns == -1.0
@@ -166,16 +166,16 @@ impl Orbita3dKinematicsModel {
                                 {
                                     log::debug!(
                                         "Adding offset {}",
-                                        disk_yaw_avg.signum() * std::f64::consts::TAU
+                                        disk_yaw_avg.signum() * core::f64::consts::TAU
                                     );
-                                    rpy[2] += disk_yaw_avg.signum() * std::f64::consts::TAU;
+                                    rpy[2] += disk_yaw_avg.signum() * core::f64::consts::TAU;
                                 }
 
                                 log::debug!("180<|yaw|<360: {}", rpy[2]);
                             } else {
                                 // We are in |yaw|>360 => how many turns?
 
-                                rpy[2] += nb_turns * std::f64::consts::TAU;
+                                rpy[2] += nb_turns * core::f64::consts::TAU;
                                 log::debug!("|yaw|>360: nb_turns {nb_turns} {}", rpy[2]);
                             }
                             log::debug!("=> Out RPY {:?}", rpy);
@@ -246,9 +246,9 @@ impl Orbita3dKinematicsModel {
         let mut phi3 = sp3_n.atan2(cp3_n);
 
         if !self.passiv_arms_direct {
-            phi1 += std::f64::consts::PI;
-            phi2 += std::f64::consts::PI;
-            phi3 += std::f64::consts::PI;
+            phi1 += core::f64::consts::PI;
+            phi2 += core::f64::consts::PI;
+            phi3 += core::f64::consts::PI;
         }
 
         Some(SVector::from_row_slice(&[
@@ -258,22 +258,12 @@ impl Orbita3dKinematicsModel {
 }
 
 fn align_vectors(a: Matrix3<f64>, b: Matrix3<f64>) -> Rotation3<f64> {
-    // Find the rotation matrix to align two sets of vectors (based on scipy implementation)
-    let na = a.ref_ndarray2().into_shape((3, 3)).unwrap();
-    let nb = b.ref_ndarray2().into_shape((3, 3)).unwrap();
-
-    let mat_b = einsum("ji,jk->ik", &[&na, &nb])
-        .unwrap()
-        .into_shape((3, 3))
-        .unwrap();
-
-    let matrix_b = mat_b.view().into_nalgebra();
-
+    let matrix_b = a.transpose() * b;
     let mat_svd = matrix_b.svd(true, true);
     let mut u = mat_svd.u.unwrap();
     let vh = mat_svd.v_t.unwrap();
 
-    let uv = u.clone() * vh.clone();
+    let uv = u * vh;
 
     if uv.determinant() < 0.0 {
         u.set_column(
@@ -282,19 +272,7 @@ fn align_vectors(a: Matrix3<f64>, b: Matrix3<f64>) -> Rotation3<f64> {
         );
     }
 
-    let mat_c = u * vh;
-
-    let m = Matrix3::from_row_slice(&[
-        mat_c.row(0)[0],
-        mat_c.row(0)[1],
-        mat_c.row(0)[2],
-        mat_c.row(1)[0],
-        mat_c.row(1)[1],
-        mat_c.row(1)[2],
-        mat_c.row(2)[0],
-        mat_c.row(2)[1],
-        mat_c.row(2)[2],
-    ]);
+    let m = u * vh;
 
     Rotation3::from_matrix_unchecked(m)
 }
@@ -355,9 +333,9 @@ impl Orbita3dForwardProblem {
 
 // We implement a trait for every problem we want to solve
 impl LeastSquaresProblem<f64, U12, U6> for Orbita3dForwardProblem {
-    type ParameterStorage = Owned<f64, U6>;
     type ResidualStorage = Owned<f64, U12>;
     type JacobianStorage = Owned<f64, U12, U6>;
+    type ParameterStorage = Owned<f64, U6>;
 
     fn set_params(&mut self, p: &SVector<f64, 6>) {
         self.p = *p;

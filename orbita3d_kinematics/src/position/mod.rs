@@ -7,7 +7,7 @@ mod tests {
     use crate::{conversion::*, Orbita3dKinematicsModel};
 
     use rand::Rng;
-    use std::f64::consts::PI;
+    use core::f64::consts::PI;
 
     const ROLL_RANGE: f64 = 30.0;
     const PITCH_RANGE: f64 = 30.0;

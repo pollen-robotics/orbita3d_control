@@ -1,5 +1,6 @@
 use nalgebra::{Quaternion, Rotation3, UnitQuaternion, Vector3};
-
+#[cfg(not(any(feature = "std", test)))]
+use nalgebra::{ComplexField, RealField};
 /// Convert a quaternion to a rotation matrix.
 pub fn quaternion_to_rotation_matrix(qx: f64, qy: f64, qz: f64, qw: f64) -> Rotation3<f64> {
     Rotation3::from(UnitQuaternion::from_quaternion(Quaternion::new(
@@ -61,7 +62,7 @@ pub fn array_to_vector3(a: [f64; 3]) -> Vector3<f64> {
 #[cfg(test)]
 mod tests {
     use rand::Rng;
-    use std::f64::consts::PI;
+    use core::f64::consts::PI;
 
     use super::*;
 
