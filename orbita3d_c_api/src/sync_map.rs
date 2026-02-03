@@ -17,7 +17,7 @@ impl<K: std::hash::Hash + Eq, V> SyncMap<K, V> {
     pub fn get(&self, key: &K) -> Option<&V> {
         unsafe { (*self.0.get()).get(key) }
     }
-
+    #[allow(clippy::mut_from_ref)]
     pub fn get_mut(&self, key: &K) -> Option<&mut V> {
         unsafe { (*self.0.get()).get_mut(key) }
     }
